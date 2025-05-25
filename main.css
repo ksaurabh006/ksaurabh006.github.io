@@ -96,7 +96,7 @@ div#layout-menu {
 div#layout-content-container {
 	width: calc(100vw - 280.8px);
 	min-height: calc(100vh - 70px);
-	margin-left: 40.8px;
+	margin-left: 280.8px;
 	background: none;
 	text-align: left;
 	display: inline-block;

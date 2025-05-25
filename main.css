@@ -106,8 +106,8 @@ div#layout-content{
 	min-height: calc(100vh - 240px);
 	padding-top: 25px;
 	padding-bottom: 25px;
-	padding-left: 10px;
-	padding-right: 10px;
+	padding-left: 35px;
+	padding-right: 35px;
 	min-width: 200px;
 	max-width: 850px;
 	margin: auto;
@@ -253,8 +253,8 @@ div#footer {
 	margin: auto;
 	padding-top: 25px;
 	padding-bottom: 25px;
-	padding-left: 10px;
-	padding-right: 10px;
+	padding-left: 35px;
+	padding-right: 35px;
 }
 
 div#footer a {

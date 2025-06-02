@@ -102,15 +102,14 @@ div#layout-content-container {
 	display: inline-block;
 }
 
-div#layout-content{
-	min-height: calc(100vh - 240px);
-	padding-top: 25px;
-	padding-bottom: 25px;
-	padding-left: 35px;
-	padding-right: 35px;
+div#footer {
+	font-size: small;
+	color: #c0c0c0;
 	min-width: 200px;
-	max-width: 850px;
-	margin: auto;
+	max-width: none;
+	margin: 0;
+	padding: 25px 35px;
+	text-align: left;
 }
 
 

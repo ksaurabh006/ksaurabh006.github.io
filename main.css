@@ -102,13 +102,12 @@ div#layout-content-container {
 	display: inline-block;
 }
 
-div#footer {
-	font-size: small;
-	color: #c0c0c0;
+div#layout-content {
+	min-height: calc(100vh - 240px);
+	padding: 25px 35px;
 	min-width: 200px;
 	max-width: none;
 	margin: 0;
-	padding: 25px 35px;
 	text-align: left;
 }
 

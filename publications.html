@@ -114,14 +114,47 @@ MathJax.Hub.Config({
 </li>
 <li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.48550/arXiv.2402.06176" target=&ldquo;blank&rdquo;>Cooperative Nonlinear Guidance Strategies for Guaranteed Pursuit-Evasion, ArXiv, 2024</a>, pp. 1-8, (under review).</p>
 </li>
-<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.48550/arXiv.2504.11592" target=&ldquo;blank&rdquo;>Provably Safe Control for Constrained Nonlinear Systems with Bounded Input, ArXiv, 2025</a>, pp. 1-11, (under review)</p>
+<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.48550/arXiv.2504.11592" target=&ldquo;blank&rdquo;>Provably Safe Control for Constrained Nonlinear Systems with Bounded Input, ArXiv, 2025</a>, pp. 1-11, (under review).</p>
 </li>
 </ol>
+<div class="infoblock">
+<div class="blockcontent">
+<p>&lt;style&gt;
+<i><b> 1st Ordered List on the page (Assume Journals) </b></i>
+ol:nth-of-type(1) li::marker {
+content: &ldquo;J&rdquo; counter(list-item) &ldquo;. &rdquo;;
+font-weight: bold;
+}</p>
+<p><i><b> 2nd Ordered List on the page (Assume Conferences) </b></i>
+ol:nth-of-type(2) li::marker {
+content: &ldquo;C&rdquo; counter(list-item) &ldquo;. &rdquo;;
+font-weight: bold;
+}</p>
+<p><i><b> 3rd Ordered List on the page (Assume Preprints) </b></i>
+ol:nth-of-type(3) li::marker {
+content: &ldquo;O&rdquo; counter(list-item) &ldquo;. &rdquo;;
+font-weight: bold;
+}</p>
+<p><i><b> Add a little extra padding so the letters don't get cut off on the left </b></i>
+ol {
+padding-left: 3em; 
+}
+&lt;/style&gt;</p>
+<p>&lt;script&gt;
+<i></i> Reverse all numbered lists on the page so the newest paper has the highest number
+document.addEventListener(&ldquo;DOMContentLoaded&rdquo;, function() {
+var lists = document.getElementsByTagName('ol&rsquo;);
+for (var i = 0; i &lt; lists.length; i<tt></tt>) {
+lists<a href="i" target=&ldquo;blank&rdquo;>i</a>.setAttribute('reversed&rsquo;, 'reversed&rsquo;);
+}
+});
+&lt;/script&gt;</p>
+</div></div>
 </div> <!-- <div id="layout-content"> -->
 <div id="footer-container">
 <div id="footer">
 <div id="footer-text">
-Last edited  on April 15<sup>th</sup> 2026  06:22PM (Time Zone: India Standard Time). </br>
+Last edited  on April 15<sup>th</sup> 2026  06:33PM (Time Zone: India Standard Time). </br>
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

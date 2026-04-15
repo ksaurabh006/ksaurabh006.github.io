@@ -722,28 +722,3 @@ div#member p{
     max-width: 100%;
   }
 }
-
-/* --- Custom Bullets ONLY for the Publications Page --- */
-
-/* Journals */
-.pub-page-lists ol:nth-of-type(1) li::marker {
-  content: "J" counter(list-item) ". ";
-  font-weight: bold;
-}
-
-/* Conferences */
-.pub-page-lists ol:nth-of-type(2) li::marker {
-  content: "C" counter(list-item) ". ";
-  font-weight: bold;
-}
-
-/* Preprints */
-.pub-page-lists ol:nth-of-type(3) li::marker {
-  content: "O" counter(list-item) ". ";
-  font-weight: bold;
-}
-
-/* Fix padding for these specific lists */
-.pub-page-lists ol {
-  padding-left: 3em; 
-}

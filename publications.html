@@ -117,44 +117,45 @@ MathJax.Hub.Config({
 <li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.48550/arXiv.2504.11592" target=&ldquo;blank&rdquo;>Provably Safe Control for Constrained Nonlinear Systems with Bounded Input, ArXiv, 2025</a>, pp. 1-11, (under review).</p>
 </li>
 </ol>
-<div class="infoblock">
-<div class="blockcontent">
-<p>&lt;style&gt;
-<i><b> 1st Ordered List on the page (Assume Journals) </b></i>
-ol:nth-of-type(1) li::marker {
-content: &ldquo;J&rdquo; counter(list-item) &ldquo;. &rdquo;;
-font-weight: bold;
-}</p>
-<p><i><b> 2nd Ordered List on the page (Assume Conferences) </b></i>
-ol:nth-of-type(2) li::marker {
-content: &ldquo;C&rdquo; counter(list-item) &ldquo;. &rdquo;;
-font-weight: bold;
-}</p>
-<p><i><b> 3rd Ordered List on the page (Assume Preprints) </b></i>
-ol:nth-of-type(3) li::marker {
-content: &ldquo;O&rdquo; counter(list-item) &ldquo;. &rdquo;;
-font-weight: bold;
-}</p>
-<p><i><b> Add a little extra padding so the letters don't get cut off on the left </b></i>
-ol {
-padding-left: 3em; 
-}
-&lt;/style&gt;</p>
-<p>&lt;script&gt;
-<i></i> Reverse all numbered lists on the page so the newest paper has the highest number
-document.addEventListener(&ldquo;DOMContentLoaded&rdquo;, function() {
-var lists = document.getElementsByTagName('ol&rsquo;);
-for (var i = 0; i &lt; lists.length; i<tt></tt>) {
-lists<a href="i" target=&ldquo;blank&rdquo;>i</a>.setAttribute('reversed&rsquo;, 'reversed&rsquo;);
-}
-});
-&lt;/script&gt;</p>
-</div></div>
+<style>
+  /* 1st Ordered List on the page (Assume Journals) */
+  ol:nth-of-type(1) li::marker {
+    content: "J" counter(list-item) ". ";
+    font-weight: bold;
+  }
+  
+  /* 2nd Ordered List on the page (Assume Conferences) */
+  ol:nth-of-type(2) li::marker {
+    content: "C" counter(list-item) ". ";
+    font-weight: bold;
+  }
+  
+  /* 3rd Ordered List on the page (Assume Preprints) */
+  ol:nth-of-type(3) li::marker {
+    content: "O" counter(list-item) ". ";
+    font-weight: bold;
+  }
+
+  /* Add a little extra padding so the letters don't get cut off on the left */
+  ol {
+    padding-left: 3em; 
+  }
+</style>
+
+<script>
+  // Reverse all numbered lists on the page so the newest paper has the highest number
+  document.addEventListener("DOMContentLoaded", function() {
+    var lists = document.getElementsByTagName('ol');
+    for (var i = 0; i < lists.length; i++) {
+      lists[i].setAttribute('reversed', 'reversed');
+    }
+  });
+</script>
 </div> <!-- <div id="layout-content"> -->
 <div id="footer-container">
 <div id="footer">
 <div id="footer-text">
-Last edited  on April 15<sup>th</sup> 2026  06:33PM (Time Zone: India Standard Time). </br>
+Last edited  on April 15<sup>th</sup> 2026  06:39PM (Time Zone: India Standard Time). </br>
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

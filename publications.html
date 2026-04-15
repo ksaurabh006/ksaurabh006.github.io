@@ -122,15 +122,49 @@ MathJax.Hub.Config({
 
 <script>
   document.addEventListener("DOMContentLoaded", function() {
-    var lists = document.querySelector('.pub-page-lists').getElementsByTagName('ol');
-    for (var i = 1; i < lists.length; i++)
+    var lists = document.querySelectorAll('.pub-page-lists ol');
+    var prefixes = ['J', 'C', 'P']; // 1st list gets J, 2nd gets C, 3rd gets P
+
+    lists.forEach(function(list, index) {
+      // Hide default numbers
+      list.style.listStyleType = 'none';
+      list.style.paddingLeft = '1em'; // Keeps a nice margin on the left
+
+      var items = Array.from(list.getElementsByTagName('li')).filter(function(li) {
+        return li.textContent.trim().length > 0;
+      });
+
+      var prefix = prefixes[index] || '';
+      var total = items.length;
+
+      items.forEach(function(li, i) {
+        var num = total - i;
+        
+        var marker = document.createElement('span');
+        marker.innerHTML = '<b>[' + prefix + num + ']</b> ';
+        
+        // Check if jemdoc wrapped the text in a <p> tag
+        var targetNode = li;
+        if (li.firstElementChild && li.firstElementChild.tagName.toLowerCase() === 'p') {
+          targetNode = li.firstElementChild;
+          // Force the paragraph to behave like normal text so it doesn't drop down
+          targetNode.style.display = 'inline'; 
+        }
+        
+        // Inject the badge safely inside
+        targetNode.insertBefore(marker, targetNode.firstChild);
+        
+        // Add a little vertical space between papers
+        li.style.marginBottom = '10px';
+      });
+    });
   });
 </script>
 </div> <!-- <div id="layout-content"> -->
 <div id="footer-container">
 <div id="footer">
 <div id="footer-text">
-Last edited  on April 15<sup>th</sup> 2026  07:17PM (Time Zone: India Standard Time). </br>
+Last edited  on April 15<sup>th</sup> 2026  07:21PM (Time Zone: India Standard Time). </br>
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

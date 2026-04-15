@@ -122,40 +122,17 @@ MathJax.Hub.Config({
 
 <script>
   document.addEventListener("DOMContentLoaded", function() {
-    var lists = document.querySelectorAll('.pub-page-lists ol');
-    var prefixes = ['J', 'C', 'P']; // 1st list gets J, 2nd gets C, 3rd gets P
-
-    lists.forEach(function(list, index) {
-      // 1. Hide the browser's default numbers
-      list.style.listStyleType = 'none';
-      
-      // 2. Count exactly how many REAL papers are in this specific list
-      var items = Array.from(list.getElementsByTagName('li')).filter(function(li) {
-        return li.textContent.trim().length > 0;
-      });
-
-      var prefix = prefixes[index] || '';
-      var total = items.length; // If there are 8 journals, this equals 8
-
-      // 3. Inject the exact custom prefix counting down to 1
-      items.forEach(function(li, i) {
-        var num = total - i; // Top item gets the max number, bottom gets 1
-        
-        // Creates the bold brackets like [J8], [C5]
-        var marker = document.createElement('span');
-        marker.innerHTML = '<b>[' + prefix + num + ']</b> ';
-        
-        // Injects it at the very front of the text
-        li.insertBefore(marker, li.firstChild);
-      });
-    });
+    var lists = document.querySelector('.pub-page-lists').getElementsByTagName('ol');
+    for (var i = 1; i < lists.length; i++) {
+      lists[i].setAttribute('reversed', 'reversed');
+    }
   });
 </script>
 </div> <!-- <div id="layout-content"> -->
 <div id="footer-container">
 <div id="footer">
 <div id="footer-text">
-Last edited  on April 15<sup>th</sup> 2026  07:09PM (Time Zone: India Standard Time). </br>
+Last edited  on April 15<sup>th</sup> 2026  07:13PM (Time Zone: India Standard Time). </br>
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

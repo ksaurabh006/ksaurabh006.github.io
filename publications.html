@@ -138,9 +138,9 @@ MathJax.Hub.Config({
     var prefixes = ['J', 'C', 'P']; // 1st list gets J, 2nd gets C, 3rd gets P
 
     lists.forEach(function(list, index) {
-      // Hide default numbers
+      // Hide default numbers and reset the padding
       list.style.listStyleType = 'none';
-      list.style.paddingLeft = '1em'; // Keeps a nice margin on the left
+      list.style.paddingLeft = '0'; 
 
       var items = Array.from(list.getElementsByTagName('li')).filter(function(li) {
         return li.textContent.trim().length > 0;
@@ -152,22 +152,31 @@ MathJax.Hub.Config({
       items.forEach(function(li, i) {
         var num = total - i;
         
-        var marker = document.createElement('span');
-        marker.innerHTML = '<b>[' + prefix + num + ']</b> ';
-        
-        // Check if jemdoc wrapped the text in a <p> tag
-        var targetNode = li;
-        if (li.firstElementChild && li.firstElementChild.tagName.toLowerCase() === 'p') {
-          targetNode = li.firstElementChild;
-          // Force the paragraph to behave like normal text so it doesn't drop down
-          targetNode.style.display = 'inline'; 
+        // 1. Setup the list item as a side-by-side Flexbox row
+        li.style.display = 'flex';
+        li.style.marginBottom = '12px'; // Spacing between papers
+
+        // 2. Create the custom bullet box
+        var marker = document.createElement('div');
+        marker.innerHTML = '<b>[' + prefix + num + ']</b>';
+        marker.style.minWidth = '3.5em'; // Fixed width so all text aligns perfectly
+        marker.style.flexShrink = '0'; // Prevents the bracket from getting squished
+
+        // 3. Create a wrapper for the paper text
+        var textWrapper = document.createElement('div');
+        while (li.firstChild) {
+          textWrapper.appendChild(li.firstChild);
         }
-        
-        // Inject the badge safely inside
-        targetNode.insertBefore(marker, targetNode.firstChild);
-        
-        // Add a little vertical space between papers
-        li.style.marginBottom = '10px';
+
+        // Strip default margins from jemdoc's paragraph tag so it aligns with the top
+        if (textWrapper.firstElementChild && textWrapper.firstElementChild.tagName.toLowerCase() === 'p') {
+          textWrapper.firstElementChild.style.marginTop = '0';
+          textWrapper.firstElementChild.style.marginBottom = '0';
+        }
+
+        // 4. Put them both back inside the list item
+        li.appendChild(marker);
+        li.appendChild(textWrapper);
       });
     });
   });
@@ -176,7 +185,7 @@ MathJax.Hub.Config({
 <div id="footer-container">
 <div id="footer">
 <div id="footer-text">
-Last edited  on April 16<sup>th</sup> 2026  06:09PM (Time Zone: IST). </br>
+Last edited  on April 16<sup>th</sup> 2026  06:26PM (Time Zone: IST). </br>
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

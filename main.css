@@ -1,437 +1,879 @@
 /* ============================================================
-   main.css — Academic Theme for jemdoc+MathJax
-   Saurabh Kumar | IIT Bombay
-   Built to match mysite.conf HTML structure exactly
+   main.css — Improved Academic Theme for jemdoc+MathJax
+   Author: Saurabh Kumar's website
+   Design: Refined academic — clean, structured, professional
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Source+Sans+3:wght@300;400;500;600&display=swap');
+/* Google Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=Source+Sans+3:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ── Tokens ──────────────────────────────────────────────── */
+/* ============================================================
+   CSS Variables / Design Tokens
+   ============================================================ */
 :root {
-  --hdr-bg:      #1a2332;
-  --hdr-h:       64px;
-  --sidebar-w:   260px;
-  --accent:      #1a56a0;
-  --accent-hov:  #b83a18;
-  --text:        #1c2028;
-  --muted:       #5a6374;
-  --light:       #8a94a6;
-  --border:      #dde1e7;
-  --soft:        #eef0f3;
-  --surface:     #f4f6f9;
-  --rule:        #d0d5de;
-  --serif:       'Source Serif 4', Georgia, serif;
-  --sans:        'Source Sans 3', 'Segoe UI', Arial, sans-serif;
+  /* Colors */
+  --clr-bg:          #ffffff;
+  --clr-surface:     #f8f9fb;
+  --clr-border:      #e3e6ea;
+  --clr-border-soft: #eef0f3;
+
+  --clr-header-bg:   #1a2332;
+  --clr-header-text: #f0f4f8;
+  --clr-menu-bg:     #f4f6f9;
+  --clr-menu-border: #dde1e7;
+
+  --clr-text:        #1c2028;
+  --clr-text-muted:  #5a6374;
+  --clr-text-light:  #8a94a6;
+
+  --clr-accent:      #1a56a0;   /* deep academic blue */
+  --clr-accent-hover:#c8411a;   /* warm terracotta on hover */
+  --clr-accent-soft: #e8f0fb;
+
+  --clr-heading:     #1a2332;
+  --clr-rule:        #d0d5de;
+
+  /* Typography */
+  --font-body:    'Source Sans 3', 'Segoe UI', Arial, sans-serif;
+  --font-heading: 'Source Serif 4', Georgia, serif;
+  --font-mono:    'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+
+  --fs-base:  16.5px;
+  --fs-sm:    14px;
+  --fs-xs:    12.5px;
+  --fs-lg:    19px;
+  --fs-xl:    24px;
+  --fs-2xl:   30px;
+  --fs-3xl:   36px;
+
+  --lh-body:    1.7;
+  --lh-heading: 1.25;
+
+  /* Layout */
+  --sidebar-w:   270px;
+  --header-h:    64px;
+  --content-max: 820px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Elevation */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.10);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,0.13);
+
+  /* Motion */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur:  0.18s;
 }
 
-/* ── Reset ───────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+/* ============================================================
+   Reset & Base
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  font-family: var(--sans);
-  font-size: 16px;
-  line-height: 1.72;
-  color: var(--text);
-  background: #fff;
-  margin: 0; padding: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  color: var(--clr-text);
+  background: var(--clr-bg);
+  padding: 0;
+  margin: 0;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Header ──────────────────────────────────────────────── */
+/* ============================================================
+   Main Container
+   ============================================================ */
+div#main-container {
+  min-height: 100vh;
+  background: var(--clr-bg);
+  margin: auto;
+}
+
+/* ============================================================
+   Header / Top Bar
+   ============================================================ */
 div#header-container {
   width: 100%;
-  height: var(--hdr-h);
+  height: var(--header-h);
 }
 
 div#header {
+  width: 100vw;
+  height: var(--header-h);
+  background: var(--clr-header-bg);
+  z-index: 100;
   position: fixed;
-  top: 0; left: 0;
-  width: 100%;
-  height: var(--hdr-h);
-  background: var(--hdr-bg);
-  z-index: 500;
+  top: 0;
   display: flex;
   align-items: center;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
 div#header-icon-text-container {
+  padding-left: var(--space-5);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding-left: 20px;
+  gap: var(--space-3);
   flex: 1;
-  min-width: 0;
 }
 
 div#header-icon-container {
-  width: 42px;
   height: 42px;
-  flex-shrink: 0;
+  width: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
   border-radius: 8px;
   overflow: hidden;
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
 
 div#header-icon-container img {
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  display: block;
-  margin: 0; padding: 0;
-  border-radius: 0;
+  border-radius: 8px;
+  margin: 0;
+  padding: 0;
 }
 
 div#header-text-container {
-  font-family: var(--serif);
-  font-size: 20px;
-  font-weight: 600;
-  color: #f0f4f8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-div#header-text-container a       { color: #f0f4f8; text-decoration: none; }
-div#header-text-container a:hover { opacity: 0.8; }
-
-div#main {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  height: var(--hdr-h);
-  padding-right: 8px;
-  flex-shrink: 0;
+  color: var(--clr-header-text);
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+div#header-text-container a {
+  color: var(--clr-header-text);
+  text-decoration: none;
+  transition: opacity var(--dur) var(--ease);
+}
+
+div#header-text-container a:hover {
+  opacity: 0.85;
+  color: var(--clr-header-text);
+}
+
+/* Hamburger button zone */
+div#main {
   margin-left: auto;
+  height: var(--header-h);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* hamburger — hidden on wide screens */
-.openbtn {
-  font-size: 0;
-  background: none;
-  border: none;
-  cursor: default;
-  color: #fff;
-  padding: 8px 10px;
-  border-radius: 4px;
-}
-
-/* ── Outer wrapper ───────────────────────────────────────── */
-div#main-container { min-height: 100vh; }
-
-/* ── Sidebar ─────────────────────────────────────────────── */
-/* mysite.conf wraps the sidebar in:
-   <div id="layout">
-     <div id="layout-menu-container">
-       <div id="layout-menu"> ... </div>
-     </div>
-     <div id="layout-content-container">
-       <div id="layout-content"> ... </div>
-     </div>
-   </div>
-*/
+/* ============================================================
+   Layout — Sidebar + Content
+   ============================================================ */
 div#layout {
+  width: 100vw;
+  min-height: calc(100vh - var(--header-h));
   display: flex;
-  min-height: calc(100vh - var(--hdr-h));
-  width: 100%;
 }
 
 div#layout-menu-container {
-  width: var(--sidebar-w);
-  flex-shrink: 0;
-  position: relative;
+  /* flex child set by media queries */
 }
 
 div#layout-menu {
-  position: fixed;
-  top: var(--hdr-h);
-  left: 0;
+  padding: 0;
+  padding-bottom: var(--space-7);
+  height: calc(100% - var(--header-h) - 30px);
   width: var(--sidebar-w);
-  height: calc(100vh - var(--hdr-h));
+  min-width: var(--sidebar-w);
+  position: fixed;
+  top: var(--header-h);
   overflow-y: auto;
-  overflow-x: hidden;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  padding-bottom: 40px;
-  z-index: 100;
+  background: var(--clr-menu-bg);
+  border-right: 1px solid var(--clr-menu-border);
+  /* subtle gradient fade at bottom */
 }
 
-div#layout-menu::-webkit-scrollbar { width: 3px; }
+/* Scrollbar styling for sidebar */
+div#layout-menu::-webkit-scrollbar {
+  width: 4px;
+}
+div#layout-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
 div#layout-menu::-webkit-scrollbar-thumb {
-  background: var(--border); border-radius: 3px;
+  background: var(--clr-border);
+  border-radius: 4px;
 }
 
-/* close button — hidden on wide screens */
-div#layout-menu .closebtn        { display: none; }
-div.menu-item a.closebtn         { display: none; }
+#layout-menu a {
+  padding: 0;
+  line-height: 1.9;
+  transition: color var(--dur) var(--ease);
+}
 
+/* ============================================================
+   Sidebar — Menu Items & Categories
+   ============================================================ */
 div.menu-category {
-  margin-top: 20px;
-  padding: 6px 20px 4px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  margin-top: var(--space-5);
+  padding: var(--space-2) var(--space-5) var(--space-1);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.9px;
   text-transform: uppercase;
-  color: var(--light);
-  border-top: 1px solid var(--soft);
-  font-family: var(--sans);
+  color: var(--clr-text-light);
+  border-top: 1px solid var(--clr-border-soft);
+  font-family: var(--font-body);
 }
 
-/* first category: no border on top */
-div#layout-menu > div.menu-item:first-child + div.menu-category,
-div#layout-menu > div.menu-category:first-of-type {
+div.menu-category:first-child {
   border-top: none;
-  margin-top: 16px;
+  margin-top: var(--space-4);
 }
 
 div.menu-item {
-  padding: 0 20px;
-  font-size: 14px;
-  font-family: var(--sans);
+  font-size: var(--fs-sm);
+  padding: 0 var(--space-5);
+  font-family: var(--font-body);
 }
 
 div.menu-item a {
   display: block;
-  padding: 3px 0;
-  color: var(--muted);
+  padding: var(--space-1) 0;
+  color: var(--clr-text-muted);
   text-decoration: none;
-  line-height: 1.85;
-  transition: color 0.15s;
+  border-radius: 4px;
+  transition: color var(--dur) var(--ease);
 }
-div.menu-item a:hover            { color: var(--accent); }
-div.menu-item a.current          { color: var(--accent); font-weight: 600; }
+
+div.menu-item a:hover {
+  color: var(--clr-accent);
+}
+
+#layout-menu a.current:link,
+#layout-menu a.current:visited {
+  color: var(--clr-accent);
+  font-weight: 600;
+}
 
 #layout-menu a:link,
-#layout-menu a:visited           { color: var(--muted); text-decoration: none; }
-#layout-menu a:hover             { color: var(--accent); }
-#layout-menu a.current:link,
-#layout-menu a.current:visited   { color: var(--accent); font-weight: 600; }
+#layout-menu a:visited {
+  color: var(--clr-text-muted);
+  text-decoration: none;
+}
 
-/* ── Content ─────────────────────────────────────────────── */
+#layout-menu a:hover {
+  color: var(--clr-accent);
+}
+
+/* ============================================================
+   Content Area
+   ============================================================ */
 div#layout-content-container {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
+  width: calc(100vw - var(--sidebar-w));
+  min-height: calc(100vh - var(--header-h));
+  margin-left: var(--sidebar-w);
+  background: none;
+  display: block;
 }
 
 div#layout-content {
-  flex: 1;
-  padding: 40px 56px;
-  max-width: 860px;
-  min-height: calc(100vh - var(--hdr-h) - 80px);
+  min-height: calc(100vh - 200px);
+  padding: var(--space-7) clamp(var(--space-5), 5vw, 64px);
+  max-width: var(--content-max);
+  margin: 0;
+  text-align: left;
 }
 
-/* ── Headings ────────────────────────────────────────────── */
+/* ============================================================
+   Typography — Headings
+   ============================================================ */
 h1, h2, h3, h4 {
-  font-family: var(--serif);
-  color: var(--text);
-  line-height: 1.25;
+  font-family: var(--font-heading);
+  color: var(--clr-heading);
+  line-height: var(--lh-heading);
   font-weight: 600;
 }
+
 h1 {
-  font-size: 32px;
-  border-bottom: 2px solid var(--rule);
+  font-size: var(--fs-3xl);
+  padding-top: 0;
   padding-bottom: 0.2em;
-  margin: 0 0 0.6em;
+  margin-bottom: 0.6em;
+  border-bottom: 2px solid var(--clr-rule);
+  font-weight: 600;
 }
+
 h2 {
-  font-size: 22px;
-  border-bottom: 1px solid var(--rule);
-  padding-top: 0.8em;
+  font-size: var(--fs-xl);
+  padding-top: 0.9em;
   padding-bottom: 0.2em;
-  margin-bottom: 14px;
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--clr-rule);
+  font-weight: 600;
+  letter-bottom: 0;
 }
+
+h2 + h3 {
+  padding-top: var(--space-2);
+}
+
 h3 {
-  font-size: 18px;
-  padding-top: 0.4em;
-  margin-bottom: 4px;
-  color: var(--accent);
+  font-size: var(--fs-lg);
+  padding-top: 0.5em;
+  margin-bottom: 0;
   border-bottom: none;
+  font-weight: 600;
+  color: var(--clr-accent);
+}
+
+/* Reduce spacing when page begins with title */
+div#toptitle + h2,
+div#toptitle + h3 {
+  margin-top: -0.5em;
 }
 
 div#toptitle {
-  border-bottom: 2px solid var(--rule);
   padding-bottom: 0.2em;
   margin-bottom: 1.2em;
+  border-bottom: 2px solid var(--clr-rule);
 }
+
 div#toptitle h1,
 #layout-content div#toptitle h1 {
+  margin-bottom: 0;
+  padding-bottom: 0.1em;
+  padding-top: 0;
+  margin-top: 0;
   border-bottom: none;
-  margin: 0; padding: 0;
-  font-size: 32px;
+  font-size: var(--fs-3xl);
 }
+
 div#subtitle {
-  color: var(--muted);
-  font-size: 17px;
-  font-family: var(--sans);
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0.1em;
+  color: var(--clr-text-muted);
+  font-size: var(--fs-lg);
+  font-family: var(--font-body);
   font-weight: 300;
-  margin: 0; padding-bottom: 0.1em;
 }
 
 #layout-content h1:first-child,
 #layout-content h2:first-child,
-#layout-content h3:first-child  { margin-top: -0.4em; }
-
-/* ── Body ────────────────────────────────────────────────── */
-p {
-  font-size: 16px;
-  line-height: 1.72;
-  margin-top: 0; margin-bottom: 0.8em; padding: 0;
+#layout-content h3:first-child {
+  margin-top: -0.5em;
 }
-em     { font-style: italic; }
-strong, b { font-weight: 600; }
 
-/* ── Links ───────────────────────────────────────────────── */
-a, a > tt           { color: var(--accent); text-decoration: none; transition: color 0.15s; }
-a:hover, a:hover>tt { color: var(--accent-hov); text-decoration: underline; text-underline-offset: 2px; }
+/* ============================================================
+   Typography — Body Text
+   ============================================================ */
+p {
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  margin-top: 0;
+  margin-bottom: 0.75em;
+  padding: 0;
+  color: var(--clr-text);
+}
 
-/* ── Code ────────────────────────────────────────────────── */
+em {
+  font-style: italic;
+}
+
+strong {
+  font-weight: 600;
+  color: var(--clr-heading);
+}
+
+/* ============================================================
+   Links
+   ============================================================ */
+a, a > tt {
+  color: var(--clr-accent);
+  text-decoration: none;
+  transition: color var(--dur) var(--ease);
+}
+
+a:hover, a:hover > tt {
+  color: var(--clr-accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ============================================================
+   Code / Monospace
+   ============================================================ */
 tt {
-  font-family: 'SFMono-Regular', Consolas, monospace;
-  font-size: 87%;
   background: #f0f3f8;
-  color: var(--text);
+  color: var(--clr-heading);
+  font-family: var(--font-mono);
   border-radius: 4px;
   padding: 1px 5px;
 }
+
 pre, code {
-  font-family: 'SFMono-Regular', Consolas, monospace;
-  font-size: 87%;
+  font-family: var(--font-mono);
+  font-size: 87.5%;
   border-radius: 6px;
   line-height: 1.55;
   overflow-x: auto;
 }
-pre { padding: 0; margin: 0; }
 
-/* ── Lists ───────────────────────────────────────────────── */
-ul, ol, dl { margin-top: 0.2em; padding-top: 0; margin-bottom: 0.8em; }
-ul { list-style: disc outside; padding-left: 1.5em; }
-ol { list-style: decimal outside; padding-left: 1.5em; }
-ol ol    { list-style-type: lower-alpha; }
-ol ol ol { list-style-type: lower-roman; }
-li { margin-bottom: 0.25em; }
-li p, dd p { margin-bottom: 0.3em; }
-p + ul, p + ol { margin-top: -0.4em; }
-li ul, li ol   { margin-top: -0.2em; }
-dt { margin-top: 0.5em; font-weight: 600; }
-dl { margin-left: 24px; }
-dd > *:first-child { margin-top: 0; }
-
-/* ── Images ──────────────────────────────────────────────── */
-img {
-  max-width: 100%; height: auto;
-  border-radius: 8px;
-  margin-right: 20px; margin-bottom: 12px;
+pre {
   padding: 0;
+  margin: 0;
 }
-div#text-img-container { overflow: hidden; margin-bottom: 20px; }
-div#img-container      { float: left; text-align: center; padding-top: 0; }
-div#text-container     { overflow: hidden; padding-top: 0; }
-div#text-container h1,
-div#text-container h2  { border-bottom: none; margin: 0; padding: 0; padding-top: 14px; }
-div#text-container h3  { padding-top: 0; margin-top: 0; }
-div#text-container h1+h3,
-div#text-container h3+h1,
-div#text-container h2+h3 { padding-top: 0; margin-top: 0; }
 
-/* ── Tables ──────────────────────────────────────────────── */
-table { border-collapse: collapse; width: 100%; margin-bottom: 24px; font-size: 14.5px; }
-table+table { margin-top: 1em; }
-th { background: var(--surface); font-weight: 600; text-align: left; padding: 8px 12px; border: 1px solid var(--border); color: var(--text); }
-td { padding: 7px 12px; text-align: left; border: 1px solid var(--border); line-height: 1.55; vertical-align: top; }
-tr:nth-child(even) td { background: #fafbfc; }
-#countries tr.r1 { font-weight: 600; }
+/* ============================================================
+   Lists
+   ============================================================ */
+ul, ol, dl {
+  margin-top: 0.2em;
+  padding-top: 0;
+  margin-bottom: 0.8em;
+}
 
-/* ── Info/Code blocks ────────────────────────────────────── */
-div.codeblock, div.infoblock { margin-top: 1.2em; margin-bottom: 1.3em; }
-p + div.codeblock { margin-top: 0.6em; }
-div.blocktitle { color: var(--accent); font-family: var(--serif); font-size: 18px; font-weight: 600; line-height: 2; }
-div.blockcontent { padding: 14px; border-radius: 8px; }
-div.infoblock > div.blockcontent { background: #eaf2fb; border: 1px solid #b5d0ef; }
-div.codeblock > div.blockcontent { background: var(--surface); border: 1px solid var(--border); }
-div.infoblock p          { margin-bottom: 0; }
-div.infoblock li p,
-div.infoblock dd p       { margin-bottom: 0.5em; }
-div.infoblock p+p        { margin-top: 0.8em; }
+ul {
+  list-style-position: outside;
+  list-style-type: disc;
+  padding-left: 1.5em;
+}
 
-/* ── News list ───────────────────────────────────────────── */
-#layout-content h2 + ol,
-#layout-content h2 + ul {
-  list-style: none;
+ol {
+  list-style-position: outside;
+  list-style-type: decimal;
+  padding-left: 1.5em;
+}
+
+ol ol {
+  list-style-type: lower-alpha;
+}
+
+ol ol ol {
+  list-style-type: lower-roman;
+}
+
+li {
+  margin-bottom: 0.25em;
+}
+
+li p, dd p {
+  margin-bottom: 0.3em;
+}
+
+p + ul, p + ol {
+  margin-top: -0.4em;
+}
+
+li ul, li ol {
+  margin-top: -0.2em;
+}
+
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-weight: 600;
+}
+
+dl {
+  margin-left: var(--space-5);
+}
+
+dd {
+  color: var(--clr-text);
+}
+
+dd > *:first-child {
+  margin-top: 0;
+}
+
+/* ============================================================
+   Publication List Styles  (used via JS in publications.html)
+   ============================================================ */
+.pub-page-lists ol {
+  list-style-type: none;
   padding-left: 0;
 }
+
+.pub-page-lists ol li {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+
+/* ============================================================
+   Images
+   ============================================================ */
+img {
+  padding: 0;
+  margin-right: var(--space-5);
+  margin-bottom: var(--space-3);
+  border-radius: 8px;
+  max-width: 100%;
+  height: auto;
+}
+
+div#text-img-container {
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  margin-bottom: var(--space-5);
+}
+
+div#img-container {
+  float: left;
+  padding-top: 0;
+  text-align: center;
+}
+
+div#text-container {
+  overflow: hidden;
+  padding-top: 0;
+}
+
+div#text-container h1 {
+  border-bottom: none;
+  margin: 0;
+  padding: 0;
+  padding-top: var(--space-4);
+}
+
+div#text-container h2 {
+  border-bottom: none;
+  margin: 0;
+  padding: 0;
+  padding-top: var(--space-4);
+}
+
+div#text-container h3 {
+  padding-top: 0;
+  margin-top: 0;
+}
+
+div#text-container h1 + h3,
+div#text-container h3 + h1,
+div#text-container h2 + h3 {
+  padding-top: 0;
+  margin-top: 0;
+}
+
+/* ============================================================
+   Profile / Homepage Intro Block
+   ============================================================ */
+.intro-block {
+  display: flex;
+  gap: var(--space-6);
+  align-items: flex-start;
+  margin-bottom: var(--space-6);
+}
+
+/* ============================================================
+   Tables
+   ============================================================ */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: var(--space-5);
+  font-size: var(--fs-sm);
+}
+
+table + table {
+  margin-top: 1em;
+}
+
+th {
+  background: var(--clr-surface);
+  font-weight: 600;
+  color: var(--clr-heading);
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--clr-border);
+}
+
+td {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  border: 1px solid var(--clr-border);
+  line-height: 1.55;
+  vertical-align: top;
+}
+
+tr:nth-child(even) td {
+  background: var(--clr-surface);
+}
+
+#countries tr.r1 {
+  font-weight: 600;
+}
+
+/* ============================================================
+   Info Blocks / Code Blocks
+   ============================================================ */
+div.codeblock, div.infoblock {
+  margin-right: 0;
+  margin-top: 1.2em;
+  margin-bottom: 1.3em;
+}
+
+p + div.codeblock {
+  margin-top: 0.6em;
+}
+
+div.blocktitle {
+  color: var(--clr-accent);
+  font-size: var(--fs-lg);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  line-height: 2;
+}
+
+div.blockcontent {
+  padding: var(--space-4);
+  border-radius: 8px;
+}
+
+div.infoblock > div.blockcontent {
+  background: var(--clr-accent-soft);
+  border: 1px solid #b8d0f0;
+  color: var(--clr-heading);
+}
+
+div.codeblock > div.blockcontent {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+}
+
+div.blockcontent p + ul,
+div.blockcontent p + ol {
+  margin-top: 0.4em;
+}
+
+div.infoblock p {
+  margin-bottom: 0;
+}
+
+div.infoblock li p, div.infoblock dd p {
+  margin-bottom: 0.5em;
+}
+
+div.infoblock p + p {
+  margin-top: 0.8em;
+}
+
+/* ============================================================
+   Footer
+   ============================================================ */
+div#footer-container {
+  border-top: 1px solid var(--clr-border-soft);
+  background: var(--clr-surface);
+}
+
+div#footer {
+  font-size: var(--fs-xs);
+  color: var(--clr-text-light);
+  font-family: var(--font-body);
+  min-width: 200px;
+  max-width: var(--content-max);
+  margin: auto;
+  padding: var(--space-5) clamp(var(--space-5), 5vw, 64px);
+}
+
+div#footer-text {
+  line-height: 1.8;
+}
+
+div#footer a {
+  color: #8098b8;
+  text-decoration: none;
+  transition: color var(--dur) var(--ease);
+}
+
+div#footer a:hover {
+  color: var(--clr-accent-hover);
+  text-decoration: underline;
+}
+
+/* ============================================================
+   News Section — Subtle styled list
+   ============================================================ */
+#layout-content h2 + ol,
+#layout-content h2 + ul {
+  padding-left: 0;
+  list-style: none;
+}
+
 #layout-content h2 + ol li,
 #layout-content h2 + ul li {
-  position: relative;
-  padding: 6px 0 6px 20px;
-  border-bottom: 1px solid var(--soft);
+  padding: var(--space-2) 0;
+  padding-left: var(--space-5);
+  border-bottom: 1px solid var(--clr-border-soft);
   font-size: 15.5px;
-  line-height: 1.6;
+  position: relative;
 }
+
 #layout-content h2 + ol li::before,
 #layout-content h2 + ul li::before {
   content: "▸";
   position: absolute;
-  left: 0; top: 8px;
-  color: var(--accent);
-  font-size: 11px;
+  left: 0;
+  color: var(--clr-accent);
+  font-size: 12px;
+  top: 10px;
 }
 
-/* ── Publications ────────────────────────────────────────── */
-.pub-page-lists ol { list-style: none; padding-left: 0; }
-.pub-page-lists ol li { display: flex; align-items: baseline; margin-bottom: 14px; }
-
-/* ── Footer ──────────────────────────────────────────────── */
-/* mysite.conf puts footer INSIDE layout-content-container but
-   OUTSIDE layout-content:
-   </div> <!-- layout-content -->
-   <div id="footer-container">
-     <div id="footer">
-       <div id="footer-text"> ...
-*/
-div#footer-container {
-  border-top: 1px solid var(--soft);
-  background: var(--surface);
-  width: 100%;
+/* ============================================================
+   fwtitle (header bar content)
+   ============================================================ */
+#fwtitle {
+  margin: 2px;
 }
-div#footer {
-  font-size: 12.5px;
-  color: var(--light);
-  font-family: var(--sans);
-  padding: 18px 56px;
-  max-width: 860px;
-}
-div#footer-text { line-height: 1.8; }
-div#footer a        { color: #7090b8; text-decoration: none; }
-div#footer a:hover  { color: var(--accent-hov); text-decoration: underline; }
 
-/* ── Slideshow ───────────────────────────────────────────── */
-.slideshow-container { position: relative; text-align: center; margin: 20px 0; }
-.mySlides            { display: none; }
-.mySlides img        { border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,0.12); }
-.mySlides .text      { font-size: 13px; color: var(--muted); padding: 6px 0; font-style: italic; }
-.numbertext          { font-size: 12px; color: var(--light); margin-bottom: 4px; font-family: monospace; }
+#fwtitle #toptitle {
+  padding-left: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+/* ============================================================
+   Slideshow / Gallery (homepage)
+   ============================================================ */
+.slideshow-container {
+  position: relative;
+  text-align: center;
+  margin: var(--space-5) 0;
+}
+
+.mySlides {
+  display: none;
+}
+
+.mySlides img {
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+}
+
+.mySlides .text {
+  font-size: var(--fs-sm);
+  color: var(--clr-text-muted);
+  padding: var(--space-2) 0;
+  font-style: italic;
+}
+
+.numbertext {
+  font-size: var(--fs-xs);
+  color: var(--clr-text-light);
+  margin-bottom: var(--space-1);
+  font-family: var(--font-mono);
+}
+
 .dot {
   cursor: pointer;
-  height: 8px; width: 8px; margin: 0 3px;
-  background: var(--border); border-radius: 50%;
-  display: inline-block; transition: background 0.15s;
+  height: 8px;
+  width: 8px;
+  margin: 0 3px;
+  background-color: var(--clr-border);
+  border-radius: 50%;
+  display: inline-block;
+  transition: background-color var(--dur) var(--ease);
 }
-.dot.active, .dot:hover { background: var(--accent); }
-.fade { animation: fadeSlide 0.9s ease; }
-@keyframes fadeSlide { from { opacity: 0.4; } to { opacity: 1; } }
 
-/* ── Members ─────────────────────────────────────────────── */
-div#member-container { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 16px; }
-div#member { width: 150px; text-align: center; }
-div#member img { width: 150px; height: 150px; object-fit: cover; border-radius: 50%; margin: 0; padding: 0; border: 3px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-div#member p { text-align: center; margin: 6px 0 0; padding: 0; font-size: 13.5px; color: var(--muted); }
+.dot.active, .dot:hover {
+  background-color: var(--clr-accent);
+}
 
-/* ── Gallery ─────────────────────────────────────────────── */
-.row    { display: flex; flex-wrap: wrap; padding: 0 4px; gap: 8px; margin-bottom: 16px; }
-.column { flex: 23%; max-width: 23%; padding: 0 4px; }
-.column img { margin-top: 8px; vertical-align: middle; width: 100%; border-radius: 6px; }
+.fade {
+  animation: fadeIn 1s ease;
+}
 
-/* ── Syntax ──────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0.5; }
+  to   { opacity: 1; }
+}
+
+/* ============================================================
+   Members Grid (group page)
+   ============================================================ */
+div#member-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin-top: var(--space-4);
+}
+
+div#member {
+  display: inline-block;
+  vertical-align: top;
+  width: 150px;
+  text-align: center;
+  margin-bottom: var(--space-4);
+}
+
+div#member img {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin: 0;
+  padding: 0;
+  box-shadow: var(--shadow-sm);
+  border: 3px solid var(--clr-border);
+}
+
+div#member p {
+  text-align: center;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  font-size: var(--fs-sm);
+  color: var(--clr-text-muted);
+}
+
+/* ============================================================
+   Group Outings / Gallery Grid
+   ============================================================ */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 4px;
+  gap: 8px;
+  margin-bottom: var(--space-4);
+}
+
+.column {
+  flex: 23%;
+  max-width: 23%;
+  padding: 0 4px;
+}
+
+.column img {
+  margin-top: 8px;
+  vertical-align: middle;
+  width: 100%;
+  border-radius: 6px;
+}
+
+/* ============================================================
+   Code Syntax Highlighting
+   ============================================================ */
 span.pycommand { color: #0a3d91; }
 span.statement  { color: #006f28; }
 span.builtin    { color: #0000a8; }
@@ -441,90 +883,177 @@ span.error      { color: #aa0000; }
 span.comment, span.comment > *,
 span.string,  span.string  > * { color: #5a6a5a; }
 
-/* ── Misc ────────────────────────────────────────────────── */
-#fwtitle               { margin: 2px; }
-#fwtitle #toptitle     { padding-left: 0.5em; margin-bottom: 0.5em; }
+/* ============================================================
+   Sidebar — Hamburger Button (mobile)
+   ============================================================ */
+.openbtn {
+  font-size: 0;
+  background: none;
+  color: none;
+  border: none;
+  cursor: default;
+}
+
+div#layout-menu-container .closebtn {
+  font-size: 0;
+}
+
+div#layout-menu-container .closebtn:hover {
+  background: #fecaca;
+  color: #b91c1c;
+}
 
 /* ============================================================
-   RESPONSIVE ≤ 1200px  — slide-in sidebar
+   Responsive — Collapse Sidebar (≤ 1200px)
    ============================================================ */
 @media screen and (max-width: 1200px) {
-
   div#header-text-container {
-    display: none;
+    visibility: hidden;
+    width: 0;
+    overflow: hidden;
   }
 
   div#layout-menu-container {
     width: 0;
-    flex-shrink: 0;
   }
 
   div#layout-menu {
-    width: 0;
+    padding-top: var(--space-5);
+    transition: width 0.35s var(--ease);
     min-width: 0;
+    width: 0;
+    box-shadow: var(--shadow-lg);
     border: none;
-    transition: width 0.28s ease;
-    box-shadow: none;
-    z-index: 400;
-    overflow: hidden;
+    z-index: 200;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   div#layout-content-container {
+    transition: margin-left 0.35s var(--ease);
+    margin-left: 0;
     width: 100%;
   }
 
+  div#main {
+    padding-left: calc(100vw - 150px);
+  }
+
   .openbtn {
-    font-size: 22px;
+    font-size: 24px;
     cursor: pointer;
     background: none;
+    color: var(--clr-header-text);
+    padding: 8px 10px;
     border: none;
-    color: #fff;
-    padding: 8px 12px;
+    width: 45px;
+    transition: background var(--dur) var(--ease);
     border-radius: 4px;
-    transition: background 0.15s;
   }
-  .openbtn:hover { background: rgba(255,255,255,0.12); }
 
-  /* show close button inside sidebar when open */
-  div.menu-item a.closebtn {
-    display: block;
-    font-size: 26px;
-    text-align: right;
-    padding: 6px 4px 6px 0;
-    color: var(--muted);
-    line-height: 1;
+  .openbtn:hover {
+    background-color: rgba(255,255,255,0.1);
   }
-  div.menu-item a.closebtn:hover { color: #b91c1c; }
+
+  div#layout-menu-container .closebtn {
+    position: absolute;
+    top: 0;
+    right: var(--space-5);
+    font-size: 32px;
+    border: none;
+    padding: 4px 10px;
+    line-height: 1;
+    background: #ffe4e6;
+    color: #9ca3af;
+    border-radius: 4px;
+  }
+
+  div#layout-menu-container .closebtn:hover {
+    background: #fecaca;
+    color: #b91c1c;
+  }
 }
 
 /* ============================================================
-   RESPONSIVE ≤ 700px
+   Responsive — Small Screens (≤ 700px)
    ============================================================ */
 @media screen and (max-width: 700px) {
-  div#layout-content { padding: 24px 20px; }
-  div#footer         { padding: 16px 20px; }
-  img { margin-right: 0; }
-  p   { text-align: left; }
-  div#img-container { float: none; text-align: center; }
+  img {
+    margin-right: 0;
+  }
+
+  p {
+    text-align: left;
+  }
+
+  div#layout-content {
+    padding: var(--space-5) var(--space-5);
+    min-height: calc(100vh - 160px);
+  }
+
+  div#footer-container {}
+
+  div#footer {
+    padding: var(--space-4) var(--space-5);
+  }
+
+  div#img-container {
+    float: none;
+    padding-top: 0;
+    text-align: center;
+  }
+
   div#text-container h1,
   div#text-container h2,
-  div#text-container h3 { text-align: center; }
-  h1 { font-size: 26px; }
-  h2 { font-size: 20px; }
-  .column { flex: 50%; max-width: 50%; }
-  div#member-container { justify-content: center; }
+  div#text-container h3 {
+    text-align: center;
+  }
+
+  .column {
+    flex: 50%;
+    max-width: 50%;
+  }
+
+  h1 { font-size: var(--fs-2xl); }
+  h2 { font-size: var(--fs-xl); }
 }
 
-@media screen and (max-width: 500px) {
-  .column { flex: 100%; max-width: 100%; }
+@media screen and (max-width: 600px) {
+  .column {
+    flex: 100%;
+    max-width: 100%;
+  }
+
+  div#member-container {
+    justify-content: center;
+  }
 }
 
 /* ============================================================
-   PRINT
+   Print Styles
    ============================================================ */
 @media print {
-  #layout-menu, div#layout-menu-container { display: none; }
-  div#layout-content-container { width: 100%; }
-  div#header { position: static; box-shadow: none; }
-  a::after { content: " (" attr(href) ")"; font-size: 11px; color: var(--muted); }
+  #layout-menu {
+    display: none;
+  }
+
+  div#layout-content-container {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  div#header {
+    position: static;
+    box-shadow: none;
+  }
+
+  a::after {
+    content: " (" attr(href) ")";
+    font-size: var(--fs-xs);
+    color: var(--clr-text-muted);
+  }
+
+  a[href^="mailto"]::after {
+    content: " (" attr(href) ")";
+  }
 }

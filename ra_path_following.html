@@ -11,8 +11,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="main.css" type="text/css" />
 <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
-<!--- <title>Research Areas</title> --->
-<title>Saurabh Kumar Research Areas IIT Bombay</title>
+<!--- <title>Path Following Guidance</title> --->
+<title>Saurabh Kumar Path Following Guidance IIT Bombay</title>
 <!-- MathJax -->
 <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async>
 </script>
@@ -50,11 +50,11 @@ MathJax.Hub.Config({
 <div class="menu-item"><a href="group.html">Group&nbsp;Page</a></div>
 <div class="menu-item"><a href="teaching.html">Teaching</a></div>
 <div class="menu-category">Research</div>
-<div class="menu-item"><a href="research.html" class="current">Research&nbsp;Areas</a></div>
+<div class="menu-item"><a href="research.html">Research&nbsp;Areas</a></div>
 <div class="menu-item"><a href="publications.html">Publications</a></div>
 <div class="menu-item"><a href="projects.html">Projects</a></div>
 <div class="menu-category">Research Areas</div>
-<div class="menu-item"><a href="ra_path_following.html">Path&nbsp;Following&nbsp;Guidance</a></div>
+<div class="menu-item"><a href="ra_path_following.html" class="current">Path&nbsp;Following&nbsp;Guidance</a></div>
 <div class="menu-item"><a href="ra_trajectory_tracking.html">Trajectory&nbsp;Tracking</a></div>
 <div class="menu-item"><a href="ra_pursuit_evasion.html">Cooperative&nbsp;Pursuit-Evasion</a></div>
 <div class="menu-item"><a href="ra_interceptor.html">Interceptor&nbsp;Guidance</a></div>
@@ -65,65 +65,49 @@ MathJax.Hub.Config({
 <div id="layout-content-container">
 <div id="layout-content">
 <div id="toptitle">
-<h1>Research Areas</h1>
+<h1>Path Following Guidance</h1>
 </div>
-<p>My work focuses on developing mathematically rigorous guidance and control strategies for autonomous systems, with provable safety and convergence guarantees.</p>
-<div class="research-grid">
-
-  <a href="ra_path_following.html" class="res-card">
-    <div class="res-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12h18M3 6l9-3 9 3M3 18l9 3 9-3"/></svg>
-    </div>
-    <h3>Path Following Guidance</h3>
-    <p>Nonlinear guidance laws for UAVs to follow arbitrary 3D paths with bounded control inputs, under wind disturbances and model uncertainties.</p>
-    <span class="res-link">Explore &rarr;</span>
-  </a>
-
-  <a href="ra_trajectory_tracking.html" class="res-card">
-    <div class="res-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M5.34 18.66l-1.41 1.41M17.66 18.66l-1.41-1.41M5.34 5.34 3.93 6.75M21 12h-3M6 12H3M12 3V6m0 12v3"/></svg>
-    </div>
-    <h3>Trajectory Tracking</h3>
-    <p>Controllers ensuring exact-time or finite-time convergence for quadrotors and surface vessels under uncertain dynamics and state constraints.</p>
-    <span class="res-link">Explore &rarr;</span>
-  </a>
-
-  <a href="ra_pursuit_evasion.html" class="res-card">
-    <div class="res-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    </div>
-    <h3>Cooperative Pursuit-Evasion</h3>
-    <p>Multi-agent nonlinear guidance strategies for cooperative pursuit-evasion scenarios with guaranteed capture and evasion conditions.</p>
-    <span class="res-link">Explore &rarr;</span>
-  </a>
-
-  <a href="ra_interceptor.html" class="res-card">
-    <div class="res-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-    </div>
-    <h3>Interceptor Guidance &amp; Control</h3>
-    <p>Impact-time and impact-angle constrained guidance laws, including exact-time convergent strategies against moving and stationary targets.</p>
-    <span class="res-link">Explore &rarr;</span>
-  </a>
-
-  <a href="ra_safety_control.html" class="res-card">
-    <div class="res-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-    </div>
-    <h3>Safety-Critical Control</h3>
-    <p>Barrier Lyapunov function and Control Barrier Function based approaches for provably safe control of constrained nonlinear systems.</p>
-    <span class="res-link">Explore &rarr;</span>
-  </a>
-
-  <a href="ra_aerial_manipulation.html" class="res-card">
-    <div class="res-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-    </div>
-    <h3>Cooperative Aerial Manipulation</h3>
-    <p>Multi-UAV cooperative strategies for manipulation and load transport, combining formation control with geometric guidance principles.</p>
-    <span class="res-link">Explore &rarr;</span>
-  </a>
-
+<div class="ra-back"><a href="research.html">&larr; All Research Areas</a></div>
+<h2>Overview</h2>
+<p>Path following guidance addresses the problem of designing control laws that steer an autonomous vehicle to converge to and travel along a desired geometric path, without a timing requirement. Unlike trajectory tracking, path following does not require the vehicle to be at a specific point at a specific time, making it more suitable for vehicles with bounded control inputs and under environmental disturbances.</p>
+<p>My work in this area focuses on developing <b>nonlinear guidance laws</b> for UAVs and autonomous surface vessels to follow arbitrary 3D paths. Key contributions include handling <b>bounded lateral acceleration constraints</b>, robustness against <b>wind disturbances</b>, and providing formal <b>convergence guarantees</b> using Lyapunov-based analysis.</p>
+<h2>Key Contributions</h2>
+<ul>
+<li><p>Three-dimensional nonlinear path following guidance for UAVs with formal stability proofs.</p>
+</li>
+<li><p>Robust path following in the presence of wind and external disturbances.</p>
+</li>
+<li><p>Guidance designs that respect bounded control input constraints.</p>
+</li>
+<li><p>Generic path-following framework applicable to various vehicle models.</p>
+</li>
+<li><p>Extension to bounded lateral acceleration constraints for fixed-wing UAVs.</p>
+</li>
+</ul>
+<h2>Relevant Publications</h2>
+<div class="pub-page-lists">
+<h3>Journal Papers</h3>
+<ol>
+<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/1.G008792" target=&ldquo;blank&rdquo;>Three-dimensional Nonlinear Path-following Guidance with Bounded Input Constraints</a>, AIAA Journal of Guidance, Control, and Dynamics, Vol. 49, No. 1, 2026, pp. 198&ndash;215.</p>
+</li>
+<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/1.G007964" target=&ldquo;blank&rdquo;>Three-Dimensional Path Following Nonlinear Guidance for Unmanned Aerial Vehicles</a>, AIAA Journal of Guidance, Control, and Dynamics, Vol. 47, No. 6, 2024, pp. 1231&ndash;1240.</p>
+</li>
+<li><p>Saurabh Kumar, Abhinav Sinha, and Shashi Ranjan Kumar, <a href="https://doi.org/10.1016/j.ast.2024.109225" target=&ldquo;blank&rdquo;>Robust Path-following Guidance for an Autonomous Vehicle in the Presence of Wind</a>, Aerospace Science and Technology, Vol. 150, 2024, pp. 109225.</p>
+</li>
+<li><p>Vinay Kathiriya, Saurabh Kumar, and Shashi Ranjan Kumar, <a href="https://doi.org/10.48550/arXiv.2603.27177" target=&ldquo;blank&rdquo;>Path-Following Guidance for Unmanned Aerial Vehicle with Bounded Lateral Acceleration</a>, ArXiv, 2026 (under review).</p>
+</li>
+</ol>
+<h3>Conference Papers</h3>
+<ol>
+<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/6.2026-1947" target=&ldquo;blank&rdquo;>Path Following Guidance with Bounded Control</a>, AIAA GNC Conference, Orlando, USA, 2026.</p>
+</li>
+<li><p>Saurabh Kumar, Abhinav Sinha, and Shashi Ranjan Kumar, <a href="https://doi.org/10.2514/6.2024-1593" target=&ldquo;blank&rdquo;>Generic Path-following Guidance for an Autonomous Vehicle</a>, AIAA GNC Conference, Orlando, USA, 2024.</p>
+</li>
+<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/6.2023-1055" target=&ldquo;blank&rdquo;>Robust Path-following Guidance for an Unmanned Vehicle</a>, AIAA GNC Conference, National Harbor, MD, USA, 2023.</p>
+</li>
+<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.1016/j.ifacol.2023.03.036" target=&ldquo;blank&rdquo;>Separate Guidance and Control Design for Autonomous Path-following</a>, IFAC-PapersOnLine, Vol. 55, No. 22, 2022, pp. 212&ndash;217.</p>
+</li>
+</ol>
 </div>
 </div> <!-- <div id="layout-content"> -->
 <div id="footer-container">

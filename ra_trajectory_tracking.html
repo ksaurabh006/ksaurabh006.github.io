@@ -11,8 +11,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="main.css" type="text/css" />
 <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
-<!--- <title>Funded Research Projects</title> --->
-<title>Saurabh Kumar Funded Research Projects IIT Bombay</title>
+<!--- <title>Trajectory Tracking with Convergence Guarantees</title> --->
+<title>Saurabh Kumar Trajectory Tracking with Convergence Guarantees IIT Bombay</title>
 <!-- MathJax -->
 <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async>
 </script>
@@ -52,10 +52,10 @@ MathJax.Hub.Config({
 <div class="menu-category">Research</div>
 <div class="menu-item"><a href="research.html">Research&nbsp;Areas</a></div>
 <div class="menu-item"><a href="publications.html">Publications</a></div>
-<div class="menu-item"><a href="projects.html" class="current">Projects</a></div>
+<div class="menu-item"><a href="projects.html">Projects</a></div>
 <div class="menu-category">Research Areas</div>
 <div class="menu-item"><a href="ra_path_following.html">Path&nbsp;Following&nbsp;Guidance</a></div>
-<div class="menu-item"><a href="ra_trajectory_tracking.html">Trajectory&nbsp;Tracking</a></div>
+<div class="menu-item"><a href="ra_trajectory_tracking.html" class="current">Trajectory&nbsp;Tracking</a></div>
 <div class="menu-item"><a href="ra_pursuit_evasion.html">Cooperative&nbsp;Pursuit-Evasion</a></div>
 <div class="menu-item"><a href="ra_interceptor.html">Interceptor&nbsp;Guidance</a></div>
 <div class="menu-item"><a href="ra_safety_control.html">Safety-Critical&nbsp;Control</a></div>
@@ -65,31 +65,50 @@ MathJax.Hub.Config({
 <div id="layout-content-container">
 <div id="layout-content">
 <div id="toptitle">
-<h1>Funded Research Projects</h1>
+<h1>Trajectory Tracking with Convergence Guarantees</h1>
 </div>
-<p><b>Note:</b> All projects listed below were funded by the Ministry of Electronics and Information Technology, Government of India, and successfully executed over a duration of 1 year.</p>
+<div class="ra-back"><a href="research.html">&larr; All Research Areas</a></div>
+<h2>Overview</h2>
+<p>Trajectory tracking requires a vehicle to follow a time-parameterized reference trajectory, which is a stricter requirement than path following. My research develops controllers that guarantee <b>finite-time</b> or <b>exact-time</b> convergence to the desired trajectory even in the presence of model uncertainties, external disturbances, and state constraints such as bounded velocities and attitude angles.</p>
+<p>Key tools employed include <b>sliding mode control</b>, <b>Barrier Lyapunov functions</b> for handling state constraints, and <b>exact-time stability</b> theory. These methods have been applied to quadrotor UAVs and autonomous surface vessels, with rigorous formal proofs of convergence.</p>
+<h2>Key Contributions</h2>
 <ul>
-<li><p><b>Trajectory Tracking of Multi-copters in Constrained Space</b> <br /> <i>Team:</i> Saurabh Kumar, S. R. Kumar, and H. Arya. </p>
+<li><p>Exact-time convergent trajectory tracking for quadrotor UAVs under uncertainties.</p>
 </li>
-<li><p><b>Robust Guidance Scheme for Fixed-wing UAV</b> <br /> <i>Team:</i> Saurabh Kumar, S. R. Kumar, and H. Arya. </p>
+<li><p>Finite-time convergent robust control with almost global stability guarantees.</p>
 </li>
-<li><p><b>Navigation of UAV Through Arbitrary Openings</b> <br /> <i>Team:</i> V. Karthickeyan, Saurabh Kumar, S. R. Kumar, and H. Arya. </p>
+<li><p>Barrier Lyapunov function-based trajectory following with bounded state constraints.</p>
 </li>
-<li><p><b>Convoy Monitoring Schemes Consisting of Heterogeneous Vehicles</b> <br /> <i>Team:</i> Saurabh Kumar, S. R. Kumar, and H. Arya. </p>
+<li><p>Robust exact-time trajectory tracking for autonomous surface vessels.</p>
 </li>
-<li><p><b>Object Transportation Using Cooperative Unmanned Aerial Vehicles</b> <br /> <i>Team:</i> Saurabh Kumar, S. R. Kumar, H. Arya, S. Singh, R. M. K. Verma, P. Surve, A. Samrat, V. Karthickeyan, and A. Antony. </p>
-</li>
-<li><p><b>Obstacle Avoidance for a UAV Using Collision Cone Approach</b> <br /> <i>Team:</i> P. Surve, S. R. Kumar, H. Arya, R. Gupta, S. Singh, Saurabh Kumar, and R. M. K. Verma. </p>
-</li>
-<li><p><b>Convoy Monitoring Schemes for Various Autonomous Vehicles</b> <br /> <i>Team:</i> D. Mukherjee, S. R. Kumar, H. Arya, S. Singh, A. K. Dubey, S. T. Raybhagi, and Saurabh Kumar. </p>
-</li>
-<li><p><b>3D Nonlinear Path Following Guidance with Limited Control Authority</b> <br /> <i>Team:</i> Saurabh Kumar, S. R. Kumar, H. Arya, S. Singh, S. Barman, R.M.K. Verma, and A. Iyer. </p>
-</li>
-<li><p><b>Designing of a UAV Capable to Maneuver in Constrained Environment</b> <br /> <i>Team:</i> H. Arya, S. R. Kumar, P. Hemali, P. Chavan, R. M. K. Verma, A. Iyer, and Saurabh Kumar. </p>
-</li>
-<li><p><b>Control of Fully Actuated Quadrotor for Enhanced Precision Trajectory Tracking</b> <br /> <i>Team:</i> H. Arya, S.R. Kumar, D. Phadke, R. M. K. Verma, A. Iyer, and Saurabh Kumar</p>
+<li><p>3D trajectory tracking for UAVs under motion constraints.</p>
 </li>
 </ul>
+<h2>Relevant Publications</h2>
+<div class="pub-page-lists">
+<h3>Journal Papers</h3>
+<ol>
+<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/1.G009445" target=&ldquo;blank&rdquo;>Three-dimensional Trajectory Tracking for Unmanned Aerial Vehicles Under Motion Constraints</a>, AIAA Journal of Guidance, Control, and Dynamics, Vol. 49, No. 1, 2026, pp. 78&ndash;96.</p>
+</li>
+<li><p>Susan Basnet, Saurabh Kumar, and Shashi Ranjan Kumar, <a href="https://doi.org/10.1109/JOE.2025.3529062" target=&ldquo;blank&rdquo;>Robust Exact-time Trajectory Tracking Control for Autonomous Surface Vessels</a>, IEEE Journal of Oceanic Engineering, Vol. 50, No. 2, 2025, pp. 1184&ndash;1195.</p>
+</li>
+<li><p>Saurabh Kumar and Shashi Ranjan Kumar, <a href="https://doi.org/10.1177/09544100241309050" target=&ldquo;blank&rdquo;>Robust Trajectory Tracking of an Uncertain Quadrotor with Almost Global Finite-time Convergence</a>, Proceedings of the IMechE Part G: Journal of Aerospace Engineering, Vol. 239, No. 8, 2025, pp. 792&ndash;817.</p>
+</li>
+</ol>
+<h3>Conference Papers</h3>
+<ol>
+<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/6.2024-0319" target=&ldquo;blank&rdquo;>Robust Nonlinear Control for Exact-time Stability of a Quadrotor UAV under Uncertainties</a>, AIAA GNC Conference, Orlando, USA, 2024.</p>
+</li>
+<li><p>Susan Basnet, Saurabh Kumar, and Shashi Ranjan Kumar, <a href="https://doi.org/10.1109/ICC61519.2023.10442728" target=&ldquo;blank&rdquo;>Nonlinear Cooperative Strategy for Active Aircraft Defence with Exact-time Convergence</a>, Indian Control Conference, Vishakhapatnam, 2023, pp. 239&ndash;244.</p>
+</li>
+<li><p>Saurabh Kumar and Shashi Ranjan Kumar, <a href="https://doi.org/10.1109/ICUAS54217.2022.9836037" target=&ldquo;blank&rdquo;>Barrier Lyapunov-based Nonlinear Trajectory Following for UAVs with Constrained Motion</a>, ICUAS, Dubrovnik, Croatia, 2022, pp. 1146&ndash;1155.</p>
+</li>
+<li><p>Saurabh Kumar and Shashi Ranjan Kumar, <a href="https://doi.org/10.1109/ICUAS54217.2022.9836191" target=&ldquo;blank&rdquo;>Finite-Time Convergent Robust Trajectory Tracking for Unmanned Aerial Vehicles</a>, ICUAS, Dubrovnik, Croatia, 2022, pp. 1166&ndash;1175.</p>
+</li>
+<li><p>Saurabh Kumar and Shashi Ranjan Kumar, <a href="https://doi.org/10.1109/ICC56513.2022.10093309" target=&ldquo;blank&rdquo;>Exponential Reaching Law based Robust Trajectory Tracking for UAVs</a>, Indian Control Conference, Chennai, 2022, pp. 302&ndash;307.</p>
+</li>
+</ol>
+</div>
 </div> <!-- <div id="layout-content"> -->
 <div id="footer-container">
 <div id="footer">

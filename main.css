@@ -1,6 +1,6 @@
 /* ============================================================
-   Jemdoc + MathJax compatible. Fully responsive.
-   ============================================================ */
+  Jemdoc + MathJax compatible. Fully responsive.
+ ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -18,7 +18,7 @@
   --text-light:     #94a3b8;
   --heading-color:  #0a1628;
 
-  --sidebar-width:  240px;
+  --sidebar-width:  270px;
   --header-height:  60px;
   --radius:         10px;
   --radius-sm:      6px;
@@ -145,30 +145,32 @@ div#layout-menu::-webkit-scrollbar-thumb { background: var(--border); border-rad
 #layout-menu a { display: block; line-height: 1.4; padding: 0; }
 
 div.menu-category {
-  margin-top: 24px;
-  /* Top: 6px | Right: 20px | Bottom: 6px | Left: 20px */
-  padding: 6px 20px 6px 20px; 
-  font-size: 0.7rem;
-  font-weight: 600;
+  margin-top: 28px;
+  padding: 8px 16px ; 
+  font-size: 0.85rem;
+  font-weight: 700 ;
   letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--accent);
-  border-top: 1px solid var(--border);
+  text-transform: uppercase ; 
+  color: var(--accent) ;      
+  border-bottom: 2px solid var(--accent) ; 
+  margin-bottom: 8px;
+  display: block ;
+  text-align: left ;        /* Guarantees uniform alignment for all headings */
+  width: 100%;
 }
 
-div.menu-category:first-of-type { border-top: none; margin-top: 14px; }
+div.menu-category:first-of-type { border-top: none; margin-top: 18px; }
 
 div.menu-item { font-size: 0.9rem; padding: 0; }
 
 div.menu-item a {
   display: block;
-  /* Top: 8px | Right: 20px | Bottom: 8px | Left: 40px (Creates the 20px indent) */
   padding: 8px 20px 8px 40px; 
+  border-left: 10px solid transparent; 
   color: var(--muted);
   text-decoration: none;
   font-weight: 400;
   transition: background 0.15s, color 0.15s;
-  border-left: 3px solid transparent;
 }
 
 div.menu-item a:hover {
@@ -184,22 +186,21 @@ div.menu-item a:hover {
   background: #eff6ff;
   color: var(--accent);
   font-weight: 600;
-  border-left: 3px solid var(--accent);
+  border-left-color: var(--accent);
 }
 
 /* ── Content Area ── */
 div#layout-content-container {
   flex: 1;
   min-width: 0;
-  /* margin-left has been deleted from here! */
+  margin-left: 0 ;
   min-height: calc(100vh - var(--header-height));
   background: var(--white);
 }
 
 div#layout-content {
   min-height: calc(100vh - var(--header-height) - 80px);
-  /* Restored balanced padding: Top, Right, Bottom, Left */
-  padding: 2.5rem 2.5rem 2.5rem 2rem; 
+  padding: 2.5rem 2.5rem 2.5rem 1.5rem;
   margin: 0;
   text-align: left;
 }
@@ -294,7 +295,7 @@ div#subtitle {
 }
 
 /* ════════════════════════════════════════════
-   SECTION LABEL (mimics portfolio .sec-label)
+   SECTION LABEL 
    ════════════════════════════════════════════ */
 div#toptitle::before {
   content: attr(data-label);
@@ -651,7 +652,7 @@ div#member p { text-align: center; margin: 0; padding: 0; font-size: 0.8rem; col
   }
   div#layout-menu-container .closebtn:hover { background: #dbeafe; color: var(--accent); }
 
-  div#layout-content { padding: 1.75rem 1.5rem; }
+  div#layout-content { padding: 1.75rem 1.5rem 1.75rem 1.5rem; }
   div#footer          { padding: 1.25rem 1.5rem; }
 }
 
@@ -694,7 +695,7 @@ div#member p { text-align: center; margin: 0; padding: 0; font-size: 0.8rem; col
    ════════════════════════════════════════════ */
 .hero-section {
   background: linear-gradient(135deg, #0a1628 0%, #0f2044 60%, #1a3a6e 100%);
-  margin: -2.5rem -2.5rem 2rem -2rem;
+  margin: -2.5rem -2.5rem 2rem -2.5rem;
   padding: 3.5rem 3rem 3rem 2.5rem;
 }
 

@@ -1,6 +1,4 @@
 /* ============================================================
-   main.css — Portfolio-matched Academic Theme
-   Inspired by the Inter-based navy/blue portfolio design.
    Jemdoc + MathJax compatible. Fully responsive.
    ============================================================ */
 
@@ -20,7 +18,7 @@
   --text-light:     #94a3b8;
   --heading-color:  #0a1628;
 
-  --sidebar-width:  220px;
+  --sidebar-width:  240px;
   --header-height:  60px;
   --radius:         10px;
   --radius-sm:      6px;
@@ -148,7 +146,8 @@ div#layout-menu::-webkit-scrollbar-thumb { background: var(--border); border-rad
 
 div.menu-category {
   margin-top: 24px;
-  padding: 6px 20px 6px 28px;
+  /* Top: 6px | Right: 20px | Bottom: 6px | Left: 20px */
+  padding: 6px 20px 6px 20px; 
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 1.5px;
@@ -163,7 +162,8 @@ div.menu-item { font-size: 0.9rem; padding: 0; }
 
 div.menu-item a {
   display: block;
-  padding: 8px 20px 8px 28px;
+  /* Top: 8px | Right: 20px | Bottom: 8px | Left: 40px (Creates the 20px indent) */
+  padding: 8px 20px 8px 40px; 
   color: var(--muted);
   text-decoration: none;
   font-weight: 400;
@@ -191,14 +191,15 @@ div.menu-item a:hover {
 div#layout-content-container {
   flex: 1;
   min-width: 0;
-  margin-left: var(--sidebar-width);
+  /* margin-left has been deleted from here! */
   min-height: calc(100vh - var(--header-height));
   background: var(--white);
 }
 
 div#layout-content {
   min-height: calc(100vh - var(--header-height) - 80px);
-  padding: 2.5rem 2.5rem 2.5rem 2rem;
+  /* Restored balanced padding: Top, Right, Bottom, Left */
+  padding: 2.5rem 2.5rem 2.5rem 2rem; 
   margin: 0;
   text-align: left;
 }

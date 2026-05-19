@@ -41,11 +41,12 @@
 
 /* ── Reset & Base ── */
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; overflow-x: hidden; }
+body { overflow-x: hidden; }
 
 body {
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 400;
   line-height: 1.65;
   color: var(--clr-text);
@@ -67,7 +68,7 @@ div#header-container {
 }
 
 div#header {
-  width: 100vw;
+  width: 100%;
   height: var(--header-height);
   background: var(--clr-header-bg);
   z-index: 100;
@@ -120,7 +121,7 @@ div#main {
 
 /* ════ LAYOUT ════ */
 div#layout {
-  width: 100vw;
+  width: 100%;
   min-height: calc(100vh - var(--header-height));
   display: flex;
 }
@@ -161,7 +162,7 @@ div.menu-category {
 
 div.menu-category:first-of-type { border-top: none; margin-top: 12px; }
 
-div.menu-item { font-size: 14px; padding: 0; }
+div.menu-item { font-size: 15px; padding: 0; }
 
 div.menu-item a {
   display: block;
@@ -212,7 +213,7 @@ h1, h2, h3, h4 {
 }
 
 h1 {
-  font-size: 28px;
+  font-size: 30px;
   margin-top: 0;
   margin-bottom: 6px;
   padding-bottom: 10px;
@@ -220,7 +221,7 @@ h1 {
 }
 
 h2 {
-  font-size: 20px;
+  font-size: 22px;
   margin-top: 36px;
   margin-bottom: 12px;
   padding-bottom: 6px;
@@ -230,7 +231,7 @@ h2 {
 h2 + h3 { margin-top: 4px; }
 
 h3 {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   margin-top: 16px;
   margin-bottom: 4px;
@@ -240,8 +241,8 @@ h3 {
 }
 
 p {
-  font-size: 15.5px;
-  line-height: 1.7;
+  font-size: 17px;
+  line-height: 1.75;
   margin-top: 0;
   margin-bottom: 12px;
   padding: 0;
@@ -273,7 +274,7 @@ div#toptitle + h2,
 div#toptitle + h3 { margin-top: 4px; }
 
 div#subtitle {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--clr-text-muted);
   margin-top: 4px;
   font-style: italic;
@@ -284,7 +285,7 @@ div#toptitle h1,
   margin: 0 0 4px 0;
   padding: 0;
   border-bottom: none;
-  font-size: 28px;
+  font-size: 30px;
 }
 
 /* ════ LISTS ════ */
@@ -309,12 +310,12 @@ tt {
   padding: 1px 5px;
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 pre {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.55;
   border-radius: var(--radius);
   overflow-x: auto;
@@ -383,17 +384,17 @@ div#text-container {
 }
 
 div#text-container h1 {
-  border-bottom: none; margin: 0; padding: 0 0 2px 0; font-size: 24px;
+  border-bottom: none; margin: 0; padding: 0 0 2px 0; font-size: 26px;
 }
 
 div#text-container h2 {
   border-bottom: none; margin: 0; padding: 6px 0 2px 0;
-  font-size: 16px; color: var(--clr-text-muted);
+  font-size: 17px; color: var(--clr-text-muted);
   font-family: var(--font-body); font-weight: 500;
 }
 
 div#text-container h3 {
-  padding-top: 0; margin-top: 0; font-size: 14px; color: var(--clr-text-muted);
+  padding-top: 0; margin-top: 0; font-size: 15px; color: var(--clr-text-muted);
 }
 
 div#text-container h1 + h3 { padding-top: 0; margin-top: 2px; }
@@ -401,7 +402,7 @@ div#text-container h3 + h1 { padding: 0; margin: 0; }
 div#text-container h2 + h3 { padding-top: 0; margin-top: 0; }
 
 /* ════ TABLES ════ */
-table { border-collapse: collapse; font-size: 14.5px; width: 100%; margin-bottom: 16px; }
+table { border-collapse: collapse; font-size: 15.5px; width: 100%; margin-bottom: 16px; }
 table + table { margin-top: 16px; }
 
 th {
@@ -437,10 +438,10 @@ img {
 .pub-page-lists h2 { margin-top: 32px; font-size: 18px; }
 .pub-page-lists ol li {
   margin-bottom: 14px;
-  font-size: 15px;
-  line-height: 1.65;
+  font-size: 17px;
+  line-height: 1.7;
 }
-.pub-page-lists ol li p { margin: 0; font-size: 15px; }
+.pub-page-lists ol li p { margin: 0; font-size: 17px; }
 
 /* ════ FOOTER ════ */
 div#footer-container {
@@ -449,7 +450,7 @@ div#footer-container {
 }
 
 div#footer {
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--clr-text-light);
   padding: 18px 32px 18px 24px;
 }
@@ -611,8 +612,8 @@ div#member p { text-align: center; margin: 0; padding: 0; font-size: 13px; color
   div#layout-content { padding: 18px 16px 18px 0px; }
   div#footer          { padding: 14px 16px 14px 14px; }
 
-  h1 { font-size: 22px; }
-  h2 { font-size: 17px; }
+  h1 { font-size: 24px; }
+  h2 { font-size: 19px; }
   p  { text-align: left; }
 
   img { margin-right: 0; }
@@ -630,7 +631,7 @@ div#member p { text-align: center; margin: 0; padding: 0; font-size: 13px; color
   div#text-container h3 { text-align: center; }
 
   .column  { flex: 1 1 46%; }
-  table    { font-size: 13px; }
+  table    { font-size: 15px; }
   td, th   { padding: 6px 8px; }
 }
 

@@ -51,7 +51,7 @@ div#main-container {
 }
 
 /* ════════════════════════════════════════════
-   HEADER — dark navy, matches portfolio nav
+   HEADER — dark navy
    ════════════════════════════════════════════ */
 div#header-container {
   width: 100%;
@@ -510,14 +510,81 @@ div#footer-container {
 
 div#footer {
   font-size: 0.875rem;
-  color: rgba(255,255,255,0.55);
-  padding: 1.5rem 2rem;
-  text-align: center;
+  color: rgba(255,255,255,0.6);
+  padding: 2rem 2rem 1.5rem 2rem;
 }
 
-div#footer a       { color: #93c5fd; text-decoration: none; }
+div#footer a       { color: #93c5fd; text-decoration: none; transition: color 0.2s; }
 div#footer a:hover { color: #bfdbfe; }
 div#footer-text    { line-height: 1.6; }
+
+.footer-inner {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 0.5rem 2rem;
+  align-items: start;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.footer-contact { grid-column: 1; grid-row: 1; }
+.footer-social  { grid-column: 2; grid-row: 1; display: flex; gap: 0.75rem; align-items: center; }
+.footer-copy    { grid-column: 1 / -1; grid-row: 2; font-size: 0.78rem; color: rgba(255,255,255,0.35); }
+
+.footer-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.3rem;
+}
+
+.footer-address {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.6;
+  margin-bottom: 0.3rem;
+}
+
+.footer-email a {
+  font-size: 0.82rem;
+  color: #93c5fd;
+}
+
+.footer-social a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.6);
+  transition: background 0.2s, color 0.2s;
+  text-decoration: none;
+}
+
+.footer-social a:hover {
+  background: rgba(255,255,255,0.15);
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.footer-social svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+
+@media screen and (max-width: 680px) {
+  .footer-inner {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+  .footer-social { grid-column: 1; grid-row: 2; margin-top: 0.75rem; }
+  .footer-copy   { grid-row: 3; }
+}
 
 /* ════════════════════════════════════════════
    HAMBURGER / CLOSE
@@ -1077,4 +1144,25 @@ a.res-card:hover .res-link {
   .hero-stats { gap: 1.25rem; }
   .stat-num   { font-size: 1.4rem; }
   .research-grid { grid-template-columns: 1fr; }
+}
+/* ════════════════════════════════════════════
+   FIGURE PLACEHOLDER
+   ════════════════════════════════════════════ */
+.fig-placeholder {
+  background: #f1f5f9;
+  border: 1.5px dashed #94a3b8;
+  border-radius: var(--radius);
+  padding: 1.1rem 1.4rem;
+  margin: 1.25rem 0;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.fig-placeholder::before {
+  content: "📷 Figure Placeholder — ";
+  font-style: normal;
+  font-weight: 600;
+  color: var(--accent);
 }

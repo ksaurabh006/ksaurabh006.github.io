@@ -572,19 +572,9 @@ div#footer-text    { line-height: 1.6; }
 }
 
 .footer-social svg {
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
   fill: currentColor;
-  display: block;
-}
-
-.footer-social img {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  padding: 0;
-  display: block;
-  border-radius: 3px;
 }
 
 @media screen and (max-width: 680px) {

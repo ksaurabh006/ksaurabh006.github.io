@@ -2005,3 +2005,22 @@ a { transition: color 0.15s ease; }
 [data-theme="dark"] .proj-coming-soon { background: #111e33; border-color: #1e293b; }
 [data-theme="dark"] .proj-cs-icon     { background: rgba(37,99,235,0.15); border-color: rgba(96,165,250,0.25); }
 [data-theme="dark"] .proj-cs-title    { color: #f1f5f9; }
+
+/* ── POC card meta row (duration + funding agency) ── */
+.poc-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.poc-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.poc-meta-item svg { flex-shrink: 0; opacity: 0.7; }
+.poc-meta-sep { opacity: 0.4; }
+[data-theme="dark"] .poc-meta { border-top-color: #1e293b; }

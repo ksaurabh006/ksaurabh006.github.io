@@ -1477,3 +1477,223 @@ a.res-card:hover .res-link {
   .project-number  { font-size: 0.95rem; }
   .project-title   { font-size: 0.9rem; }
 }
+
+/* ════════════════════════════════════════════════════════════
+   DYNAMIC ENHANCEMENTS  — append to end of main.css
+   Compatible with Jemdoc+MathJax
+   ════════════════════════════════════════════════════════════ */
+
+/* ── 1. DARK MODE VARIABLES ─────────────────────────────────
+   Applied when <html data-theme="dark"> is set by dynamic.js  */
+
+[data-theme="dark"] {
+  --navy:          #e2e8f0;
+  --navy2:         #f1f5f9;
+  --accent:        #60a5fa;
+  --accent2:       #93c5fd;
+  --light:         #0d1829;
+  --muted:         #94a3b8;
+  --border:        #1e293b;
+  --white:         #111e33;
+  --text:          #cbd5e1;
+  --text-light:    #475569;
+  --heading-color: #f1f5f9;
+}
+
+[data-theme="dark"] body                        { background: #0d1829; }
+[data-theme="dark"] div#main-container          { background: #0d1829; }
+[data-theme="dark"] div#layout-content          { background: #0d1829; color: var(--text); }
+[data-theme="dark"] div#layout-menu             { background: #0a1628; border-right: 1px solid #1e293b; }
+[data-theme="dark"] div#layout-menu a           { color: #94a3b8; }
+[data-theme="dark"] div#layout-menu a.current   { color: var(--accent2); }
+[data-theme="dark"] div#layout-menu .menu-category { color: #64748b; }
+[data-theme="dark"] div#footer                  { background: #070e1c; border-top: 1px solid #1e293b; }
+
+[data-theme="dark"] .res-card,
+[data-theme="dark"] .course-card,
+[data-theme="dark"] .mentor-card,
+[data-theme="dark"] .project-card,
+[data-theme="dark"] .edu-body                   { background: #111e33; border-color: #1e293b; color: var(--text); }
+
+[data-theme="dark"] .res-card:hover,
+[data-theme="dark"] .course-card:hover,
+[data-theme="dark"] .project-card:hover         { box-shadow: 0 4px 20px rgba(96,165,250,0.12); border-color: #2563eb; }
+
+[data-theme="dark"] .hero-badge                 { background: rgba(37,99,235,0.25); color: var(--accent2); }
+[data-theme="dark"] .hero-tags .hero-tag        { background: rgba(37,99,235,0.18); color: var(--accent2); border-color: rgba(96,165,250,0.25); }
+[data-theme="dark"] .btn-outline                { border-color: var(--accent2); color: var(--accent2); }
+[data-theme="dark"] .btn-outline:hover          { background: var(--accent2); color: #0a1628; }
+[data-theme="dark"] .edu-chip                   { background: rgba(37,99,235,0.18); color: var(--accent2); }
+[data-theme="dark"] .thesis-label,
+[data-theme="dark"] .team-label                 { background: #1e293b; color: #94a3b8; }
+[data-theme="dark"] .projects-intro             { background: rgba(37,99,235,0.08); border-color: rgba(37,99,235,0.25); }
+[data-theme="dark"] h1, [data-theme="dark"] h2,
+[data-theme="dark"] h3                          { color: var(--heading-color); }
+[data-theme="dark"] a                           { color: var(--accent2); }
+[data-theme="dark"] a:hover                     { color: #bfdbfe; }
+[data-theme="dark"] hr                          { border-color: #1e293b; }
+
+/* ── 2. DARK MODE TOGGLE BUTTON ─────────────────────────────
+   Injected by dynamic.js into #main                           */
+
+#theme-toggle {
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #94a3b8;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  margin-right: 0.6rem;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+#theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #fff;
+}
+#theme-toggle svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+/* ── 3. SCROLL FADE-IN ──────────────────────────────────────
+   Elements get .sk-fade on DOM-ready, .sk-visible on viewport */
+
+.sk-fade {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  will-change: opacity, transform;
+}
+.sk-fade.sk-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── 4. HERO ENTRANCE ANIMATION ─────────────────────────────
+   Runs once on page load; canvas sits behind via CSS          */
+
+#hero-canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+}
+
+.hero-section {
+  overflow: hidden; /* clip the canvas */
+}
+
+.hero-inner {
+  animation: sk-heroUp 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes sk-heroUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Blinking cursor after hero-badge text while typing */
+.hero-badge::after {
+  content: '|';
+  display: inline-block;
+  margin-left: 2px;
+  animation: sk-blink 0.85s step-end infinite;
+  color: inherit;
+  opacity: 0.7;
+  font-weight: 300;
+}
+@keyframes sk-blink {
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 0; }
+}
+
+/* ── 5. PUBLICATION FILTER BAR ──────────────────────────────
+   Injected by dynamic.js above .pub-page-lists content        */
+
+.pub-filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.pub-filter-btn {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 0.28rem 0.95rem;
+  transition: background 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s;
+}
+.pub-filter-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+.pub-filter-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+[data-theme="dark"] .pub-filter-btn        { background: #111e33; border-color: #1e293b; color: #94a3b8; }
+[data-theme="dark"] .pub-filter-btn:hover  { border-color: var(--accent); color: var(--accent2); }
+[data-theme="dark"] .pub-filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ── 6. ENHANCED CARD HOVER / TRANSITIONS ───────────────────
+   Augments existing hover styles with lift + glow             */
+
+.res-card,
+.course-card,
+.project-card {
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease !important;
+}
+.res-card:hover    { transform: translateY(-5px) !important; }
+.course-card:hover { transform: translateY(-3px) !important; }
+.project-card:hover{ transform: translateY(-3px) !important; }
+
+.mentor-card {
+  transition: box-shadow 0.22s ease, transform 0.22s ease !important;
+}
+.mentor-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* ── 7. PAGE FADE-IN ────────────────────────────────────────
+   Subtle fade for each page load                              */
+
+#layout-content-container {
+  animation: sk-pageFade 0.38s ease both;
+}
+@keyframes sk-pageFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── 8. ACTIVE NAV ITEM INDICATOR ───────────────────────────*/
+div#layout-menu .menu-item a.current {
+  border-left: 3px solid var(--accent2);
+  padding-left: calc(0.65rem - 3px);
+  transition: border-color 0.2s;
+}
+
+/* ── 9. SMOOTH LINK TRANSITIONS ─────────────────────────────*/
+a { transition: color 0.15s ease; }

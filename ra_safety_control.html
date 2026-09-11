@@ -84,6 +84,19 @@ MathJax.Hub.Config({
 <h2>Overview</h2>
 <p>Safety-critical control addresses the problem of designing controllers for nonlinear systems that are guaranteed to remain within safe operating regions, even under bounded disturbances and input constraints. My research uses <b>Barrier Lyapunov functions (BLF)</b> and <b>Control Barrier Functions (CBF)</b> to design provably safe controllers that simultaneously achieve control objectives without violating safety constraints.</p>
 <p>Applications include autonomous vehicles with velocity and attitude constraints, systems with bounded actuators, and multi-constraint scenarios where multiple safety conditions must be satisfied simultaneously.</p>
+<h2>Control Architecture</h2>
+<p>Consider a strict-feedback nonlinear system</p>
+<p style="text-align:center">
+\[ \dot x_i = f_i(\bar x_i)+g_i(\bar x_i)x_{i+1},\ \ i=1,\dots,n-1, \qquad \dot x_n=f_n(\bar x_n)+g_n(\bar x_n)u,\qquad y=x_1 \]
+</p><p>whose physical actuator output must always remain inside a prescribed, possibly asymmetric, admissible set \(\mathbb U=\{u\mid u_{min}&lt;u&lt;u_{max}\}\). Rather than saturating the commanded input after the controller is designed — which destroys differentiability exactly where it matters most — admissibility is embedded directly into the closed-loop dynamics through an <b>Admissibility-Preserving Input Realization</b> (APIR):</p>
+<p style="text-align:center">
+\[ \dot u = p_1\left[\rho\left\{1-\left(\frac{u}{u_{max}}\right)^{\gamma}\right\}+(1-\rho)\left\{1-\left(\frac{u}{u_{min}}\right)^{\gamma}\right\}\right]u_c - p_1p_2u \]
+</p><p>a continuously differentiable dynamic state whose vector field points strictly inward as \(u\) approaches either bound, making the admissible set forward-invariant by construction and directly compatible with recursive backstepping design.</p>
+<figure class="paper-figure">
+  <img src="images/research/apc_architecture.png" alt="Admissibility-Preserving Control architecture" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+  <div class="paper-figure-placeholder">Figure not yet added &mdash; save <code>apc_architecture.png</code> to <code>images/research/</code></div>
+  <figcaption>Canonical Admissibility-Preserving Control (APC) architecture: the backstepping/barrier-Lyapunov layer generates a commanded input, which the APIR dynamically realizes as an admissible physical actuator output.</figcaption>
+</figure>
 <h2>Key Contributions</h2>
 <ul>
 <li><p>BLF-based controllers for state-constrained trajectory tracking of UAVs.</p>
@@ -147,7 +160,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2025 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 11<sup>th</sup> 2026  07:24PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated September 11<sup>th</sup> 2026  08:33PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

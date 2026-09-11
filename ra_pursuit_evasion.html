@@ -84,6 +84,16 @@ MathJax.Hub.Config({
 <h2>Overview</h2>
 <p>Pursuit-evasion problems involve one or more pursuers trying to capture one or more evaders, each acting in their own interest. My research formulates <b>multi-agent nonlinear guidance strategies</b> for cooperative pursuit-evasion scenarios, with theoretically guaranteed conditions for capture (by pursuers) and evasion (by the evader).</p>
 <p>The work uses <b>differential game theory</b> and <b>nonlinear guidance principles</b> to derive strategies that are both computationally tractable and formally verifiable. Applications include cooperative interception, active aircraft defence, and autonomous vehicle coordination.</p>
+<h2>Guidance Formulation</h2>
+<p>Consider a three-agent planar engagement between a pursuer (\(P\)), an evader (\(E\)), and a defender (\(D\)), each evolving as a nonholonomic agent steered by its lateral acceleration \(a_\ell\):</p>
+<p style="text-align:center">
+\[ \dot x_\ell = v_\ell\cos\gamma_\ell,\quad \dot y_\ell = v_\ell\sin\gamma_\ell,\quad \dot\gamma_\ell = \frac{a_\ell}{v_\ell}, \quad \ell\in\{P,E,D\} \]
+</p><p>Classical geometric guidance strategies require the defender, pursuer, and evader to become exactly collinear (a defender–pursuer–evader angle of \(\pi\)) to guarantee interception. My work relaxes this requirement to convergence of the angle \(\chi\) into the wider admissible interval \([\pi/2,\,3\pi/2]\) within a user-specified time, which still guarantees the defender intercepts the pursuer before it reaches the evader — without needing a noisy time-to-go estimate or any assumption on the pursuer's strategy.</p>
+<figure class="paper-figure">
+  <img src="images/research/pursuit_evasion_geometry.png" alt="Three-body pursuit-evasion engagement geometry" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+  <div class="paper-figure-placeholder">Figure not yet added &mdash; save <code>pursuit_evasion_geometry.png</code> to <code>images/research/</code></div>
+  <figcaption>Geometry of the three-body pursuer&ndash;evader&ndash;defender engagement, showing the line-of-sight angles and the defender&ndash;pursuer&ndash;evader angle &chi;.</figcaption>
+</figure>
 <h2>Key Contributions</h2>
 <ul>
 <li><p>Nonlinear cooperative guidance strategies for guaranteed pursuit-evasion with multiple pursuers.</p>
@@ -149,7 +159,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2025 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 11<sup>th</sup> 2026  07:24PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated September 11<sup>th</sup> 2026  08:33PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

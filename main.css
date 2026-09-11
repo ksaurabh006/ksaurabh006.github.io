@@ -2057,3 +2057,56 @@ a { transition: color 0.15s ease; }
 }
 .poc-meta-sep { opacity: 0.4; }
 [data-theme="dark"] .poc-meta { border-top-color: #1e293b; }
+
+/* ════════════════════════════════════════════
+   PAPER FIGURES (research-area pages)
+   ════════════════════════════════════════════ */
+.paper-figure {
+  margin: 1.5rem auto 1.75rem auto;
+  max-width: 560px;
+  text-align: center;
+}
+.paper-figure img {
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: block;
+  margin: 0 auto;
+}
+.paper-figure-placeholder {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 190px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  padding: 1rem;
+  background: rgba(37,99,235,0.03);
+}
+.paper-figure-placeholder code {
+  background: rgba(37,99,235,0.08);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+}
+.paper-figure figcaption {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-top: 0.6rem;
+  line-height: 1.5;
+}
+[data-theme="dark"] .paper-figure-placeholder { background: rgba(96,165,250,0.06); }
+[data-theme="dark"] .paper-figure-placeholder code { background: rgba(96,165,250,0.12); }
+
+/* ════════════════════════════════════════════
+   EQUATION BLOCKS (jemdoc \( ... \) display math)
+   ════════════════════════════════════════════ */
+#layout-content p[style*="text-align:center"] {
+  overflow-x: auto;
+  padding: 0.25rem 0;
+}

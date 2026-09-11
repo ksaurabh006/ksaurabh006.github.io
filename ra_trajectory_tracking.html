@@ -84,6 +84,16 @@ MathJax.Hub.Config({
 <h2>Overview</h2>
 <p>Trajectory tracking requires a vehicle to follow a time-parameterized reference trajectory, which is a stricter requirement than path following. My research develops controllers that guarantee <b>finite-time</b> or <b>exact-time</b> convergence to the desired trajectory even in the presence of model uncertainties, external disturbances, and state constraints such as bounded velocities and attitude angles.</p>
 <p>Key tools employed include <b>sliding mode control</b>, <b>Barrier Lyapunov functions</b> for handling state constraints, and <b>exact-time stability</b> theory. These methods have been applied to quadrotor UAVs and autonomous surface vessels, with rigorous formal proofs of convergence.</p>
+<h2>Guidance Formulation</h2>
+<p>Consider a quadrotor UAV whose attitude channels (\(\phi,\theta,\psi\) for roll, pitch, and yaw) are coupled second-order nonlinear systems of the form</p>
+<p style="text-align:center">
+\[ \ddot\Theta_k = \mathcal F_k + \mathcal G_k u_k + h_k, \quad k \in \{\phi,\theta,\psi\} \]
+</p><p>where \(\mathcal F_k\) captures the cross-coupling between channels, \(\mathcal G_k\) the (partially known) inertia-dependent control effectiveness, and \(h_k\) bounded uncertainty from an unmodeled inertia matrix. The controller is designed to guarantee <b>exact-time</b> or <b>finite-time</b> convergence of the position \(P(t)\) and attitude \(\Theta(t)\) to a time-varying reference \(P_d(t),\Theta_d(t)\), while explicitly respecting motion constraints such as bounded velocities, attitude angles, or a spatially confined operating region (e.g., a pipeline or tunnel inspection corridor).</p>
+<figure class="paper-figure">
+  <img src="images/research/trajectory_tracking_constrained_motion.png" alt="Quadrotor trajectory tracking under motion constraints" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+  <div class="paper-figure-placeholder">Figure not yet added &mdash; save <code>trajectory_tracking_constrained_motion.png</code> to <code>images/research/</code></div>
+  <figcaption>Sample constrained-trajectory-tracking scenario: a quadrotor tracking a time-varying reference within a spatially confined corridor.</figcaption>
+</figure>
 <h2>Key Contributions</h2>
 <ul>
 <li><p>Exact-time convergent trajectory tracking for quadrotor UAVs under uncertainties.</p>
@@ -157,7 +167,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2025 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 11<sup>th</sup> 2026  07:24PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated September 11<sup>th</sup> 2026  08:33PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

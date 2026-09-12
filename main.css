@@ -21,9 +21,9 @@
 
   --sidebar-width:  270px;
   --header-height:  60px;
-  --radius:         10px;
-  --radius-sm:      6px;
-  --radius-lg:      12px;
+  --radius:         8px;
+  --radius-sm:      5px;
+  --radius-lg:      10px;
 }
 
 /* ── Reset & Base ── */
@@ -1641,18 +1641,18 @@ a.res-card:hover .res-link {
 .res-card,
 .course-card,
 .project-card {
-  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
 }
-.res-card:hover    { transform: translateY(-5px) !important; }
-.course-card:hover { transform: translateY(-3px) !important; }
-.project-card:hover{ transform: translateY(-3px) !important; }
+.res-card:hover,
+.course-card:hover,
+.project-card:hover { transform: none !important; }
 
 .mentor-card {
-  transition: box-shadow 0.22s ease, transform 0.22s ease !important;
+  transition: box-shadow 0.2s ease !important;
 }
 .mentor-card:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.1) !important;
+  transform: none !important;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06) !important;
 }
 
 /* ── 7. PAGE FADE-IN ────────────────────────────────────────
@@ -1868,9 +1868,8 @@ a { transition: color 0.15s ease; }
   transition: box-shadow 0.22s ease, border-color 0.22s ease, transform 0.22s ease;
 }
 .poc-card:hover {
-  box-shadow: 0 4px 16px rgba(37,99,235,0.08);
+  box-shadow: 0 2px 10px rgba(15,23,42,0.06);
   border-color: #bfdbfe;
-  transform: translateY(-3px);
 }
 
 .poc-card-top {

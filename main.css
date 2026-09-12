@@ -2110,3 +2110,41 @@ a { transition: color 0.15s ease; }
   overflow-x: auto;
   padding: 0.25rem 0;
 }
+
+/* ════════════════════════════════════════════
+   ABOUT SECTION (home page)
+   ════════════════════════════════════════════ */
+.about-block {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.4rem 1.6rem;
+  margin-top: 0.5rem;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+}
+.about-block-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.about-block-icon svg { width: 22px; height: 22px; }
+.about-block p {
+  margin: 0 0 0.75rem 0;
+  line-height: 1.75;
+  color: var(--text);
+}
+.about-block p:last-child { margin-bottom: 0; }
+[data-theme="dark"] .about-block { background: #111e33; border-color: #1e293b; }
+[data-theme="dark"] .about-block-icon { background: rgba(37,99,235,0.18); color: var(--accent2); }
+@media (max-width: 700px) {
+  .about-block { flex-direction: column; padding: 1.2rem; }
+}

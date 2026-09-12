@@ -690,10 +690,6 @@ div#member p { text-align: center; margin: 0; padding: 0; font-size: 0.8rem; col
    ════════════════════════════════════════════ */
 @media screen and (max-width: 1100px) {
 
-  div#header-text-container {
-    visibility: hidden; width: 0; overflow: hidden;
-  }
-
   div#layout-menu-container { width: 0; flex-shrink: 0; }
 
   div#layout-menu {
@@ -1134,7 +1130,7 @@ a.res-card:hover .res-link {
    ════════════════════════════════════════════ */
 @media screen and (max-width: 900px) {
   .hero-section {
-    margin: -1.75rem -1.5rem 1.5rem 0;
+    margin: -1.75rem -1.5rem 1.5rem -1.5rem;
     padding: 2.5rem 1.5rem;
   }
   .hero-inner {
@@ -1151,7 +1147,7 @@ a.res-card:hover .res-link {
 
 @media screen and (max-width: 680px) {
   .hero-section {
-    margin: -1.25rem -1rem 1.25rem 0;
+    margin: -1.25rem -1rem 1.25rem -1rem;
     padding: 2rem 1rem;
   }
   .hero-name  { font-size: 1.65rem; }

@@ -2,7 +2,7 @@
   Jemdoc + MathJax compatible
  ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:wght@500;600;700&display=swap');
 
 /* ── CSS Variables (matched to portfolio palette) ── */
 :root {
@@ -17,6 +17,7 @@
   --text:           #1e293b;
   --text-light:     #94a3b8;
   --heading-color:  #0a1628;
+  --font-serif:     'Lora', Georgia, 'Times New Roman', serif;
 
   --sidebar-width:  270px;
   --header-height:  60px;
@@ -95,7 +96,8 @@ div#header-icon-container {
 div#header-text-container {
   display: inline-block;
   color: #ffffff;
-  font-size: 1rem;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
   font-weight: 600;
   letter-spacing: 0.4px;
 }
@@ -216,7 +218,9 @@ h1, h2, h3, h4 {
 }
 
 h1 {
-  font-size: 1.9rem;
+  font-family: var(--font-serif);
+  font-size: 2.1rem;
+  font-weight: 600;
   margin-top: 0;
   margin-bottom: 0.5rem;
   padding-bottom: 0.75rem;
@@ -281,7 +285,7 @@ div#toptitle h1,
   margin: 0 0 0.25rem 0;
   padding: 0;
   border-bottom: none;
-  font-size: 1.9rem;
+  font-size: 2.1rem;
 }
 
 div#toptitle + h2,
@@ -767,7 +771,8 @@ div#member p { text-align: center; margin: 0; padding: 0; font-size: 0.8rem; col
    HERO SECTION (index page)
    ════════════════════════════════════════════ */
 .hero-section {
-  background: linear-gradient(135deg, #0a1628 0%, #0f2044 60%, #1a3a6e 100%);
+  background: linear-gradient(180deg, #0a1628 0%, #0d1c33 100%);
+  border-bottom: 3px solid var(--accent);
   margin: -2.5rem -2.5rem 2rem -2.5rem;
   padding: 3.5rem 3rem 3rem 2.5rem;
 }
@@ -782,26 +787,28 @@ div#member p { text-align: center; margin: 0; padding: 0; font-size: 0.8rem; col
 
 .hero-badge {
   display: inline-block;
-  background: rgba(37,99,235,0.25);
-  border: 1px solid rgba(59,130,246,0.4);
+  background: none;
+  border: none;
+  border-bottom: 2px solid rgba(59,130,246,0.55);
   color: #93c5fd;
-  font-size: 0.78rem;
-  font-weight: 500;
-  padding: 0.35rem 0.9rem;
-  border-radius: 20px;
-  margin-bottom: 1rem;
-  letter-spacing: 0.4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0 0 0.4rem 0;
+  border-radius: 0;
+  margin-bottom: 1.1rem;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
 }
 
 .hero-name {
-  font-size: 2.6rem;
-  font-weight: 700;
+  font-size: 2.7rem;
+  font-weight: 600;
   color: #ffffff;
-  line-height: 1.15;
+  line-height: 1.2;
   margin: 0 0 0.5rem 0;
   padding: 0;
   border: none;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-serif);
 }
 
 .hero-dept {
@@ -1519,7 +1526,7 @@ a.res-card:hover .res-link {
 [data-theme="dark"] .course-card:hover,
 [data-theme="dark"] .project-card:hover         { box-shadow: 0 4px 20px rgba(96,165,250,0.12); border-color: #2563eb; }
 
-[data-theme="dark"] .hero-badge                 { background: rgba(37,99,235,0.25); color: var(--accent2); }
+[data-theme="dark"] .hero-badge                 { color: var(--accent2); }
 [data-theme="dark"] .hero-tags .hero-tag        { background: rgba(37,99,235,0.18); color: var(--accent2); border-color: rgba(96,165,250,0.25); }
 [data-theme="dark"] .btn-outline                { border-color: var(--accent2); color: var(--accent2); }
 [data-theme="dark"] .btn-outline:hover          { background: var(--accent2); color: #0a1628; }
@@ -1577,21 +1584,7 @@ a.res-card:hover .res-link {
   transform: translateY(0);
 }
 
-/* ── 4. HERO ENTRANCE ANIMATION ─────────────────────────────
-   Runs once on page load; canvas sits behind via CSS          */
-
-#hero-canvas {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  pointer-events: none;
-  z-index: 0;
-  border-radius: inherit;
-}
-
-.hero-section {
-  overflow: hidden; /* clip the canvas */
-}
+/* ── 4. HERO ENTRANCE ANIMATION ───────────────────────────── */
 
 .hero-inner {
   animation: sk-heroUp 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -1599,21 +1592,6 @@ a.res-card:hover .res-link {
 @keyframes sk-heroUp {
   from { opacity: 0; transform: translateY(28px); }
   to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Blinking cursor after hero-badge text while typing */
-.hero-badge::after {
-  content: '|';
-  display: inline-block;
-  margin-left: 2px;
-  animation: sk-blink 0.85s step-end infinite;
-  color: inherit;
-  opacity: 0.7;
-  font-weight: 300;
-}
-@keyframes sk-blink {
-  0%, 100% { opacity: 0.7; }
-  50%       { opacity: 0; }
 }
 
 /* ── 5. PUBLICATION FILTER BAR ──────────────────────────────

@@ -2121,3 +2121,35 @@ a { transition: color 0.15s ease; }
 @media (max-width: 700px) {
   .about-block { flex-direction: column; padding: 1.2rem; }
 }
+
+/* ════════════════════════════════════════════
+   PAPER VIDEO GALLERY (research-area pages)
+   ════════════════════════════════════════════ */
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin: 1rem 0 1.5rem 0;
+}
+.video-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  background: #fff;
+}
+.video-card video {
+  width: 100%;
+  display: block;
+  border-radius: var(--radius-sm);
+  background: #000;
+}
+.video-card-caption {
+  margin: 0.6rem 0.15rem 0 0.15rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+[data-theme="dark"] .video-card { background: #111e33; border-color: #1e293b; }
+@media (max-width: 700px) {
+  .video-grid { grid-template-columns: 1fr; }
+}

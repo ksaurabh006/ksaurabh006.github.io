@@ -3,7 +3,6 @@ Drop the following figure files in this folder (exact names, referenced by the r
 - path_following_geometry.png
 - trajectory_tracking_constrained_motion.png
 - pursuit_evasion_geometry.png
-- interceptor_engagement_geometry.png
 - apc_architecture.png
 - equivalent_agent_geometry.png
 

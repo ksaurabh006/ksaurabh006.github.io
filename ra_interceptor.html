@@ -73,19 +73,6 @@ MathJax.Hub.Config({
 <h2>Overview</h2>
 <p>Interceptor guidance is concerned with designing guidance laws that steer a missile or interceptor to hit a target while satisfying terminal constraints such as <b>impact time</b>, <b>impact angle</b>, or both simultaneously. These constraints are critical in salvo attacks, cooperative interception, and angle-constrained scenarios.</p>
 <p>My research develops <b>exact-time convergent</b> guidance strategies that achieve desired impact conditions against both stationary and moving targets. The work also addresses <b>input constraints</b>, <b>asymmetric bounds</b>, and <b>integrated guidance and control</b> (IGC) formulations that couple the guidance and autopilot design.</p>
-<h2>Guidance Formulation</h2>
-<p>For a planar interceptor (\(M\))–target (\(T\)) engagement, the relative motion in range/LOS coordinates is</p>
-<p style="text-align:center">
-\[ V_r = \dot r = V_T\cos\psi_T - V_M\cos\psi_M, \qquad V_\theta = r\dot\theta = V_T\sin\psi_T - V_M\sin\psi_M \]
-</p><p>Interception at a prescribed impact time \(t_f\) is posed as nulling a range-to-go error \(e_r\), built from the predicted interception point, whose dynamics reduce to the remarkably compact form</p>
-<p style="text-align:center">
-\[ \dot e_r = -V_M\left(1-\cos\psi_{M_p}\right) \]
-</p><p>so that driving only the interceptor's lead angle \(\psi_{M_p}\to 0\) guarantees interception exactly at \(t_f\) — without ever needing a noisy time-to-go estimate. As in the path-following work, the commanded lateral acceleration is passed through a smooth, asymmetric input-realization law so the true actuator output never leaves its (possibly unequal) upper/lower bounds.</p>
-<figure class="paper-figure">
-  <img src="images/research/interceptor_engagement_geometry.png" alt="Interceptor-target engagement geometry" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-  <div class="paper-figure-placeholder">Figure not yet added &mdash; save <code>interceptor_engagement_geometry.png</code> to <code>images/research/</code></div>
-  <figcaption>Interceptor&ndash;target engagement geometry and the predicted interception point used to derive the range-to-go based impact-time guidance law.</figcaption>
-</figure>
 <h2>Key Contributions</h2>
 <ul>
 <li><p>Exact-time convergent impact time guidance against moving targets.</p>
@@ -99,6 +86,39 @@ MathJax.Hub.Config({
 <li><p>Asymmetric input constrained range-to-go based impact time guidance.</p>
 </li>
 </ul>
+<h2>Asymmetric Input Constrained Range-to-go based Impact Time Guidance</h2>
+<p>Saurabh Kumar, Rohit V. Nanavati, and Shashi Ranjan Kumar, Proceedings of the European Control Conference (ECC), Reykjavík, Iceland, 2026.</p>
+<div class="video-grid">
+
+  <div class="video-card">
+    <video controls preload="metadata">
+      <source src="videos/ecc2026-impact-time/Simulation_Diff_td_Animation.mp4" type="video/mp4">
+    </video>
+    <p class="video-card-caption">Simulation results for different desired impact times.</p>
+  </div>
+
+  <div class="video-card">
+    <video controls preload="metadata">
+      <source src="videos/ecc2026-impact-time/Simulation_Diff_Heading_Animation.mp4" type="video/mp4">
+    </video>
+    <p class="video-card-caption">Simulation results for different initial heading angles.</p>
+  </div>
+
+  <div class="video-card">
+    <video controls preload="metadata">
+      <source src="videos/ecc2026-impact-time/Simulation_Diff_Gamma_T_Animation.mp4" type="video/mp4">
+    </video>
+    <p class="video-card-caption">Simulation results for different target aspect angles.</p>
+  </div>
+
+  <div class="video-card">
+    <video controls preload="metadata">
+      <source src="videos/ecc2026-impact-time/Simultaneous_Guidance_Comparison.mp4" type="video/mp4">
+    </video>
+    <p class="video-card-caption">Comparison of simultaneous guidance strategies.</p>
+  </div>
+
+</div>
 <h2>Relevant Publications</h2>
 <div class="pub-page-lists">
 <h3>Conference Papers</h3>
@@ -152,7 +172,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2025 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 13<sup>th</sup> 2026  01:13AM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated September 14<sup>th</sup> 2026  11:46PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

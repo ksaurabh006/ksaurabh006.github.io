@@ -73,19 +73,6 @@ MathJax.Hub.Config({
 <h2>Overview</h2>
 <p>Path following guidance addresses the problem of designing control laws that steer an autonomous vehicle to converge to and travel along a desired geometric path, without a timing requirement. Unlike trajectory tracking, path following does not require the vehicle to be at a specific point at a specific time, making it more suitable for vehicles with bounded control inputs and under environmental disturbances.</p>
 <p>My work in this area focuses on developing <b>nonlinear guidance laws</b> for UAVs and autonomous surface vessels to follow arbitrary 3D paths. Key contributions include handling <b>bounded lateral acceleration constraints</b>, robustness against <b>wind disturbances</b>, and providing formal <b>convergence guarantees</b> using Lyapunov-based analysis.</p>
-<h2>Guidance Formulation</h2>
-<p>Consider a UAV following a virtual pseudotarget \(T\) that moves along the desired 3D path. The engagement is described by the relative range \(r\) and the UAV's azimuth/elevation lead angles \(\psi_U,\theta_U\) measured with respect to the line-of-sight (LOS) frame:</p>
-<p style="text-align:center">
-\[ \dot r = V_T\cos\theta_T\cos\psi_T - V_U\cos\theta_U\cos\psi_U \]
-</p><p>together with analogous rate equations for \(\theta_U\) and \(\psi_U\). The guidance law drives \(r,\theta_U,\psi_U \to 0\) within a <b>fixed convergence time</b> that does not depend on the UAV's initial configuration relative to the path. Because real actuators have finite authority, the commanded linear speed and turn rates are not simply clipped after design; instead they are passed through a smooth realization law</p>
-<p style="text-align:center">
-\[ \dot{\mathcal U} = \mathcal K_1\left[1-\left(\frac{\mathcal U}{\mathcal U^{max}}\right)^{\gamma}\right]\mathcal U^c - \mathcal K_1\mathcal K_2\mathcal U \]
-</p><p>which keeps the physical control input strictly inside its bounds at every instant, rather than only after the fact.</p>
-<figure class="paper-figure">
-  <img src="images/research/path_following_geometry.png" alt="UAV path-following engagement geometry" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-  <div class="paper-figure-placeholder">Figure not yet added &mdash; save <code>path_following_geometry.png</code> to <code>images/research/</code></div>
-  <figcaption>UAV&ndash;path-following engagement geometry: relative range <em>r</em>, the LOS frame, and the UAV's azimuth/elevation lead angles with respect to a moving pseudotarget on the desired path.</figcaption>
-</figure>
 <h2>Key Contributions</h2>
 <ul>
 <li><p>Three-dimensional nonlinear path following guidance for UAVs with formal stability proofs.</p>
@@ -101,6 +88,22 @@ MathJax.Hub.Config({
 <li><p>Input-constrained planar path-following guidance for practical onboard implementation.</p>
 </li>
 </ul>
+<h2>Robust Path-following Guidance for an Autonomous Vehicle in the Presence of Wind</h2>
+<p>Saurabh Kumar, Abhinav Sinha, and Shashi Ranjan Kumar, <a href="https://doi.org/10.1016/j.ast.2024.109225" target=&ldquo;blank&rdquo;>Aerospace Science and Technology</a>, Vol. 150, 2024, pp. 109225.</p>
+<div class="video-card video-single">
+  <video controls preload="metadata">
+    <source src="videos/path-following/curvilinear_constantwind_final.mp4" type="video/mp4">
+  </video>
+  <p class="video-card-caption">Path-following along a curvilinear path under a constant wind disturbance.</p>
+</div>
+<h2>Three-Dimensional Path Following Nonlinear Guidance for Unmanned Aerial Vehicles</h2>
+<p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/1.G007964" target=&ldquo;blank&rdquo;>AIAA Journal of Guidance, Control, and Dynamics</a>, Vol. 47, No. 6, 2024, pp. 1231&ndash;1240.</p>
+<div class="video-card video-single">
+  <video controls preload="metadata">
+    <source src="videos/path-following/3D_Merged_all.mp4" type="video/mp4">
+  </video>
+  <p class="video-card-caption">Three-dimensional path-following simulations for the UAV.</p>
+</div>
 <h2>Relevant Publications</h2>
 <div class="pub-page-lists">
 <h3>Journal Papers</h3>
@@ -163,7 +166,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2025 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 13<sup>th</sup> 2026  01:13AM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated September 15<sup>th</sup> 2026  12:03AM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

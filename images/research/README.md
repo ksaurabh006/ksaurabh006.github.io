@@ -1,6 +1,5 @@
 Drop the following figure files in this folder (exact names, referenced by the research-area pages):
 
-- path_following_geometry.png
 - trajectory_tracking_constrained_motion.png
 - pursuit_evasion_geometry.png
 - apc_architecture.png

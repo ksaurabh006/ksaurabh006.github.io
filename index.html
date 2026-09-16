@@ -34,12 +34,12 @@ MathJax.Hub.Config({
 });
 </script>
 <!-- End MathJax -->
-<!-- Vanta.js animated globe background (hero section) -->
+<!-- Vanta.js animated halo background (hero section) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"
   integrity="sha512-334uBDwY0iZ2TklV1OtDtBW9vp7jjP7SWRzT7Ehu1fdtPIjTpCwTSFb8HI/YBau9L1/kRBEOALrS229Kry4yFQ=="
   crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.globe.min.js"
-  integrity="sha512-cfeQlKIIaFDUyrmXLF3uv1DSprgNRSSptQF6lyPPmsnXhR2M8qtQ4B6pMQJE3BePiGHRefNCVO4u5/FUSzMkbQ=="
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.halo.min.js"
+  integrity="sha512-gRIqup64NLSGaR/I3X+mtgekcMOf9mQhmA4dKplXPYpXRUyV3ToH35BE5ftKCHNgWyFb4pMiQzeBEXqXrd4JSg=="
   crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
@@ -261,24 +261,30 @@ function closeNav() {
     }
 }
 
-// Vanta.js animated globe background for the hero section, colored to
-// match the site's navy/blue palette (see :root in main.css). The hero
-// banner stays dark navy in both light and dark site themes, so this
-// looks consistent regardless of the theme toggle.
-if (window.VANTA && document.getElementById("vanta-bg")) {
-    VANTA.GLOBE({
+// Vanta.js animated halo background for the hero section. Note: HALO's
+// shader shifts a literal blue (e.g. the site's own #3b82f6) toward
+// violet/purple, so baseColor below is deliberately a brighter sky-blue
+// (#00bfff) chosen empirically to actually render blue on screen -- it
+// is not one of the site's --accent variables. backgroundColor matches
+// --navy so it blends into the hero gradient in both site themes.
+// Below the site's own mobile breakpoint (see HERO RESPONSIVE in
+// main.css), the hero content stacks into a single column and a
+// centered halo ring ends up overlapping the tags/buttons/social row
+// no matter how small it's scaled. Skip it there -- the plain gradient
+// (already in place) is the fallback -- which also saves battery/GPU
+// on phones.
+if (window.VANTA && document.getElementById("vanta-bg") && window.innerWidth > 900) {
+    VANTA.HALO({
         el: "#vanta-bg",
         mouseControls: true,
         touchControls: true,
         gyroControls: false,
         minHeight: 200.00,
         minWidth: 200.00,
-        scale: 1.00,
-        scaleMobile: 1.00,
-        color: 0x3b82f6,        /* --accent2: globe wireframe / dots */
-        color2: 0x2563eb,       /* --accent: secondary dot color */
+        baseColor: 0x00bfff,
         backgroundColor: 0x0a1628, /* --navy: matches hero gradient start */
-        size: 1.10
+        amplitudeFactor: 2.00,
+        size: 1.50
     });
 }
 </script>

@@ -2293,3 +2293,62 @@ a { transition: color 0.15s ease; }
   align-items: center;
   gap: 5px;
 }
+
+/* ════════════════════════════════════════════
+   RESOURCES PAGE
+   ════════════════════════════════════════════ */
+.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.25rem;
+}
+.resource-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+.resource-card img {
+  width: 100%;
+  display: block;
+  border-bottom: 1px solid var(--border);
+}
+.resource-card-body {
+  padding: 1.1rem 1.25rem 1.3rem 1.25rem;
+}
+.resource-card h3 {
+  margin: 0 0 0.35rem 0;
+  font-size: 1.05rem;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.resource-credit {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 0.7rem;
+  line-height: 1.5;
+}
+.resource-desc {
+  font-size: 0.9rem;
+  color: var(--text);
+  line-height: 1.7;
+  margin-bottom: 0.9rem;
+}
+.resource-links {
+  display: flex;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+.resource-links a {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+[data-theme="dark"] .resource-card { background: #111e33; border-color: #1e293b; }
+[data-theme="dark"] .resource-card img { border-bottom-color: #1e293b; }
+[data-theme="dark"] .resource-links { border-top-color: #1e293b; }

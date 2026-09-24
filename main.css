@@ -1648,6 +1648,80 @@ a.res-card:hover .res-link {
 [data-theme="dark"] .pub-filter-btn:hover  { border-color: var(--accent); color: var(--accent2); }
 [data-theme="dark"] .pub-filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
+/* ── 5b. CITATION / BIBTEX COPY BUTTON ──────────────────────
+   Injected per-entry by publications.jemdoc's list script       */
+
+.cite-wrap {
+  flex: 1 0 100%;
+  margin-top: 0.4rem;
+}
+
+.cite-btn {
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 0.18rem 0.75rem;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+}
+.cite-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.cite-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.cite-panel {
+  margin-top: 0.6rem;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+}
+
+.cite-panel pre {
+  margin: 0 0 0.7rem 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: #1e293b;
+}
+
+.cite-copy-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0.32rem 0.85rem;
+  transition: background 0.18s;
+}
+.cite-copy-btn:hover {
+  background: var(--accent2);
+}
+.cite-copy-btn.copied {
+  background: #16a34a;
+}
+
+[data-theme="dark"] .cite-btn        { border-color: #1e293b; color: #94a3b8; }
+[data-theme="dark"] .cite-btn:hover  { border-color: var(--accent); color: var(--accent2); }
+[data-theme="dark"] .cite-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+[data-theme="dark"] .cite-panel      { background: #0b1524; border-color: #1e293b; }
+[data-theme="dark"] .cite-panel pre  { color: #cbd5e1; }
+
 /* ── 6. ENHANCED CARD HOVER / TRANSITIONS ───────────────────
    Augments existing hover styles with lift + glow             */
 

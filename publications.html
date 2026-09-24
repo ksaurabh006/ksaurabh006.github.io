@@ -163,12 +163,57 @@ MathJax.Hub.Config({
 
 <script>
   document.addEventListener("DOMContentLoaded", function() {
+    var BIBTEX = {
+      J: [
+        "@article{kumar2026ijrnc,\n  author  = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title   = {Admissibility-Preserving Control for Strict-Feedback Nonlinear Systems with Asymmetric Actuator Constraints},\n  journal = {International Journal of Robust and Nonlinear Control},\n  year    = {2026},\n  pages   = {1--18},\n  doi     = {10.48550/arXiv.2608.15375},\n  note    = {under review}\n}",
+        "@article{kumar2026jais,\n  author  = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title   = {Prescribed-Time Cooperative Geometric Guidance under Delay-Robust Information Structures for Pursuit-Evasion},\n  journal = {Journal of Aerospace Information Systems},\n  year    = {2026},\n  note    = {under revision}\n}",
+        "@article{kumar2026ast1,\n  author  = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title   = {Equivalent-Agent Guidance for Cooperative UAV Payload Transportation},\n  journal = {Aerospace Science and Technology},\n  year    = {2026},\n  doi     = {10.48550/arXiv.2609.19312},\n  note    = {under review}\n}",
+        "@article{kathiriya2026ast,\n  author  = {Vinay Kathiriya and Saurabh Kumar and Shashi Ranjan Kumar},\n  title   = {Path-Following Guidance for Unmanned Aerial Vehicle with Bounded Lateral Acceleration},\n  journal = {Aerospace Science and Technology},\n  year    = {2026},\n  pages   = {1--17}\n}",
+        "@article{kumar2026jgcd1,\n  author  = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title   = {Three-dimensional Nonlinear Path-following Guidance with Bounded Input Constraints},\n  journal = {AIAA Journal of Guidance, Control, and Dynamics},\n  year    = {2026},\n  volume  = {49},\n  number  = {1},\n  pages   = {198--215},\n  doi     = {10.2514/1.G008792}\n}",
+        "@article{kumar2026jgcd2,\n  author  = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title   = {Three-dimensional Trajectory Tracking for Unmanned Aerial Vehicles Under Motion Constraints},\n  journal = {AIAA Journal of Guidance, Control, and Dynamics},\n  year    = {2026},\n  volume  = {49},\n  number  = {1},\n  pages   = {78--96},\n  doi     = {10.2514/1.G009445}\n}",
+        "@article{basnet2025joe,\n  author  = {Susan Basnet and Saurabh Kumar and Shashi Ranjan Kumar},\n  title   = {Robust Exact-time Trajectory Tracking Control for Autonomous Surface Vessels},\n  journal = {IEEE Journal of Oceanic Engineering},\n  year    = {2025},\n  volume  = {50},\n  number  = {2},\n  pages   = {1184--1195},\n  doi     = {10.1109/JOE.2025.3529062}\n}",
+        "@article{kumar2025imeche,\n  author  = {Saurabh Kumar and Shashi Ranjan Kumar},\n  title   = {Robust Trajectory Tracking of an Uncertain Quadrotor with Almost Global Finite-time Convergence},\n  journal = {Proceedings of the Institution of Mechanical Engineers, Part G: Journal of Aerospace Engineering},\n  year    = {2025},\n  volume  = {239},\n  number  = {8},\n  pages   = {792--817},\n  doi     = {10.1177/09544100241309050}\n}",
+        "@article{kumar2024jgcd,\n  author  = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title   = {Three-Dimensional Path Following Nonlinear Guidance for Unmanned Aerial Vehicles},\n  journal = {AIAA Journal of Guidance, Control, and Dynamics},\n  year    = {2024},\n  volume  = {47},\n  number  = {6},\n  pages   = {1231--1240},\n  doi     = {10.2514/1.G007964}\n}",
+        "@article{kumar2024ast,\n  author  = {Saurabh Kumar and Abhinav Sinha and Shashi Ranjan Kumar},\n  title   = {Robust Path-following Guidance for an Autonomous Vehicle in the Presence of Wind},\n  journal = {Aerospace Science and Technology},\n  year    = {2024},\n  volume  = {150},\n  pages   = {109225},\n  doi     = {10.1016/j.ast.2024.109225}\n}",
+      ],
+      C: [
+        "@inproceedings{kathiriya2026acc,\n  author    = {Vinay Kathiriya and Saurabh Kumar and Shashi Ranjan Kumar},\n  title     = {Input Constrained Planar Path-Following Guidance for Unmanned Aerial Vehicles},\n  booktitle = {Proceedings of Asian Control Conference},\n  address   = {Bali, Indonesia},\n  year      = {2026}\n}",
+        "@inproceedings{punyamurthy2026vss,\n  author    = {Jashwanth Punyamurthy and Saurabh Kumar and Shashi Ranjan Kumar},\n  title     = {True-Proportional Navigation based Exact-Time Convergent Impact Time Guidance},\n  booktitle = {Proceedings of International Workshop on Variable Structure Systems and Sliding Mode Control},\n  address   = {Exeter, UK},\n  year      = {2026}\n}",
+        "@inproceedings{kumar2026ecc1,\n  author    = {Saurabh Kumar and Rohit V. Nanavati and Shashi Ranjan Kumar},\n  title     = {Asymmetric Input Constrained Range-to-go based Impact Time Guidance},\n  booktitle = {Proceedings of European Control Conference},\n  address   = {Reykjav\\'ik, Iceland},\n  year      = {2026},\n  pages     = {2623--2628},\n  doi       = {10.1109/EuropeanControlConference.2026.11625333}\n}",
+        "@inproceedings{kathiriya2026ecc,\n  author    = {Vinay Kathiriya and Saurabh Kumar and Rohit V. Nanavati and Shashi Ranjan Kumar and Hemendra Arya},\n  title     = {Sliding Mode Control based Line-of-Sight Stabilization of a 2-DOF Gimbal},\n  booktitle = {Proceedings of European Control Conference},\n  address   = {Reykjav\\'ik, Iceland},\n  year      = {2026},\n  pages     = {907--912}\n}",
+        "@inproceedings{kidron2026ecc,\n  author    = {M Kidron and Saurabh Kumar and Shashi Ranjan Kumar},\n  title     = {Integrated Guidance and Control for Impact-Time-Constrained Target Interception},\n  booktitle = {Proceedings of European Control Conference},\n  address   = {Reykjav\\'ik, Iceland},\n  year      = {2026},\n  pages     = {449--454}\n}",
+        "@inproceedings{kumar2026aiaagnc,\n  author    = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title     = {Path Following Guidance with Bounded Control},\n  booktitle = {Proceedings of AIAA Guidance, Navigation and Control Conference},\n  address   = {Orlando, Florida, USA},\n  year      = {2026},\n  doi       = {10.2514/6.2026-1947}\n}",
+        "@inproceedings{kidron2025icc,\n  author    = {M Kidron and Saurabh Kumar and Shashi Ranjan Kumar},\n  title     = {Exact-Time Convergent Impact Time Guidance Against Moving Targets},\n  booktitle = {Proceedings of Indian Control Conference},\n  address   = {Bangalore, India},\n  year      = {2025},\n  doi       = {10.1109/ICC69100.2025.11372280}\n}",
+        "@inproceedings{kathiriya2025icc,\n  author    = {Vinay Kathiriya and Saurabh Kumar and Shashi Ranjan Kumar},\n  title     = {Impact Angle and Input Constrained Guidance Against Stationary Targets},\n  booktitle = {Proceedings of Indian Control Conference},\n  address   = {Bangalore, India},\n  year      = {2025},\n  doi       = {10.1109/ICC69100.2025.11372269}\n}",
+        "@inproceedings{kumar2025aiaagnc,\n  author    = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title     = {Geometric Guidance for Enclosing Moving Targets},\n  booktitle = {Proceedings of AIAA Guidance, Navigation and Control Conference},\n  address   = {Orlando, Florida, USA},\n  year      = {2025},\n  doi       = {10.2514/6.2025-2233}\n}",
+        "@inproceedings{kumar2024aiaagnc1,\n  author    = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title     = {Robust Nonlinear Control for Exact-time Stability of a Quadrotor UAV under Uncertainties},\n  booktitle = {Proceedings of AIAA Guidance, Navigation and Control Conference},\n  address   = {Orlando, Florida},\n  year      = {2024},\n  doi       = {10.2514/6.2024-0319}\n}",
+        "@inproceedings{kumar2024aiaagnc2,\n  author    = {Saurabh Kumar and Abhinav Sinha and Shashi Ranjan Kumar},\n  title     = {Generic Path-following Guidance for an Autonomous Vehicle},\n  booktitle = {Proceedings of AIAA Guidance, Navigation and Control Conference},\n  address   = {Orlando, Florida},\n  year      = {2024},\n  doi       = {10.2514/6.2024-1593}\n}",
+        "@inproceedings{basnet2023icc,\n  author    = {Susan Basnet and Saurabh Kumar and Shashi Ranjan Kumar},\n  title     = {Nonlinear Cooperative Strategy for Active Aircraft Defence with Exact-time Convergence},\n  booktitle = {Proceedings of Indian Control Conference},\n  address   = {Vishakhapatnam, India},\n  year      = {2023},\n  pages     = {239--244},\n  doi       = {10.1109/ICC61519.2023.10442728}\n}",
+        "@inproceedings{kumar2023aiaagnc,\n  author    = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title     = {Robust Path-following Guidance for an Unmanned Vehicle},\n  booktitle = {Proceedings of AIAA Guidance, Navigation and Control Conference},\n  address   = {National Harbor, MD, USA},\n  year      = {2023},\n  doi       = {10.2514/6.2023-1055}\n}",
+        "@inproceedings{kumar2022icc,\n  author    = {Saurabh Kumar and Shashi Ranjan Kumar},\n  title     = {Exponential Reaching Law based Robust Trajectory Tracking for Unmanned Aerial Vehicles},\n  booktitle = {Proceedings of Indian Control Conference},\n  address   = {Chennai, India},\n  year      = {2022},\n  pages     = {302--307},\n  doi       = {10.1109/ICC56513.2022.10093309}\n}",
+        "@article{kumar2022ifac,\n  author  = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title   = {Separate Guidance and Control Design for Autonomous Path-following},\n  journal = {IFAC-PapersOnLine},\n  year    = {2022},\n  volume  = {55},\n  number  = {22},\n  pages   = {212--217},\n  doi     = {10.1016/j.ifacol.2023.03.036}\n}",
+        "@inproceedings{kumar2022icuas1,\n  author    = {Saurabh Kumar and Shashi Ranjan Kumar},\n  title     = {Barrier Lyapunov-based Nonlinear Trajectory Following for Unmanned Aerial Vehicles with Constrained Motion},\n  booktitle = {Proceedings of International Conference on Unmanned Aircraft Systems},\n  address   = {Dubrovnik, Croatia},\n  year      = {2022},\n  pages     = {1146--1155},\n  doi       = {10.1109/ICUAS54217.2022.9836037}\n}",
+        "@inproceedings{kumar2022icuas2,\n  author    = {Saurabh Kumar and Shashi Ranjan Kumar},\n  title     = {Finite-Time Convergent Robust Trajectory Tracking for Unmanned Aerial Vehicles},\n  booktitle = {Proceedings of International Conference on Unmanned Aircraft Systems},\n  address   = {Dubrovnik, Croatia},\n  year      = {2022},\n  pages     = {1166--1175},\n  doi       = {10.1109/ICUAS54217.2022.9836191}\n}",
+        "@inproceedings{kumar2021sgesc,\n  author    = {Saurabh Kumar and Lillie Dewan},\n  title     = {A Comparative Analysis of LQR and SMC for Quanser AERO},\n  booktitle = {Control and Measurement Applications for Smart Grid: Select Proceedings of SGESC 2021},\n  year      = {2021},\n  doi       = {10.1007/978-981-16-7664-2_37}\n}",
+        "@inproceedings{kumar2021iciccs,\n  author    = {Saurabh Kumar and Lillie Dewan},\n  title     = {Set-Point Tracking of Quanser AERO using SMC in the presence of Uncertainties},\n  booktitle = {Proceedings of International Conference on Intelligent Computing and Control Systems},\n  address   = {Madurai, India},\n  year      = {2021},\n  pages     = {1595--1601},\n  doi       = {10.1109/ICICCS51141.2021.9432294}\n}",
+      ],
+      P: [
+        "@misc{kumar2026arxiv1,\n  author        = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title         = {Equivalent-Agent Guidance for Cooperative UAV Payload Transportation},\n  year          = {2026},\n  eprint        = {2609.19312},\n  archivePrefix = {arXiv},\n  primaryClass  = {eess.SY}\n}",
+        "@misc{kumar2026arxiv2,\n  author        = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title         = {Admissibility-Preserving Control for Strict-Feedback Nonlinear Systems with Asymmetric Actuator Constraints},\n  year          = {2026},\n  eprint        = {2608.15375},\n  archivePrefix = {arXiv},\n  primaryClass  = {eess.SY}\n}",
+        "@misc{kathiriya2026arxiv,\n  author        = {Vinay Kathiriya and Saurabh Kumar and Shashi Ranjan Kumar},\n  title         = {Path-Following Guidance for Unmanned Aerial Vehicle with Bounded Lateral Acceleration},\n  year          = {2026},\n  eprint        = {2603.27177},\n  archivePrefix = {arXiv},\n  primaryClass  = {eess.SY}\n}",
+        "@misc{kumar2024arxiv1,\n  author        = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title         = {Three-dimensional Nonlinear Path-following Guidance with Bounded Input Constraints},\n  year          = {2024},\n  eprint        = {2409.08507},\n  archivePrefix = {arXiv},\n  primaryClass  = {eess.SY}\n}",
+        "@misc{kumar2024arxiv2,\n  author        = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title         = {Trajectory Tracking for Unmanned Aerial Vehicles in 3D Spaces under Motion Constraints},\n  year          = {2024},\n  eprint        = {2407.10837},\n  archivePrefix = {arXiv},\n  primaryClass  = {eess.SY}\n}",
+        "@misc{kumar2024arxiv3,\n  author        = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title         = {Cooperative Nonlinear Guidance Strategies for Guaranteed Pursuit-Evasion},\n  year          = {2024},\n  eprint        = {2402.06176},\n  archivePrefix = {arXiv},\n  primaryClass  = {eess.SY}\n}",
+        "@misc{kumar2025arxiv,\n  author        = {Saurabh Kumar and Shashi Ranjan Kumar and Abhinav Sinha},\n  title         = {Provably Safe Control for Constrained Nonlinear Systems with Bounded Input},\n  year          = {2025},\n  eprint        = {2504.11592},\n  archivePrefix = {arXiv},\n  primaryClass  = {eess.SY}\n}",
+      ],
+    };
+
     var lists = document.querySelectorAll('.pub-page-lists ol');
     var prefixes = ['J', 'C', 'P']; // 1st list gets J, 2nd gets C, 3rd gets P
 
     lists.forEach(function(list, index) {
       list.style.listStyleType = 'none';
-      list.style.paddingLeft = '0'; 
+      list.style.paddingLeft = '0';
 
       var items = Array.from(list.getElementsByTagName('li')).filter(function(li) {
         return li.textContent.trim().length > 0;
@@ -176,26 +221,28 @@ MathJax.Hub.Config({
 
       var prefix = prefixes[index] || '';
       var total = items.length;
+      var bibList = BIBTEX[prefix] || [];
 
       items.forEach(function(li, i) {
         var num = total - i;
-        
+
         li.style.display = 'flex';
-        // NEW: Forces the text to sit on the exact same horizontal line
-        li.style.alignItems = 'baseline'; 
-        li.style.marginBottom = '12px'; 
+        li.style.flexWrap = 'wrap';
+        li.style.alignItems = 'baseline';
+        li.style.marginBottom = '12px';
 
         var marker = document.createElement('div');
         marker.innerHTML = '<b>[' + prefix + num + ']</b>';
-        marker.style.minWidth = '3.5em'; 
-        marker.style.flexShrink = '0'; 
+        marker.style.minWidth = '3.5em';
+        marker.style.flexShrink = '0';
 
         var textWrapper = document.createElement('div');
+        textWrapper.style.flex = '1 1 auto';
+        textWrapper.style.minWidth = '0';
         while (li.firstChild) {
           textWrapper.appendChild(li.firstChild);
         }
 
-        // NEW: Aggressively target ALL paragraph tags to remove hidden jemdoc spacing
         var pTags = textWrapper.getElementsByTagName('p');
         for (var j = 0; j < pTags.length; j++) {
           pTags[j].style.marginTop = '0';
@@ -206,6 +253,65 @@ MathJax.Hub.Config({
 
         li.appendChild(marker);
         li.appendChild(textWrapper);
+
+        var bib = bibList[i];
+        if (bib) {
+          var citeWrap = document.createElement('div');
+          citeWrap.className = 'cite-wrap';
+
+          var citeBtn = document.createElement('button');
+          citeBtn.type = 'button';
+          citeBtn.className = 'cite-btn';
+          citeBtn.textContent = 'Cite';
+
+          var panel = document.createElement('div');
+          panel.className = 'cite-panel';
+          panel.hidden = true;
+
+          var pre = document.createElement('pre');
+          pre.textContent = bib;
+
+          var copyBtn = document.createElement('button');
+          copyBtn.type = 'button';
+          copyBtn.className = 'cite-copy-btn';
+          copyBtn.textContent = 'Copy BibTeX';
+          copyBtn.addEventListener('click', function() {
+            var done = function() {
+              var old = copyBtn.textContent;
+              copyBtn.textContent = 'Copied!';
+              copyBtn.classList.add('copied');
+              setTimeout(function() {
+                copyBtn.textContent = old;
+                copyBtn.classList.remove('copied');
+              }, 1600);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(bib).then(done, done);
+            } else {
+              var ta = document.createElement('textarea');
+              ta.value = bib;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              try { document.execCommand('copy'); } catch (e) {}
+              document.body.removeChild(ta);
+              done();
+            }
+          });
+
+          panel.appendChild(pre);
+          panel.appendChild(copyBtn);
+
+          citeBtn.addEventListener('click', function() {
+            panel.hidden = !panel.hidden;
+            citeBtn.classList.toggle('active', !panel.hidden);
+          });
+
+          citeWrap.appendChild(citeBtn);
+          citeWrap.appendChild(panel);
+          li.appendChild(citeWrap);
+        }
       });
     });
   });
@@ -245,7 +351,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 24<sup>th</sup> 2026  07:59PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated September 25<sup>th</sup> 2026  12:28AM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

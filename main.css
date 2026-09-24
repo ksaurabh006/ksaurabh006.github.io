@@ -2178,6 +2178,12 @@ a { transition: color 0.15s ease; }
   overflow: hidden;
   background: #000;
 }
+/* Matches the native 1920x1034 export resolution of the MATLAB
+   simulation recordings (not quite 16:9) so YouTube doesn't
+   letterbox them inside the card. */
+.yt-embed.ratio-sim {
+  aspect-ratio: 1920 / 1034;
+}
 .yt-embed iframe {
   position: absolute;
   top: 0; left: 0;

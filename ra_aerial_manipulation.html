@@ -75,16 +75,6 @@ MathJax.Hub.Config({
 <h2>Overview</h2>
 <p>Cooperative aerial manipulation involves multiple UAVs working together to grasp, transport, or manipulate objects that a single UAV cannot handle alone. This requires tight coordination in both formation geometry and force application, presenting challenges in <b>distributed control</b>, <b>geometric guidance</b>, and <b>real-time constraint satisfaction</b>.</p>
 <p>My research in this area combines <b>formation control principles</b> with geometric guidance laws to enable coordinated multi-UAV manipulation. The work addresses load sharing, cable-suspended transport, and cooperative grasping scenarios.</p>
-<h2>Guidance Formulation</h2>
-<p>Two UAVs, \(A\) and \(B\), rigidly transport a payload of length \(L\) to a landing platform. Rather than controlling each UAV's trajectory directly, the coupled translational motion of the two-UAV–payload system is represented through a single virtual <b>equivalent agent</b> \(U\), whose position is a convex combination of the UAV positions along the rigid link, parametrized by the link-orientation angle \(\xi\):</p>
-<p style="text-align:center">
-\[ r_{au}=\big[\sigma L\cos\xi,\ \sigma L\sin\xi,\ 0\big]^\top, \qquad r_{bu}=\big[-(1-\sigma) L\cos\xi,\ -(1-\sigma) L\sin\xi,\ 0\big]^\top \]
-</p><p>The individual UAV velocities and accelerations then follow directly from the equivalent agent's motion and the payload's rotation \((\omega,\alpha)\) via standard rigid-body kinematics. This reduces cooperative payload delivery to a single-agent range/line-of-sight engagement between \(U\) and the landing platform — the same guidance-design machinery used for path following and interception — for which fixed-time guidance laws are derived for both stationary and maneuvering platforms.</p>
-<figure class="paper-figure">
-  <img src="images/research/equivalent_agent_geometry.png" alt="Two-UAV payload equivalent-agent geometry" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-  <div class="paper-figure-placeholder">Figure not yet added &mdash; save <code>equivalent_agent_geometry.png</code> to <code>images/research/</code></div>
-  <figcaption>Geometric representation of the two-UAV&ndash;payload system and its virtual equivalent agent <em>U</em>, used to formulate cooperative payload delivery as a single engagement problem.</figcaption>
-</figure>
 <h2>Key Contributions</h2>
 <ul>
 <li><p>Multi-UAV formation control strategies for cooperative load transport.</p>
@@ -98,6 +88,39 @@ MathJax.Hub.Config({
 <li><p>Fixed-time sliding mode guidance validated via processor-in-the-loop implementation on a Raspberry Pi.</p>
 </li>
 </ul>
+<h2>Equivalent-Agent Guidance for Cooperative UAV Payload Transportation</h2>
+<p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.48550/arXiv.2609.19312" target=&ldquo;blank&rdquo;>Aerospace Science and Technology</a>, 2026 (under review).</p>
+<div class="video-grid">
+
+  <div class="video-card">
+    <video controls preload="metadata">
+      <source src="videos/aerial-manipulation/Load_Transportation_Stationary_All.mp4" type="video/mp4">
+    </video>
+    <p class="video-card-caption">Delivery to a stationary platform &mdash; full simulation dashboard.</p>
+  </div>
+
+  <div class="video-card">
+    <video controls preload="metadata">
+      <source src="videos/aerial-manipulation/Load_Transportation_Stationary_Trajectory.mp4" type="video/mp4">
+    </video>
+    <p class="video-card-caption">Delivery to a stationary platform &mdash; 3D trajectory.</p>
+  </div>
+
+  <div class="video-card">
+    <video controls preload="metadata">
+      <source src="videos/aerial-manipulation/Load_Transportation_Maneuvering_All.mp4" type="video/mp4">
+    </video>
+    <p class="video-card-caption">Delivery to a maneuvering platform &mdash; full simulation dashboard.</p>
+  </div>
+
+  <div class="video-card">
+    <video controls preload="metadata">
+      <source src="videos/aerial-manipulation/Load_Transportation_Maneuvering_Trajectory.mp4" type="video/mp4">
+    </video>
+    <p class="video-card-caption">Delivery to a maneuvering platform &mdash; 3D trajectory.</p>
+  </div>
+
+</div>
 <h2>Relevant Publications</h2>
 <div class="pub-page-lists">
 <h3>Journal Papers</h3>
@@ -141,7 +164,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 24<sup>th</sup> 2026  07:59PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated September 24<sup>th</sup> 2026  08:21PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

@@ -178,7 +178,7 @@ MathJax.Hub.Config({
     var XT0 = 10000, YT0 = 0;
     var CONTROL_DT = 0.01; // matches MATLAB's h
     var HIT_RADIUS = 1.0;
-    var TIME_SPEEDUP = 4; // played back faster than real time, for viewing
+    var TIME_SPEEDUP = 2; // played back faster than real time, for viewing
 
     // MATLAB styleList: {color, linestyle} cycled per run, keyed here by t_d
     var TD_STYLE = {
@@ -307,7 +307,7 @@ MathJax.Hub.Config({
       if (targetTrail.length > 1) {
         ctx.setLineDash([7, 5]);
         ctx.strokeStyle = '#000';
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(targetTrail[0].x, targetTrail[0].y);
         for (var i = 1; i < targetTrail.length; i++) ctx.lineTo(targetTrail[i].x, targetTrail[i].y);
@@ -320,7 +320,7 @@ MathJax.Hub.Config({
       if (trail.length > 1) {
         ctx.setLineDash(style.dash);
         ctx.strokeStyle = style.color;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(trail[0].x, trail[0].y);
         for (var j = 1; j < trail.length; j++) ctx.lineTo(trail[j].x, trail[j].y);
@@ -571,7 +571,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 25<sup>th</sup> 2026  11:13PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated September 25<sup>th</sup> 2026  11:17PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

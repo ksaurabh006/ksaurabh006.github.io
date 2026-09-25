@@ -90,7 +90,7 @@ MathJax.Hub.Config({
 </ul>
 <h2>Interactive Demo: Impact-Time-Controlled Guidance</h2>
 <div class="demo-card">
-  <p class="demo-note">A direct JavaScript port of the paper's exact nonlinear range-to-go guidance law &mdash; constant 300 m/s interceptor speed, asymmetric 15g / &minus;10g acceleration limits, and a first-order autopilot lag, integrated with RK4 in place of MATLAB's ode45 (the control law itself is unchanged). Pick an initial heading and a desired impact time &mdash; both drawn from the paper's own tested scenarios &mdash; and press Launch.</p>
+  <p class="demo-note">A direct JavaScript port of the paper's exact nonlinear range-to-go guidance law against a <b>moving</b> target &mdash; constant 300 m/s interceptor speed, a target moving at 100 m/s, asymmetric 15g / &minus;10g acceleration limits, and a first-order autopilot lag, integrated with RK4 in place of MATLAB's ode45 (the control law itself is unchanged). Colors and line styles match the original MATLAB figures: magenta solid / blue dashed / dark-green dash-dot for t<sub>d</sub> = 35/37/40 s, black dashed for the target track, with diamond start markers and a red star at impact. Pick an initial heading and a desired impact time &mdash; both drawn from the paper's own tested scenarios &mdash; and press Launch.</p>
 
   <div class="demo-body">
     <div class="demo-canvas-wrap">
@@ -100,10 +100,10 @@ MathJax.Hub.Config({
     <div class="demo-controls">
       <div class="demo-option-label">Initial heading &gamma;<sub>M</sub>(0)</div>
       <div class="demo-buttons demo-option-group" id="itg-heading-group">
-        <button type="button" class="demo-btn" data-value="-90">-90&deg;</button>
         <button type="button" class="demo-btn selected" data-value="-60">-60&deg;</button>
         <button type="button" class="demo-btn" data-value="-45">-45&deg;</button>
         <button type="button" class="demo-btn" data-value="60">60&deg;</button>
+        <button type="button" class="demo-btn" data-value="90">90&deg;</button>
       </div>
 
       <div class="demo-option-label">Desired impact time t<sub>d</sub></div>
@@ -119,7 +119,7 @@ MathJax.Hub.Config({
       </div>
 
       <div class="demo-readout" id="itg-readout">
-        Constant speed: 300 m/s. Press Launch to run the guidance law.
+        Constant speed: 300 m/s vs. a 100 m/s target. Press Launch to run the guidance law.
       </div>
     </div>
   </div>
@@ -137,24 +137,36 @@ MathJax.Hub.Config({
 
     // Exact parameters from the paper's MATLAB simulation
     var G = 9.81;
-    var VM = 300, VT = 0;
+    var VM = 300, VT = 100;
     var N_EXP = 2;
     var A_MAX = 15 * G, A_MIN = -10 * G;
     var C1 = 0.1, K1 = 0.6, K2 = 10, K3 = 0.3;
     var GAMMA_T = 100 * Math.PI / 180;
-    var XT = 10000, YT = 0;
+    var XT0 = 10000, YT0 = 0;
     var CONTROL_DT = 0.01; // matches MATLAB's h
     var HIT_RADIUS = 1.0;
     var TIME_SPEEDUP = 4; // played back faster than real time, for viewing
 
+    // MATLAB styleList: {color, linestyle} cycled per run, keyed here by t_d
+    var TD_STYLE = {
+      35: { color: '#FF00FF', dash: [] },       // 'm' solid
+      37: { color: '#0000FF', dash: [10, 6] },  // 'b' dashed
+      40: { color: '#008000', dash: [10, 4, 2, 4] } // dark green dash-dot
+    };
+
     // World (meters) -> canvas (px) mapping, sized to fit every safe scenario
-    var WORLD_X_MIN = -300, WORLD_X_MAX = 10300;
-    var WORLD_Y_MIN = -2700, WORLD_Y_MAX = 2700;
+    var WORLD_X_MIN = -400, WORLD_X_MAX = 10200;
+    var WORLD_Y_MIN = -1700, WORLD_Y_MAX = 4200;
+    var WORLD_Y_MID = (WORLD_Y_MIN + WORLD_Y_MAX) / 2;
     var innerW = W - 2 * MARGIN, innerH = H - 2 * MARGIN;
     var SCALE = Math.max((WORLD_X_MAX - WORLD_X_MIN) / innerW, (WORLD_Y_MAX - WORLD_Y_MIN) / innerH);
 
     function toCanvasX(xm) { return MARGIN + (xm - WORLD_X_MIN) / SCALE; }
-    function toCanvasY(ym) { return MARGIN + innerH / 2 - ym / SCALE; }
+    function toCanvasY(ym) { return MARGIN + innerH / 2 - (ym - WORLD_Y_MID) / SCALE; }
+
+    function targetPos(t) {
+      return { x: XT0 + VT * Math.cos(GAMMA_T) * t, y: YT0 + VT * Math.sin(GAMMA_T) * t };
+    }
 
     var headingGroup = document.getElementById('itg-heading-group');
     var tdGroup = document.getElementById('itg-td-group');
@@ -179,16 +191,19 @@ MathJax.Hub.Config({
     wireGroup(headingGroup, function (v) { selectedHeadingDeg = v; });
     wireGroup(tdGroup, function (v) { selectedTd = v; });
 
-    var state, trail, running, elapsed, tDesired, rafId, finished;
+    var state, trail, targetTrail, impactPoint, running, elapsed, tDesired, rafId, finished;
 
     function resetState() {
       state = { xm: 0, ym: 0, gammaM: selectedHeadingDeg * Math.PI / 180, am: 0 };
       trail = [{ x: toCanvasX(0), y: toCanvasY(0) }];
+      var t0 = targetPos(0);
+      targetTrail = [{ x: toCanvasX(t0.x), y: toCanvasY(t0.y) }];
+      impactPoint = null;
       running = false;
       finished = false;
       elapsed = 0;
       if (rafId) cancelAnimationFrame(rafId);
-      readout.textContent = 'Constant speed: 300 m/s. Press Launch to run the guidance law.';
+      readout.textContent = 'Constant speed: 300 m/s vs. a 100 m/s target. Press Launch to run the guidance law.';
       draw();
     }
 
@@ -209,12 +224,41 @@ MathJax.Hub.Config({
       }
     }
 
+    function drawDiamond(x, y) {
+      ctx.fillStyle = '#000';
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x, y - 6);
+      ctx.lineTo(x + 6, y);
+      ctx.lineTo(x, y + 6);
+      ctx.lineTo(x - 6, y);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawStar(x, y) {
+      ctx.strokeStyle = '#dc2626';
+      ctx.lineWidth = 2;
+      var spikes = 6, outer = 10, inner = 4.2;
+      ctx.beginPath();
+      for (var i = 0; i < spikes * 2; i++) {
+        var rad = i % 2 === 0 ? outer : inner;
+        var ang = (Math.PI / spikes) * i - Math.PI / 2;
+        var px = x + rad * Math.cos(ang), py = y + rad * Math.sin(ang);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
+
     function draw() {
       ctx.clearRect(0, 0, W, H);
       drawGrid();
 
       var mx = toCanvasX(state.xm), my = toCanvasY(state.ym);
-      var tx = toCanvasX(XT), ty = toCanvasY(YT);
+      var tPos = targetPos(elapsed);
+      var tx = toCanvasX(tPos.x), ty = toCanvasY(tPos.y);
 
       // line of sight
       ctx.setLineDash([4, 5]);
@@ -226,40 +270,52 @@ MathJax.Hub.Config({
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // trail
-      if (trail.length > 1) {
-        ctx.strokeStyle = '#2563eb';
-        ctx.lineWidth = 2;
+      // target track: black dashed (matches plot_figs.m)
+      if (targetTrail.length > 1) {
+        ctx.setLineDash([7, 5]);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(trail[0].x, trail[0].y);
-        for (var i = 1; i < trail.length; i++) ctx.lineTo(trail[i].x, trail[i].y);
+        ctx.moveTo(targetTrail[0].x, targetTrail[0].y);
+        for (var i = 1; i < targetTrail.length; i++) ctx.lineTo(targetTrail[i].x, targetTrail[i].y);
         ctx.stroke();
+        ctx.setLineDash([]);
       }
 
-      // start marker
-      ctx.fillStyle = 'rgba(100,116,139,0.55)';
-      ctx.beginPath();
-      ctx.arc(toCanvasX(0), toCanvasY(0), 3.5, 0, 2 * Math.PI);
-      ctx.fill();
+      // interceptor track: color/dash keyed to selected impact time
+      var style = TD_STYLE[selectedTd] || TD_STYLE[35];
+      if (trail.length > 1) {
+        ctx.setLineDash(style.dash);
+        ctx.strokeStyle = style.color;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(trail[0].x, trail[0].y);
+        for (var j = 1; j < trail.length; j++) ctx.lineTo(trail[j].x, trail[j].y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
 
-      // target
-      ctx.strokeStyle = '#dc2626';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(tx, ty, 9, 0, 2 * Math.PI);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(tx - 13, ty);
-      ctx.lineTo(tx + 13, ty);
-      ctx.moveTo(tx, ty - 13);
-      ctx.lineTo(tx, ty + 13);
-      ctx.stroke();
+      // start markers (black diamonds, matching plot_figs.m)
+      drawDiamond(toCanvasX(0), toCanvasY(0));
+      drawDiamond(targetTrail[0].x, targetTrail[0].y);
+
+      // impact marker (red star) once finished
+      if (impactPoint) {
+        drawStar(impactPoint.x, impactPoint.y);
+      } else {
+        // live target position while running/idle
+        ctx.strokeStyle = '#dc2626';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(tx, ty, 7, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
 
       // interceptor (triangle oriented by heading; canvas y is flipped vs. world y)
       ctx.save();
       ctx.translate(mx, my);
       ctx.rotate(-state.gammaM);
-      ctx.fillStyle = '#2563eb';
+      ctx.fillStyle = style.color;
       ctx.beginPath();
       ctx.moveTo(11, 0);
       ctx.lineTo(-8, 6);
@@ -280,6 +336,8 @@ MathJax.Hub.Config({
       if (rafId) cancelAnimationFrame(rafId);
       var msg;
       if (status === 'hit') {
+        var tPos = targetPos(elapsed);
+        impactPoint = { x: toCanvasX(tPos.x), y: toCanvasY(tPos.y) };
         msg = 'Impact at t = ' + elapsed.toFixed(2) + ' s (desired ' + tDesired.toFixed(0) + ' s).';
       } else if (status === 'singular') {
         msg = 'Guidance encountered a numerical singularity for this configuration.';
@@ -322,8 +380,8 @@ MathJax.Hub.Config({
     }
 
     // Range-to-go backstepping guidance law (verbatim structure from engagement.m / main.m)
-    function computeAc(s, tGo) {
-      var dx = XT - s.xm, dy = YT - s.ym;
+    function computeAc(s, xt, yt, tGo) {
+      var dx = xt - s.xm, dy = yt - s.ym;
       var r = Math.hypot(dx, dy);
       var theta = Math.atan2(dy, dx);
       var psiM = s.gammaM - theta;
@@ -369,7 +427,8 @@ MathJax.Hub.Config({
 
     function controlStep() {
       var tGo = Math.max(tDesired - elapsed, 0.05);
-      var result = computeAc(state, tGo);
+      var tPos = targetPos(elapsed);
+      var result = computeAc(state, tPos.x, tPos.y, tGo);
       if (result.r < HIT_RADIUS) {
         finish('hit');
         return false;
@@ -381,6 +440,8 @@ MathJax.Hub.Config({
       state = rk4Step(state, result.ac, CONTROL_DT);
       elapsed += CONTROL_DT;
       trail.push({ x: toCanvasX(state.xm), y: toCanvasY(state.ym) });
+      var newTPos = targetPos(elapsed);
+      targetTrail.push({ x: toCanvasX(newTPos.x), y: toCanvasY(newTPos.y) });
       updateReadout(result.r);
       if (elapsed > tDesired + 8) {
         finish('timeout');
@@ -510,7 +571,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 25<sup>th</sup> 2026  10:58PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated September 25<sup>th</sup> 2026  11:06PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

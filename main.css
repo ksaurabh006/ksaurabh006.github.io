@@ -1722,6 +1722,111 @@ a.res-card:hover .res-link {
 [data-theme="dark"] .cite-panel      { background: #0b1524; border-color: #1e293b; }
 [data-theme="dark"] .cite-panel pre  { color: #cbd5e1; }
 
+/* ── 5c. INTERACTIVE RESEARCH DEMOS (canvas + controls) ─────
+   Used by ra_interceptor.jemdoc's impact-time demo             */
+
+.demo-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--white);
+  padding: 1.25rem 1.25rem 1.5rem 1.25rem;
+  margin: 1rem 0 1.75rem 0;
+}
+
+.demo-note {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0 0 1rem 0;
+}
+
+.demo-body {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.demo-canvas-wrap {
+  flex: 1 1 420px;
+  min-width: 280px;
+}
+
+#itg-canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 640 / 380;
+  display: block;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: crosshair;
+}
+
+.demo-controls {
+  flex: 1 1 220px;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.demo-slider-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.demo-controls input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.demo-buttons {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+}
+
+.demo-btn {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.4rem 1rem;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+}
+.demo-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.demo-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.demo-btn.primary:hover {
+  background: var(--accent2);
+  border-color: var(--accent2);
+  color: #fff;
+}
+
+.demo-readout {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.5;
+  min-height: 2.4em;
+}
+
+[data-theme="dark"] .demo-card         { background: #111e33; border-color: #1e293b; }
+[data-theme="dark"] #itg-canvas        { background: #0b1524; border-color: #1e293b; }
+[data-theme="dark"] .demo-btn          { background: #111e33; border-color: #1e293b; color: #e2e8f0; }
+[data-theme="dark"] .demo-btn:hover    { border-color: var(--accent2); color: var(--accent2); }
+
 /* ── 6. ENHANCED CARD HOVER / TRANSITIONS ───────────────────
    Augments existing hover styles with lift + glow             */
 

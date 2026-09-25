@@ -88,6 +88,258 @@ MathJax.Hub.Config({
 <li><p>Asymmetric input constrained range-to-go based impact time guidance.</p>
 </li>
 </ul>
+<h2>Interactive Demo: Impact-Time-Controlled Guidance</h2>
+<div class="demo-card">
+  <p class="demo-note">A simplified, in-browser illustration of impact-time-controlled guidance &mdash; not the exact algorithm from the paper. Click anywhere in the field to place the target, choose a desired impact time, and watch the interceptor modulate its speed (within bounded, asymmetric acceleration/deceleration limits) to arrive exactly then.</p>
+
+  <div class="demo-body">
+    <div class="demo-canvas-wrap">
+      <canvas id="itg-canvas" width="640" height="380"></canvas>
+    </div>
+
+    <div class="demo-controls">
+      <label class="demo-slider-label" for="itg-td">
+        Desired impact time: <span id="itg-td-value">8.0</span> s
+      </label>
+      <input type="range" id="itg-td" min="3" max="15" step="0.5" value="8">
+
+      <div class="demo-buttons">
+        <button id="itg-launch" class="demo-btn primary" type="button">Launch</button>
+        <button id="itg-reset" class="demo-btn" type="button">Reset</button>
+      </div>
+
+      <div class="demo-readout" id="itg-readout">
+        Click on the field to place the target, then press Launch.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  document.addEventListener('DOMContentLoaded', function () {
+    var canvas = document.getElementById('itg-canvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+
+    var W = canvas.width, H = canvas.height;
+    var MARGIN = 24;
+
+    var START = { x: MARGIN + 20, y: H - MARGIN - 20 };
+    var MAX_SPEED = 260, MIN_SPEED = 45;
+    var MAX_ACCEL = 70, MAX_DECEL = 105;
+    var MAX_TURN_RATE = 3.2;
+    var HIT_RADIUS = 9;
+
+    var tdSlider = document.getElementById('itg-td');
+    var tdValue = document.getElementById('itg-td-value');
+    var launchBtn = document.getElementById('itg-launch');
+    var resetBtn = document.getElementById('itg-reset');
+    var readout = document.getElementById('itg-readout');
+
+    var target = { x: W - MARGIN - 60, y: MARGIN + 50 };
+    var interceptor, trail, running, elapsed, tDesired, lastTime, rafId, finished;
+
+    function resetState() {
+      interceptor = { x: START.x, y: START.y, heading: -Math.PI / 5, speed: MIN_SPEED };
+      trail = [{ x: START.x, y: START.y }];
+      running = false;
+      finished = false;
+      elapsed = 0;
+      if (rafId) cancelAnimationFrame(rafId);
+      readout.textContent = 'Click on the field to place the target, then press Launch.';
+      draw();
+    }
+
+    function normalizeAngle(a) {
+      while (a > Math.PI) a -= 2 * Math.PI;
+      while (a < -Math.PI) a += 2 * Math.PI;
+      return a;
+    }
+
+    function drawGrid() {
+      ctx.strokeStyle = 'rgba(100,116,139,0.12)';
+      ctx.lineWidth = 1;
+      for (var gx = MARGIN; gx <= W - MARGIN; gx += 40) {
+        ctx.beginPath();
+        ctx.moveTo(gx, MARGIN);
+        ctx.lineTo(gx, H - MARGIN);
+        ctx.stroke();
+      }
+      for (var gy = MARGIN; gy <= H - MARGIN; gy += 40) {
+        ctx.beginPath();
+        ctx.moveTo(MARGIN, gy);
+        ctx.lineTo(W - MARGIN, gy);
+        ctx.stroke();
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      drawGrid();
+
+      // line of sight
+      ctx.setLineDash([4, 5]);
+      ctx.strokeStyle = 'rgba(100,116,139,0.45)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(interceptor.x, interceptor.y);
+      ctx.lineTo(target.x, target.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // trail
+      if (trail.length > 1) {
+        ctx.strokeStyle = '#2563eb';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(trail[0].x, trail[0].y);
+        for (var i = 1; i < trail.length; i++) ctx.lineTo(trail[i].x, trail[i].y);
+        ctx.stroke();
+      }
+
+      // start marker
+      ctx.fillStyle = 'rgba(100,116,139,0.55)';
+      ctx.beginPath();
+      ctx.arc(START.x, START.y, 3.5, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // target
+      ctx.strokeStyle = '#dc2626';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(target.x, target.y, 9, 0, 2 * Math.PI);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(target.x - 13, target.y);
+      ctx.lineTo(target.x + 13, target.y);
+      ctx.moveTo(target.x, target.y - 13);
+      ctx.lineTo(target.x, target.y + 13);
+      ctx.stroke();
+
+      // interceptor (triangle oriented by heading)
+      ctx.save();
+      ctx.translate(interceptor.x, interceptor.y);
+      ctx.rotate(interceptor.heading);
+      ctx.fillStyle = '#2563eb';
+      ctx.beginPath();
+      ctx.moveTo(11, 0);
+      ctx.lineTo(-8, 6);
+      ctx.lineTo(-8, -6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function updateReadout() {
+      var range = Math.hypot(target.x - interceptor.x, target.y - interceptor.y);
+      readout.textContent = 'Elapsed: ' + elapsed.toFixed(2) + ' s   |   Range: ' +
+        range.toFixed(0) + '   |   Speed: ' + interceptor.speed.toFixed(0);
+    }
+
+    function finish(aborted) {
+      running = false;
+      finished = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      var diff = elapsed - tDesired;
+      var msg;
+      if (aborted) {
+        msg = 'Target not reached within the desired time &mdash; the bounded speed limits could not close the range in time. Try a longer desired time or a closer target.';
+      } else if (Math.abs(diff) < 0.15) {
+        msg = 'Impact at t = ' + elapsed.toFixed(2) + ' s (desired ' + tDesired.toFixed(1) + ' s) &mdash; converged.';
+      } else {
+        msg = 'Impact at t = ' + elapsed.toFixed(2) + ' s (desired ' + tDesired.toFixed(1) +
+          ' s) &mdash; input constraints prevented exact convergence for this geometry.';
+      }
+      readout.innerHTML = msg;
+    }
+
+    function step(now) {
+      if (!running) return;
+      if (!lastTime) lastTime = now;
+      var dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+      elapsed += dt;
+
+      var dx = target.x - interceptor.x;
+      var dy = target.y - interceptor.y;
+      var range = Math.hypot(dx, dy);
+
+      if (range < HIT_RADIUS) {
+        interceptor.x = target.x;
+        interceptor.y = target.y;
+        trail.push({ x: interceptor.x, y: interceptor.y });
+        draw();
+        finish(false);
+        return;
+      }
+
+      var tRemaining = Math.max(tDesired - elapsed, 0.15);
+      var desiredSpeed = range / tRemaining;
+      desiredSpeed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, desiredSpeed));
+
+      var speedError = desiredSpeed - interceptor.speed;
+      var maxDeltaV = (speedError >= 0 ? MAX_ACCEL : MAX_DECEL) * dt;
+      var deltaV = Math.max(-maxDeltaV, Math.min(maxDeltaV, speedError));
+      interceptor.speed += deltaV;
+
+      var desiredHeading = Math.atan2(dy, dx);
+      var headingError = normalizeAngle(desiredHeading - interceptor.heading);
+      var maxDeltaH = MAX_TURN_RATE * dt;
+      var deltaH = Math.max(-maxDeltaH, Math.min(maxDeltaH, headingError));
+      interceptor.heading += deltaH;
+
+      interceptor.x += interceptor.speed * Math.cos(interceptor.heading) * dt;
+      interceptor.y += interceptor.speed * Math.sin(interceptor.heading) * dt;
+      trail.push({ x: interceptor.x, y: interceptor.y });
+
+      draw();
+      updateReadout();
+
+      if (elapsed > tDesired + 6) {
+        finish(true);
+        return;
+      }
+
+      rafId = requestAnimationFrame(step);
+    }
+
+    canvas.addEventListener('click', function (e) {
+      if (running) return;
+      var rect = canvas.getBoundingClientRect();
+      var scaleX = W / rect.width, scaleY = H / rect.height;
+      var x = (e.clientX - rect.left) * scaleX;
+      var y = (e.clientY - rect.top) * scaleY;
+      x = Math.max(MARGIN + 10, Math.min(W - MARGIN - 10, x));
+      y = Math.max(MARGIN + 10, Math.min(H - MARGIN - 10, y));
+      target.x = x;
+      target.y = y;
+      if (finished) resetState();
+      else draw();
+    });
+
+    tdSlider.addEventListener('input', function () {
+      tdValue.textContent = parseFloat(tdSlider.value).toFixed(1);
+    });
+
+    launchBtn.addEventListener('click', function () {
+      if (running) return;
+      resetState();
+      tDesired = parseFloat(tdSlider.value);
+      running = true;
+      lastTime = 0;
+      readout.textContent = 'Elapsed: 0.00 s';
+      rafId = requestAnimationFrame(step);
+    });
+
+    resetBtn.addEventListener('click', function () {
+      resetState();
+    });
+
+    resetState();
+  });
+})();
+</script>
 <h2>Asymmetric Input Constrained Range-to-go based Impact Time Guidance</h2>
 <p>Saurabh Kumar, Rohit V. Nanavati, and Shashi Ranjan Kumar, Proceedings of the European Control Conference (ECC), Reykjavík, Iceland, 2026.</p>
 <div class="video-grid">
@@ -174,7 +426,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 24<sup>th</sup> 2026  08:38PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated September 25<sup>th</sup> 2026  10:38PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

@@ -336,12 +336,21 @@ MathJax.Hub.Config({
       if (impactPoint) {
         drawStar(impactPoint.x, impactPoint.y);
       } else {
-        // live target position while running/idle
-        ctx.strokeStyle = '#dc2626';
-        ctx.lineWidth = 2;
+        // live target position while running/idle: triangle oriented along its heading
+        ctx.save();
+        ctx.translate(tx, ty);
+        ctx.rotate(-GAMMA_T);
+        ctx.fillStyle = '#dc2626';
+        ctx.strokeStyle = '#7f1d1d';
+        ctx.lineWidth = 1.25;
         ctx.beginPath();
-        ctx.arc(tx, ty, 7, 0, 2 * Math.PI);
+        ctx.moveTo(10, 0);
+        ctx.lineTo(-7, 5.5);
+        ctx.lineTo(-7, -5.5);
+        ctx.closePath();
+        ctx.fill();
         ctx.stroke();
+        ctx.restore();
       }
 
       // interceptor (triangle oriented by heading; canvas y is flipped vs. world y)
@@ -571,7 +580,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 25<sup>th</sup> 2026  11:17PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated September 25<sup>th</sup> 2026  11:19PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

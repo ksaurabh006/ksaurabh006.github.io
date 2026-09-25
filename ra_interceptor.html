@@ -88,9 +88,42 @@ MathJax.Hub.Config({
 <li><p>Asymmetric input constrained range-to-go based impact time guidance.</p>
 </li>
 </ul>
-<h2>Interactive Demo: Impact-Time-Controlled Guidance</h2>
+<h2>Asymmetric Input Constrained Range-to-go based Impact Time Guidance</h2>
+<p>Saurabh Kumar, Rohit V. Nanavati, and Shashi Ranjan Kumar, Proceedings of the European Control Conference (ECC), Reykjavík, Iceland, 2026.</p>
+<div class="video-grid">
+
+  <div class="video-card">
+    <video controls preload="metadata" poster="videos/ecc2026-impact-time/Simulation_Diff_td_Animation.jpg">
+      <source src="videos/ecc2026-impact-time/Simulation_Diff_td_Animation.mp4" type="video/mp4">
+    </video>
+    <p class="video-card-caption">Simulation results for different desired impact times.</p>
+  </div>
+
+  <div class="video-card">
+    <video controls preload="metadata" poster="videos/ecc2026-impact-time/Simulation_Diff_Heading_Animation.jpg">
+      <source src="videos/ecc2026-impact-time/Simulation_Diff_Heading_Animation.mp4" type="video/mp4">
+    </video>
+    <p class="video-card-caption">Simulation results for different initial heading angles.</p>
+  </div>
+
+  <div class="video-card">
+    <video controls preload="metadata" poster="videos/ecc2026-impact-time/Simulation_Diff_Gamma_T_Animation.jpg">
+      <source src="videos/ecc2026-impact-time/Simulation_Diff_Gamma_T_Animation.mp4" type="video/mp4">
+    </video>
+    <p class="video-card-caption">Simulation results for different target aspect angles.</p>
+  </div>
+
+  <div class="video-card">
+    <video controls preload="metadata" poster="videos/ecc2026-impact-time/Simultaneous_Guidance_Comparison.jpg">
+      <source src="videos/ecc2026-impact-time/Simultaneous_Guidance_Comparison.mp4" type="video/mp4">
+    </video>
+    <p class="video-card-caption">Comparison of simultaneous guidance strategies.</p>
+  </div>
+
+</div>
+<h3>Try It Yourself</h3>
 <div class="demo-card">
-  <p class="demo-note">A direct JavaScript port of the paper's exact nonlinear range-to-go guidance law against a <b>moving</b> target &mdash; constant 300 m/s interceptor speed, a target moving at 100 m/s, asymmetric 15g / &minus;10g acceleration limits, and a first-order autopilot lag, integrated with RK4 in place of MATLAB's ode45 (the control law itself is unchanged). Colors and line styles match the original MATLAB figures: magenta solid / blue dashed / dark-green dash-dot for t<sub>d</sub> = 35/37/40 s, black dashed for the target track, with diamond start markers and a red star at impact. Pick an initial heading and a desired impact time &mdash; both drawn from the paper's own tested scenarios &mdash; and press Launch.</p>
+  <p class="demo-note">Choose an initial heading and a desired impact time below, then press Launch to watch the interceptor home in on the moving target &mdash; arriving exactly at the time you chose. Press Reset to try a different combination.</p>
 
   <div class="demo-body">
     <div class="demo-canvas-wrap">
@@ -485,39 +518,6 @@ MathJax.Hub.Config({
   });
 })();
 </script>
-<h2>Asymmetric Input Constrained Range-to-go based Impact Time Guidance</h2>
-<p>Saurabh Kumar, Rohit V. Nanavati, and Shashi Ranjan Kumar, Proceedings of the European Control Conference (ECC), Reykjavík, Iceland, 2026.</p>
-<div class="video-grid">
-
-  <div class="video-card">
-    <video controls preload="metadata" poster="videos/ecc2026-impact-time/Simulation_Diff_td_Animation.jpg">
-      <source src="videos/ecc2026-impact-time/Simulation_Diff_td_Animation.mp4" type="video/mp4">
-    </video>
-    <p class="video-card-caption">Simulation results for different desired impact times.</p>
-  </div>
-
-  <div class="video-card">
-    <video controls preload="metadata" poster="videos/ecc2026-impact-time/Simulation_Diff_Heading_Animation.jpg">
-      <source src="videos/ecc2026-impact-time/Simulation_Diff_Heading_Animation.mp4" type="video/mp4">
-    </video>
-    <p class="video-card-caption">Simulation results for different initial heading angles.</p>
-  </div>
-
-  <div class="video-card">
-    <video controls preload="metadata" poster="videos/ecc2026-impact-time/Simulation_Diff_Gamma_T_Animation.jpg">
-      <source src="videos/ecc2026-impact-time/Simulation_Diff_Gamma_T_Animation.mp4" type="video/mp4">
-    </video>
-    <p class="video-card-caption">Simulation results for different target aspect angles.</p>
-  </div>
-
-  <div class="video-card">
-    <video controls preload="metadata" poster="videos/ecc2026-impact-time/Simultaneous_Guidance_Comparison.jpg">
-      <source src="videos/ecc2026-impact-time/Simultaneous_Guidance_Comparison.mp4" type="video/mp4">
-    </video>
-    <p class="video-card-caption">Comparison of simultaneous guidance strategies.</p>
-  </div>
-
-</div>
 <h2>Relevant Publications</h2>
 <div class="pub-page-lists">
 <h3>Conference Papers</h3>
@@ -571,7 +571,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 25<sup>th</sup> 2026  11:06PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated September 25<sup>th</sup> 2026  11:13PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

@@ -1771,21 +1771,21 @@ a.res-card:hover .res-link {
   gap: 0.6rem;
 }
 
-.demo-slider-label {
+.demo-option-label {
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--text);
 }
 
-.demo-controls input[type="range"] {
-  width: 100%;
-  accent-color: var(--accent);
-}
-
 .demo-buttons {
   display: flex;
   gap: 0.6rem;
+  flex-wrap: wrap;
   margin-top: 0.2rem;
+}
+
+.demo-option-group {
+  margin-bottom: 0.4rem;
 }
 
 .demo-btn {
@@ -1803,6 +1803,11 @@ a.res-card:hover .res-link {
 .demo-btn:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+.demo-btn.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
 }
 .demo-btn.primary {
   background: var(--accent);
@@ -1826,6 +1831,7 @@ a.res-card:hover .res-link {
 [data-theme="dark"] #itg-canvas        { background: #0b1524; border-color: #1e293b; }
 [data-theme="dark"] .demo-btn          { background: #111e33; border-color: #1e293b; color: #e2e8f0; }
 [data-theme="dark"] .demo-btn:hover    { border-color: var(--accent2); color: var(--accent2); }
+[data-theme="dark"] .demo-btn.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* ── 6. ENHANCED CARD HOVER / TRANSITIONS ───────────────────
    Augments existing hover styles with lift + glow             */

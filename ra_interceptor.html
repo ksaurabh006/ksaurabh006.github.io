@@ -90,7 +90,7 @@ MathJax.Hub.Config({
 </ul>
 <h2>Interactive Demo: Impact-Time-Controlled Guidance</h2>
 <div class="demo-card">
-  <p class="demo-note">A simplified, in-browser illustration &mdash; not the exact algorithm from the paper. The interceptor steers using true proportional navigation (turn rate proportional to line-of-sight rate and closing speed) while its speed is modulated within bounded, asymmetric acceleration/deceleration limits to arrive at an exact, user-chosen impact time, echoing <i>True-Proportional Navigation based Exact-Time Convergent Impact Time Guidance</i>. Click anywhere in the field to place the target, choose a desired impact time, and press Launch.</p>
+  <p class="demo-note">A direct JavaScript port of the paper's exact nonlinear range-to-go guidance law &mdash; constant 300 m/s interceptor speed, asymmetric 15g / &minus;10g acceleration limits, and a first-order autopilot lag, integrated with RK4 in place of MATLAB's ode45 (the control law itself is unchanged). Pick an initial heading and a desired impact time &mdash; both drawn from the paper's own tested scenarios &mdash; and press Launch.</p>
 
   <div class="demo-body">
     <div class="demo-canvas-wrap">
@@ -98,10 +98,20 @@ MathJax.Hub.Config({
     </div>
 
     <div class="demo-controls">
-      <label class="demo-slider-label" for="itg-td">
-        Desired impact time: <span id="itg-td-value">8.0</span> s
-      </label>
-      <input type="range" id="itg-td" min="3" max="15" step="0.5" value="8">
+      <div class="demo-option-label">Initial heading &gamma;<sub>M</sub>(0)</div>
+      <div class="demo-buttons demo-option-group" id="itg-heading-group">
+        <button type="button" class="demo-btn" data-value="-90">-90&deg;</button>
+        <button type="button" class="demo-btn selected" data-value="-60">-60&deg;</button>
+        <button type="button" class="demo-btn" data-value="-45">-45&deg;</button>
+        <button type="button" class="demo-btn" data-value="60">60&deg;</button>
+      </div>
+
+      <div class="demo-option-label">Desired impact time t<sub>d</sub></div>
+      <div class="demo-buttons demo-option-group" id="itg-td-group">
+        <button type="button" class="demo-btn selected" data-value="35">35 s</button>
+        <button type="button" class="demo-btn" data-value="37">37 s</button>
+        <button type="button" class="demo-btn" data-value="40">40 s</button>
+      </div>
 
       <div class="demo-buttons">
         <button id="itg-launch" class="demo-btn primary" type="button">Launch</button>
@@ -109,7 +119,7 @@ MathJax.Hub.Config({
       </div>
 
       <div class="demo-readout" id="itg-readout">
-        Click on the field to place the target, then press Launch.
+        Constant speed: 300 m/s. Press Launch to run the guidance law.
       </div>
     </div>
   </div>
@@ -125,30 +135,60 @@ MathJax.Hub.Config({
     var W = canvas.width, H = canvas.height;
     var MARGIN = 24;
 
-    var START = { x: MARGIN + 20, y: H - MARGIN - 20 };
-    var MAX_SPEED = 260, MIN_SPEED = 45;
-    var MAX_ACCEL = 70, MAX_DECEL = 105;
-    var MAX_TURN_RATE = 3.2;
-    var HIT_RADIUS = 9;
-    var PN_GAIN = 3.5; // navigation constant N
+    // Exact parameters from the paper's MATLAB simulation
+    var G = 9.81;
+    var VM = 300, VT = 0;
+    var N_EXP = 2;
+    var A_MAX = 15 * G, A_MIN = -10 * G;
+    var C1 = 0.1, K1 = 0.6, K2 = 10, K3 = 0.3;
+    var GAMMA_T = 100 * Math.PI / 180;
+    var XT = 10000, YT = 0;
+    var CONTROL_DT = 0.01; // matches MATLAB's h
+    var HIT_RADIUS = 1.0;
+    var TIME_SPEEDUP = 4; // played back faster than real time, for viewing
 
-    var tdSlider = document.getElementById('itg-td');
-    var tdValue = document.getElementById('itg-td-value');
+    // World (meters) -> canvas (px) mapping, sized to fit every safe scenario
+    var WORLD_X_MIN = -300, WORLD_X_MAX = 10300;
+    var WORLD_Y_MIN = -2700, WORLD_Y_MAX = 2700;
+    var innerW = W - 2 * MARGIN, innerH = H - 2 * MARGIN;
+    var SCALE = Math.max((WORLD_X_MAX - WORLD_X_MIN) / innerW, (WORLD_Y_MAX - WORLD_Y_MIN) / innerH);
+
+    function toCanvasX(xm) { return MARGIN + (xm - WORLD_X_MIN) / SCALE; }
+    function toCanvasY(ym) { return MARGIN + innerH / 2 - ym / SCALE; }
+
+    var headingGroup = document.getElementById('itg-heading-group');
+    var tdGroup = document.getElementById('itg-td-group');
     var launchBtn = document.getElementById('itg-launch');
     var resetBtn = document.getElementById('itg-reset');
     var readout = document.getElementById('itg-readout');
 
-    var target = { x: W - MARGIN - 60, y: MARGIN + 50 };
-    var interceptor, trail, running, elapsed, tDesired, lastTime, rafId, finished;
+    var selectedHeadingDeg = -60;
+    var selectedTd = 35;
+
+    function wireGroup(group, onSelect) {
+      var buttons = group.querySelectorAll('.demo-btn');
+      buttons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (running) return;
+          buttons.forEach(function (b) { b.classList.remove('selected'); });
+          btn.classList.add('selected');
+          onSelect(parseFloat(btn.getAttribute('data-value')));
+        });
+      });
+    }
+    wireGroup(headingGroup, function (v) { selectedHeadingDeg = v; });
+    wireGroup(tdGroup, function (v) { selectedTd = v; });
+
+    var state, trail, running, elapsed, tDesired, rafId, finished;
 
     function resetState() {
-      interceptor = { x: START.x, y: START.y, heading: -Math.PI / 5, speed: MIN_SPEED };
-      trail = [{ x: START.x, y: START.y }];
+      state = { xm: 0, ym: 0, gammaM: selectedHeadingDeg * Math.PI / 180, am: 0 };
+      trail = [{ x: toCanvasX(0), y: toCanvasY(0) }];
       running = false;
       finished = false;
       elapsed = 0;
       if (rafId) cancelAnimationFrame(rafId);
-      readout.textContent = 'Click on the field to place the target, then press Launch.';
+      readout.textContent = 'Constant speed: 300 m/s. Press Launch to run the guidance law.';
       draw();
     }
 
@@ -173,13 +213,16 @@ MathJax.Hub.Config({
       ctx.clearRect(0, 0, W, H);
       drawGrid();
 
+      var mx = toCanvasX(state.xm), my = toCanvasY(state.ym);
+      var tx = toCanvasX(XT), ty = toCanvasY(YT);
+
       // line of sight
       ctx.setLineDash([4, 5]);
       ctx.strokeStyle = 'rgba(100,116,139,0.45)';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(interceptor.x, interceptor.y);
-      ctx.lineTo(target.x, target.y);
+      ctx.moveTo(mx, my);
+      ctx.lineTo(tx, ty);
       ctx.stroke();
       ctx.setLineDash([]);
 
@@ -196,26 +239,26 @@ MathJax.Hub.Config({
       // start marker
       ctx.fillStyle = 'rgba(100,116,139,0.55)';
       ctx.beginPath();
-      ctx.arc(START.x, START.y, 3.5, 0, 2 * Math.PI);
+      ctx.arc(toCanvasX(0), toCanvasY(0), 3.5, 0, 2 * Math.PI);
       ctx.fill();
 
       // target
       ctx.strokeStyle = '#dc2626';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(target.x, target.y, 9, 0, 2 * Math.PI);
+      ctx.arc(tx, ty, 9, 0, 2 * Math.PI);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(target.x - 13, target.y);
-      ctx.lineTo(target.x + 13, target.y);
-      ctx.moveTo(target.x, target.y - 13);
-      ctx.lineTo(target.x, target.y + 13);
+      ctx.moveTo(tx - 13, ty);
+      ctx.lineTo(tx + 13, ty);
+      ctx.moveTo(tx, ty - 13);
+      ctx.lineTo(tx, ty + 13);
       ctx.stroke();
 
-      // interceptor (triangle oriented by heading)
+      // interceptor (triangle oriented by heading; canvas y is flipped vs. world y)
       ctx.save();
-      ctx.translate(interceptor.x, interceptor.y);
-      ctx.rotate(interceptor.heading);
+      ctx.translate(mx, my);
+      ctx.rotate(-state.gammaM);
       ctx.fillStyle = '#2563eb';
       ctx.beginPath();
       ctx.moveTo(11, 0);
@@ -226,109 +269,151 @@ MathJax.Hub.Config({
       ctx.restore();
     }
 
-    function updateReadout() {
-      var range = Math.hypot(target.x - interceptor.x, target.y - interceptor.y);
-      readout.textContent = 'Elapsed: ' + elapsed.toFixed(2) + ' s   |   Range: ' +
-        range.toFixed(0) + '   |   Speed: ' + interceptor.speed.toFixed(0);
+    function updateReadout(range) {
+      readout.textContent = 'Elapsed: ' + elapsed.toFixed(2) + ' s   |   Range-to-go: ' +
+        range.toFixed(0) + ' m   |   a_m: ' + state.am.toFixed(1) + ' m/s²';
     }
 
-    function finish(aborted) {
+    function finish(status) {
       running = false;
       finished = true;
       if (rafId) cancelAnimationFrame(rafId);
-      var diff = elapsed - tDesired;
       var msg;
-      if (aborted) {
-        msg = 'Target not reached within the desired time &mdash; the bounded speed limits could not close the range in time. Try a longer desired time or a closer target.';
-      } else if (Math.abs(diff) < 0.15) {
-        msg = 'Impact at t = ' + elapsed.toFixed(2) + ' s (desired ' + tDesired.toFixed(1) + ' s) &mdash; converged.';
+      if (status === 'hit') {
+        msg = 'Impact at t = ' + elapsed.toFixed(2) + ' s (desired ' + tDesired.toFixed(0) + ' s).';
+      } else if (status === 'singular') {
+        msg = 'Guidance encountered a numerical singularity for this configuration.';
       } else {
-        msg = 'Impact at t = ' + elapsed.toFixed(2) + ' s (desired ' + tDesired.toFixed(1) +
-          ' s) &mdash; input constraints prevented exact convergence for this geometry.';
+        msg = 'Did not converge for this combination within the simulated horizon.';
       }
-      readout.innerHTML = msg;
+      readout.textContent = msg;
     }
 
-    function step(now) {
+    function g3Of(am) {
+      var rho = am >= 0 ? 1 : 0;
+      var ratio = rho ? (am / A_MAX) : (am / A_MIN);
+      ratio = Math.max(-50, Math.min(50, ratio));
+      return rho * (1 - Math.pow(ratio, N_EXP)) + (1 - rho) * (1 - Math.pow(ratio, N_EXP));
+    }
+
+    function derivative(s, ac) {
+      var xmDot = VM * Math.cos(s.gammaM);
+      var ymDot = VM * Math.sin(s.gammaM);
+      var gammaMDot = s.am / VM;
+      var amDot = g3Of(s.am) * ac - C1 * s.am;
+      return { xm: xmDot, ym: ymDot, gammaM: gammaMDot, am: amDot };
+    }
+
+    function addScaled(a, b, k) {
+      return { xm: a.xm + k * b.xm, ym: a.ym + k * b.ym, gammaM: a.gammaM + k * b.gammaM, am: a.am + k * b.am };
+    }
+
+    function rk4Step(s, ac, dt) {
+      var k1 = derivative(s, ac);
+      var k2 = derivative(addScaled(s, k1, dt / 2), ac);
+      var k3 = derivative(addScaled(s, k2, dt / 2), ac);
+      var k4 = derivative(addScaled(s, k3, dt), ac);
+      return {
+        xm: s.xm + (dt / 6) * (k1.xm + 2 * k2.xm + 2 * k3.xm + k4.xm),
+        ym: s.ym + (dt / 6) * (k1.ym + 2 * k2.ym + 2 * k3.ym + k4.ym),
+        gammaM: s.gammaM + (dt / 6) * (k1.gammaM + 2 * k2.gammaM + 2 * k3.gammaM + k4.gammaM),
+        am: s.am + (dt / 6) * (k1.am + 2 * k2.am + 2 * k3.am + k4.am)
+      };
+    }
+
+    // Range-to-go backstepping guidance law (verbatim structure from engagement.m / main.m)
+    function computeAc(s, tGo) {
+      var dx = XT - s.xm, dy = YT - s.ym;
+      var r = Math.hypot(dx, dy);
+      var theta = Math.atan2(dy, dx);
+      var psiM = s.gammaM - theta;
+      var psiT = GAMMA_T - theta;
+
+      var rp = Math.sqrt(r * r + 2 * r * VT * tGo * Math.cos(psiT) + VT * VT * tGo * tGo);
+      var eR = VM * tGo - rp;
+      var Phi = Math.cos(psiT - psiM);
+      var cosPsiMp = (r * Math.cos(psiM) + VT * tGo * Phi) / rp;
+      var erDot = -VM * (1 - cosPsiMp);
+      var b = r * Math.sin(psiM) - VT * tGo * Math.sin(psiT - psiM);
+
+      var f2 = (2 * VM / rp) * erDot + (erDot * erDot) / rp;
+      var g2 = -b / rp;
+      if (Math.abs(g2) < 1e-6) g2 = g2 >= 0 ? 1e-6 : -1e-6;
+      var f3 = -C1 * s.am;
+      var g3 = g3Of(s.am);
+      if (Math.abs(g3) < 1e-6) g3 = g3 >= 0 ? 1e-6 : -1e-6;
+
+      var z1 = eR;
+      var alpha1 = -K1 * z1;
+      var z2 = erDot - alpha1;
+
+      var alpha2 = (1 / g2) * (-z1 - K2 * z2 - K1 * erDot - f2);
+      var z3 = s.am - alpha2;
+
+      var rDot = VT * Math.cos(psiT) - VM * Math.cos(psiM);
+      var thetaDot = (VT * Math.sin(psiT) - VM * Math.sin(psiM)) / r;
+      var rpDot = -VM * cosPsiMp;
+      var erDDot = f2 + g2 * s.am;
+      var bDot = (rDot * Math.sin(psiM) - r * thetaDot * Math.cos(psiM) + VT * Math.sin(psiT - psiM)) +
+        s.am * ((r * Math.cos(psiM) / VM) + (VT * tGo / VM) * Math.cos(psiT - psiM));
+
+      var f2Dot = (2 * erDDot * (VM + erDot) / rp) - (rpDot * f2 / rp);
+      var g2Dot = -(g2 * rpDot + bDot) / rp;
+
+      var n2Dot = -(1 + K1 * K2) * erDot - (K1 + K2) * erDDot - f2Dot;
+      var alpha2Dot = (1 / g2) * (n2Dot - g2Dot * alpha2);
+
+      var ac = (1 / g3) * (-g2 * z2 - K3 * z3 - f3 + alpha2Dot);
+      return { ac: Math.max(-3000, Math.min(3000, ac)), r: r };
+    }
+
+    function controlStep() {
+      var tGo = Math.max(tDesired - elapsed, 0.05);
+      var result = computeAc(state, tGo);
+      if (result.r < HIT_RADIUS) {
+        finish('hit');
+        return false;
+      }
+      if (!isFinite(result.ac)) {
+        finish('singular');
+        return false;
+      }
+      state = rk4Step(state, result.ac, CONTROL_DT);
+      elapsed += CONTROL_DT;
+      trail.push({ x: toCanvasX(state.xm), y: toCanvasY(state.ym) });
+      updateReadout(result.r);
+      if (elapsed > tDesired + 8) {
+        finish('timeout');
+        return false;
+      }
+      return true;
+    }
+
+    var lastTime;
+    function frame(now) {
       if (!running) return;
       if (!lastTime) lastTime = now;
-      var dt = Math.min((now - lastTime) / 1000, 0.05);
+      var wallDt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
-      elapsed += dt;
-
-      var dx = target.x - interceptor.x;
-      var dy = target.y - interceptor.y;
-      var range = Math.hypot(dx, dy);
-
-      if (range < HIT_RADIUS) {
-        interceptor.x = target.x;
-        interceptor.y = target.y;
-        trail.push({ x: interceptor.x, y: interceptor.y });
-        draw();
-        finish(false);
-        return;
+      var simBudget = wallDt * TIME_SPEEDUP;
+      var iterations = 0;
+      while (simBudget > 0 && iterations < 500) {
+        if (!controlStep()) { draw(); return; }
+        simBudget -= CONTROL_DT;
+        iterations++;
       }
-
-      var tRemaining = Math.max(tDesired - elapsed, 0.15);
-      var desiredSpeed = range / tRemaining;
-      desiredSpeed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, desiredSpeed));
-
-      var speedError = desiredSpeed - interceptor.speed;
-      var maxDeltaV = (speedError >= 0 ? MAX_ACCEL : MAX_DECEL) * dt;
-      var deltaV = Math.max(-maxDeltaV, Math.min(maxDeltaV, speedError));
-      interceptor.speed += deltaV;
-
-      // True proportional navigation: a_cmd = N * Vc * lambda_dot, applied as a turn rate
-      var vx = interceptor.speed * Math.cos(interceptor.heading);
-      var vy = interceptor.speed * Math.sin(interceptor.heading);
-      var lambdaDot = (dy * vx - dx * vy) / (range * range);
-      var closingSpeed = (dx * vx + dy * vy) / range;
-      var aCmd = PN_GAIN * closingSpeed * lambdaDot;
-      var headingRate = aCmd / interceptor.speed;
-      headingRate = Math.max(-MAX_TURN_RATE, Math.min(MAX_TURN_RATE, headingRate));
-      interceptor.heading += headingRate * dt;
-
-      interceptor.x += interceptor.speed * Math.cos(interceptor.heading) * dt;
-      interceptor.y += interceptor.speed * Math.sin(interceptor.heading) * dt;
-      trail.push({ x: interceptor.x, y: interceptor.y });
-
       draw();
-      updateReadout();
-
-      if (elapsed > tDesired + 6) {
-        finish(true);
-        return;
-      }
-
-      rafId = requestAnimationFrame(step);
+      rafId = requestAnimationFrame(frame);
     }
-
-    canvas.addEventListener('click', function (e) {
-      if (running) return;
-      var rect = canvas.getBoundingClientRect();
-      var scaleX = W / rect.width, scaleY = H / rect.height;
-      var x = (e.clientX - rect.left) * scaleX;
-      var y = (e.clientY - rect.top) * scaleY;
-      x = Math.max(MARGIN + 10, Math.min(W - MARGIN - 10, x));
-      y = Math.max(MARGIN + 10, Math.min(H - MARGIN - 10, y));
-      target.x = x;
-      target.y = y;
-      if (finished) resetState();
-      else draw();
-    });
-
-    tdSlider.addEventListener('input', function () {
-      tdValue.textContent = parseFloat(tdSlider.value).toFixed(1);
-    });
 
     launchBtn.addEventListener('click', function () {
       if (running) return;
       resetState();
-      tDesired = parseFloat(tdSlider.value);
+      tDesired = selectedTd;
       running = true;
       lastTime = 0;
       readout.textContent = 'Elapsed: 0.00 s';
-      rafId = requestAnimationFrame(step);
+      rafId = requestAnimationFrame(frame);
     });
 
     resetBtn.addEventListener('click', function () {
@@ -425,7 +510,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 25<sup>th</sup> 2026  10:45PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated September 25<sup>th</sup> 2026  10:58PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

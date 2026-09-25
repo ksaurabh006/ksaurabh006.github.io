@@ -90,7 +90,7 @@ MathJax.Hub.Config({
 </ul>
 <h2>Interactive Demo: Impact-Time-Controlled Guidance</h2>
 <div class="demo-card">
-  <p class="demo-note">A simplified, in-browser illustration of impact-time-controlled guidance &mdash; not the exact algorithm from the paper. Click anywhere in the field to place the target, choose a desired impact time, and watch the interceptor modulate its speed (within bounded, asymmetric acceleration/deceleration limits) to arrive exactly then.</p>
+  <p class="demo-note">A simplified, in-browser illustration &mdash; not the exact algorithm from the paper. The interceptor steers using true proportional navigation (turn rate proportional to line-of-sight rate and closing speed) while its speed is modulated within bounded, asymmetric acceleration/deceleration limits to arrive at an exact, user-chosen impact time, echoing <i>True-Proportional Navigation based Exact-Time Convergent Impact Time Guidance</i>. Click anywhere in the field to place the target, choose a desired impact time, and press Launch.</p>
 
   <div class="demo-body">
     <div class="demo-canvas-wrap">
@@ -130,6 +130,7 @@ MathJax.Hub.Config({
     var MAX_ACCEL = 70, MAX_DECEL = 105;
     var MAX_TURN_RATE = 3.2;
     var HIT_RADIUS = 9;
+    var PN_GAIN = 3.5; // navigation constant N
 
     var tdSlider = document.getElementById('itg-td');
     var tdValue = document.getElementById('itg-td-value');
@@ -149,12 +150,6 @@ MathJax.Hub.Config({
       if (rafId) cancelAnimationFrame(rafId);
       readout.textContent = 'Click on the field to place the target, then press Launch.';
       draw();
-    }
-
-    function normalizeAngle(a) {
-      while (a > Math.PI) a -= 2 * Math.PI;
-      while (a < -Math.PI) a += 2 * Math.PI;
-      return a;
     }
 
     function drawGrid() {
@@ -283,11 +278,15 @@ MathJax.Hub.Config({
       var deltaV = Math.max(-maxDeltaV, Math.min(maxDeltaV, speedError));
       interceptor.speed += deltaV;
 
-      var desiredHeading = Math.atan2(dy, dx);
-      var headingError = normalizeAngle(desiredHeading - interceptor.heading);
-      var maxDeltaH = MAX_TURN_RATE * dt;
-      var deltaH = Math.max(-maxDeltaH, Math.min(maxDeltaH, headingError));
-      interceptor.heading += deltaH;
+      // True proportional navigation: a_cmd = N * Vc * lambda_dot, applied as a turn rate
+      var vx = interceptor.speed * Math.cos(interceptor.heading);
+      var vy = interceptor.speed * Math.sin(interceptor.heading);
+      var lambdaDot = (dy * vx - dx * vy) / (range * range);
+      var closingSpeed = (dx * vx + dy * vy) / range;
+      var aCmd = PN_GAIN * closingSpeed * lambdaDot;
+      var headingRate = aCmd / interceptor.speed;
+      headingRate = Math.max(-MAX_TURN_RATE, Math.min(MAX_TURN_RATE, headingRate));
+      interceptor.heading += headingRate * dt;
 
       interceptor.x += interceptor.speed * Math.cos(interceptor.heading) * dt;
       interceptor.y += interceptor.speed * Math.sin(interceptor.heading) * dt;
@@ -426,7 +425,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 25<sup>th</sup> 2026  10:38PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated September 25<sup>th</sup> 2026  10:45PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

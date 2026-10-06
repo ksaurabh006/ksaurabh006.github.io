@@ -14,16 +14,16 @@
 </script>
 <link rel="stylesheet" href="main.css" type="text/css" />
 <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
-<!--- <title>Trajectory Tracking with Convergence Guarantees</title> --->
-<title>Saurabh Kumar Trajectory Tracking with Convergence Guarantees IIT Bombay</title>
-<meta name="description" content="Saurabh Kumar Trajectory Tracking with Convergence Guarantees IIT Bombay &mdash; Postdoctoral Fellow, Department of Aerospace Engineering. Research in guidance and control of autonomous vehicles, nonlinear control systems, and cooperative pursuit-evasion.">
+<!--- <title>Trajectory Tracking and Safety-Critical Control</title> --->
+<title>Saurabh Kumar Trajectory Tracking and Safety-Critical Control IIT Bombay</title>
+<meta name="description" content="Saurabh Kumar Trajectory Tracking and Safety-Critical Control IIT Bombay &mdash; Postdoctoral Fellow, Department of Aerospace Engineering. Research in guidance and control of autonomous vehicles, nonlinear control systems, and cooperative pursuit-evasion.">
 <meta property="og:site_name" content="Saurabh Kumar, IIT Bombay">
-<meta property="og:title" content="Saurabh Kumar Trajectory Tracking with Convergence Guarantees IIT Bombay">
+<meta property="og:title" content="Saurabh Kumar Trajectory Tracking and Safety-Critical Control IIT Bombay">
 <meta property="og:description" content="Postdoctoral Fellow, Dept. of Aerospace Engineering, IIT Bombay. Research in guidance and control of autonomous vehicles, nonlinear control systems, and cooperative pursuit-evasion.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://ksaurabh006.github.io/images/sk_headshot.jpg">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Saurabh Kumar Trajectory Tracking with Convergence Guarantees IIT Bombay">
+<meta name="twitter:title" content="Saurabh Kumar Trajectory Tracking and Safety-Critical Control IIT Bombay">
 <meta name="twitter:description" content="Postdoctoral Fellow, Dept. of Aerospace Engineering, IIT Bombay. Research in guidance and control of autonomous vehicles, nonlinear control systems, and cooperative pursuit-evasion.">
 <!-- MathJax -->
 <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async>
@@ -69,12 +69,13 @@ MathJax.Hub.Config({
 <div id="layout-content-container">
 <div id="layout-content">
 <div id="toptitle">
-<h1>Trajectory Tracking with Convergence Guarantees</h1>
+<h1>Trajectory Tracking and Safety-Critical Control</h1>
 </div>
 <div class="ra-back"><a href="research.html">&larr; All Research Areas</a></div>
 <h2>Overview</h2>
 <p>Trajectory tracking requires a vehicle to follow a time-parameterized reference trajectory, which is a stricter requirement than path following. My research develops controllers that guarantee <b>finite-time</b> or <b>exact-time</b> convergence to the desired trajectory even in the presence of model uncertainties, external disturbances, and state constraints such as bounded velocities and attitude angles.</p>
 <p>Key tools employed include <b>sliding mode control</b>, <b>Barrier Lyapunov functions</b> for handling state constraints, and <b>exact-time stability</b> theory. These methods have been applied to quadrotor UAVs and autonomous surface vessels, with rigorous formal proofs of convergence.</p>
+<p>Tracking is often required to be <i>safe</i> as well as accurate: the vehicle must stay within prescribed operating regions throughout the transient, even under bounded disturbances. I use <b>Barrier Lyapunov functions (BLF)</b> and <b>Control Barrier Functions (CBF)</b> to design controllers that meet the tracking objective without violating velocity, attitude, or spatial constraints, including scenarios where several safety conditions must hold simultaneously. Work on actuator limits enforced by construction is on the <a href="ra_admissibility.html" target=&ldquo;blank&rdquo;>Admissibility-Preserving Control</a> page.</p>
 <h2>Guidance Formulation</h2>
 <p>Consider a quadrotor UAV whose attitude channels (\(\phi,\theta,\psi\) for roll, pitch, and yaw) are coupled second-order nonlinear systems of the form</p>
 <p style="text-align:center">
@@ -96,6 +97,10 @@ MathJax.Hub.Config({
 <li><p>Robust exact-time trajectory tracking for autonomous surface vessels.</p>
 </li>
 <li><p>3D trajectory tracking for UAVs under motion constraints.</p>
+</li>
+<li><p>CBF-based approaches for simultaneous satisfaction of multiple safety constraints.</p>
+</li>
+<li><p>Formal safety certificates with convergence guarantees under uncertainty.</p>
 </li>
 </ul>
 <h2>Relevant Publications</h2>
@@ -158,7 +163,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 24<sup>th</sup> 2026  10:18AM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated October 6<sup>th</sup> 2026  04:37PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

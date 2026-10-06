@@ -2271,6 +2271,46 @@ a { transition: color 0.15s ease; }
   margin-top: 0.6rem;
   line-height: 1.5;
 }
+.paper-figure.wide { max-width: 860px; }
+[data-theme="dark"] .paper-figure img { background: #fff; }
+
+/* Grid of paper plots (research-area pages) */
+.figure-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin: 1rem 0 0.5rem 0;
+}
+.figure-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.figure-card {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem;
+  background: #fff;
+}
+.figure-card img {
+  width: 100%;
+  display: block;
+  border-radius: var(--radius-sm);
+}
+.figure-card figcaption {
+  margin: 0.5rem 0.15rem 0 0.15rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.figure-grid-note {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-style: italic;
+  margin: 0.25rem 0 1.25rem 0;
+}
+[data-theme="dark"] .figure-card { background: #111e33; border-color: #1e293b; }
+[data-theme="dark"] .figure-card img { background: #fff; }
+@media (max-width: 700px) {
+  .figure-grid, .figure-grid.cols-3 { grid-template-columns: 1fr; }
+}
 [data-theme="dark"] .paper-figure-placeholder { background: rgba(96,165,250,0.06); }
 [data-theme="dark"] .paper-figure-placeholder code { background: rgba(96,165,250,0.12); }
 

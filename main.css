@@ -2272,6 +2272,7 @@ a { transition: color 0.15s ease; }
   line-height: 1.5;
 }
 .paper-figure.wide { max-width: 700px; }
+.paper-figure.narrow { max-width: 380px; }
 [data-theme="dark"] .paper-figure img { background: #fff; }
 
 /* Grid of paper plots (research-area pages) */

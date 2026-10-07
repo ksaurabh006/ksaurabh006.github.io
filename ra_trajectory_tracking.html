@@ -73,36 +73,114 @@ MathJax.Hub.Config({
 </div>
 <div class="ra-back"><a href="research.html">&larr; All Research Areas</a></div>
 <h2>Overview</h2>
-<p>Trajectory tracking requires a vehicle to follow a time-parameterized reference trajectory, which is a stricter requirement than path following. My research develops controllers that guarantee <b>finite-time</b> or <b>exact-time</b> convergence to the desired trajectory even in the presence of model uncertainties, external disturbances, and state constraints such as bounded velocities and attitude angles.</p>
-<p>Key tools employed include <b>sliding mode control</b>, <b>Barrier Lyapunov functions</b> for handling state constraints, and <b>exact-time stability</b> theory. These methods have been applied to quadrotor UAVs and autonomous surface vessels, with rigorous formal proofs of convergence.</p>
-<p>Tracking is often required to be <i>safe</i> as well as accurate: the vehicle must stay within prescribed operating regions throughout the transient, even under bounded disturbances. I use <b>Barrier Lyapunov functions (BLF)</b> and <b>Control Barrier Functions (CBF)</b> to design controllers that meet the tracking objective without violating velocity, attitude, or spatial constraints, including scenarios where several safety conditions must hold simultaneously. Work on actuator limits enforced by construction is on the <a href="ra_admissibility.html" target=&ldquo;blank&rdquo;>Admissibility-Preserving Control</a> page.</p>
-<h2>Guidance Formulation</h2>
-<p>Consider a quadrotor UAV whose attitude channels (\(\phi,\theta,\psi\) for roll, pitch, and yaw) are coupled second-order nonlinear systems of the form</p>
-<p style="text-align:center">
-\[ \ddot\Theta_k = \mathcal F_k + \mathcal G_k u_k + h_k, \quad k \in \{\phi,\theta,\psi\} \]
-</p><p>where \(\mathcal F_k\) captures the cross-coupling between channels, \(\mathcal G_k\) the (partially known) inertia-dependent control effectiveness, and \(h_k\) bounded uncertainty from an unmodeled inertia matrix. The controller is designed to guarantee <b>exact-time</b> or <b>finite-time</b> convergence of the position \(P(t)\) and attitude \(\Theta(t)\) to a time-varying reference \(P_d(t),\Theta_d(t)\), while explicitly respecting motion constraints such as bounded velocities, attitude angles, or a spatially confined operating region (e.g., a pipeline or tunnel inspection corridor).</p>
-<figure class="paper-figure">
-  <img src="images/research/trajectory_tracking_constrained_motion.png" alt="Quadrotor trajectory tracking under motion constraints" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-  <div class="paper-figure-placeholder">Figure not yet added &mdash; save <code>trajectory_tracking_constrained_motion.png</code> to <code>images/research/</code></div>
-  <figcaption>Sample constrained-trajectory-tracking scenario: a quadrotor tracking a time-varying reference within a spatially confined corridor.</figcaption>
-</figure>
+<p>Trajectory tracking requires a vehicle to follow a time-parameterized reference, which is a stricter requirement than path following: the vehicle must be at the right place at the right time. My research develops tracking controllers with formal guarantees on <i>how</i> and <i>when</i> the vehicle converges, including <b>finite-time</b> convergence, <b>exact-time</b> convergence at a time chosen before the mission, and convergence that never leaves a prescribed safe region.</p>
+<p>Tracking is often required to be safe as well as accurate. The vehicle must stay within velocity, attitude, and spatial limits throughout the transient, even under model uncertainty and disturbances. I use <b>sliding mode control</b>, <b>Barrier Lyapunov functions (BLF)</b>, <b>Control Barrier Functions (CBF)</b>, and <b>exact-time stability</b> theory to design such controllers, and the work is organized below by vehicle type. Work on actuator limits enforced by construction is on the <a href="ra_admissibility.html" target=&ldquo;blank&rdquo;>Admissibility-Preserving Control</a> page.</p>
 <h2>Key Contributions</h2>
 <ul>
-<li><p>Exact-time convergent trajectory tracking for quadrotor UAVs under uncertainties.</p>
+<li><p>3D trajectory tracking for quadrotors with asymmetric constraints on all six degrees of freedom, using barrier Lyapunov functions.</p>
 </li>
-<li><p>Finite-time convergent robust control with almost global stability guarantees.</p>
+<li><p>Almost global finite-time trajectory tracking for an uncertain quadrotor, with a modified exponential reaching law for faster convergence.</p>
 </li>
-<li><p>Barrier Lyapunov function-based trajectory following with bounded state constraints.</p>
+<li><p>Exact-time trajectory tracking for autonomous surface vessels, with the convergence time selected before the mission and independent of initial conditions.</p>
 </li>
-<li><p>Robust exact-time trajectory tracking for autonomous surface vessels.</p>
-</li>
-<li><p>3D trajectory tracking for UAVs under motion constraints.</p>
+<li><p>Robustness to partially known inertia and damping, and to bounded external disturbances, including disturbance-observer-based designs.</p>
 </li>
 <li><p>CBF-based approaches for simultaneous satisfaction of multiple safety constraints.</p>
 </li>
-<li><p>Formal safety certificates with convergence guarantees under uncertainty.</p>
-</li>
 </ul>
+<h2>Quadrotor UAVs</h2>
+<p>A quadrotor is underactuated: four inputs (the net thrust and three moments) must control six degrees of freedom. Both quadrotor designs below use a cascaded architecture. An outer loop regulates position and produces the thrust and the desired roll and pitch angles, and an inner loop regulates attitude through the moments. Each attitude channel has the form</p>
+<p style="text-align:center">
+\[ \ddot\Theta_k = \mathcal F_k + \mathcal G_k u_k + h_k, \quad k \in \{\phi,\theta,\psi\} \]
+</p><p>where \(\mathcal F_k\) captures gyroscopic and cross-coupling terms, \(\mathcal G_k\) is the inertia-dependent control effectiveness, and \(h_k\) is a bounded uncertainty arising from the partially known inertia matrix.</p>
+<h3>Three-dimensional Trajectory Tracking under Motion Constraints</h3>
+<p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/1.G009445" target=&ldquo;blank&rdquo;>AIAA Journal of Guidance, Control, and Dynamics</a>, Vol. 49, No. 1, 2026, pp. 78&ndash;96.</p>
+<p>Inspection tasks such as tunnels, pipelines, and power lines confine the vehicle to a narrow corridor, so the position must never leave its bounds, even during the transient. This work constrains <b>all six</b> degrees of freedom, position and attitude, through <b>asymmetric</b> bounds on the tracking errors, and enforces them with an asymmetric barrier Lyapunov function:</p>
+<p style="text-align:center">
+\[ \mathcal{W}_\ell = \frac{1-q(\gamma_\ell)}{2}\ln\frac{\underline{\gamma}_\ell^{2}}{\underline{\gamma}_\ell^{2}-\gamma_\ell^{2}} + \frac{q(\gamma_\ell)}{2}\ln\frac{\overline{\gamma}_\ell^{2}}{\overline{\gamma}_\ell^{2}-\gamma_\ell^{2}}, \qquad q(\gamma_\ell)=\begin{cases}1,&amp;\gamma_\ell&gt;0\\0,&amp;\gamma_\ell\le 0\end{cases} \]
+</p><p>where \(\gamma_\ell\) is the position error and \(-\underline{\gamma}_\ell\), \(\overline{\gamma}_\ell\) are its lower and upper bounds. The function grows without bound as the error approaches either limit. A backstepping design keeps \(\dot{\mathcal W}\le 0\), so every error starting inside its bounds stays inside them, and converges asymptotically to zero, while linear and angular velocities remain bounded. Using asymmetric rather than symmetric bounds strictly enlarges the set of safe initial conditions.</p>
+<figure class="paper-figure">
+  <img src="images/research/tt/blf_tunnel.png" alt="Quadrotor inspecting a tunnel" loading="lazy">
+  <figcaption>Motivating scenario: a quadrotor tracking a reference inside a tunnel, where position and attitude must stay within prescribed bounds.</figcaption>
+</figure>
+<div class="figure-grid cols-4">
+  <figure class="figure-card">
+    <img src="images/research/tt/blf_helix.png" alt="Helical trajectory tracking" loading="lazy">
+    <figcaption>Tracking a helical path.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/tt/blf_comp_error_x.png" alt="Position error under disturbance compared with other methods" loading="lazy">
+    <figcaption>Under a strong gust, two existing methods cross the error bound (dashed); the proposed controller does not.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/tt/blf_asy_phase.png" alt="Phase portrait with asymmetric constraints" loading="lazy">
+    <figcaption>Asymmetric bounds: 500 Monte Carlo runs from a wide range of initial errors, all safe.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/tt/blf_sym_phase.png" alt="Phase portrait with symmetric constraints" loading="lazy">
+    <figcaption>Symmetric bounds: the admissible initial region is much smaller.</figcaption>
+  </figure>
+</div>
+<h3>Robust Trajectory Tracking with Almost Global Finite-time Convergence</h3>
+<p>Saurabh Kumar and Shashi Ranjan Kumar, <a href="https://doi.org/10.1177/09544100241309050" target=&ldquo;blank&rdquo;>Proceedings of the IMechE, Part G: Journal of Aerospace Engineering</a>, Vol. 239, No. 8, 2025, pp. 792&ndash;817.</p>
+<p>This work drives all six position and orientation errors to zero in finite time and keeps them there, from almost any initial condition, despite a partially known inertia matrix and bounded disturbances. Each channel uses a nonsingular terminal sliding manifold</p>
+<p style="text-align:center">
+\[ \mathcal{S}_i = \varrho_i + \frac{1}{\beta_i}\,\dot\varrho_i^{\,p_i/q_i}, \qquad 1&lt;\frac{p_i}{q_i}&lt;2 \]
+</p><p>where \(\varrho_i\) is the tracking error in channel \(i\). A second design replaces the constant reaching law with an exponential one,</p>
+<p style="text-align:center">
+\[ \dot{\mathcal{S}} = -\frac{\kappa}{\alpha_0 + (1-\alpha_0)\,e^{-\mathcal{N}|\mathcal{S}|^{\mathcal{P}}}}\,\mathrm{sign}(\mathcal{S}), \qquad 0&lt;\alpha_0&lt;1 \]
+</p><p>whose gain is large far from the manifold and falls back near it. This provably shortens the reaching time for the same gain, while limiting chattering. In simulation, the modified law gives lower position error (RMS 0.447 m) than two existing finite-time controllers (0.560 m and 0.832 m) with less control effort, and the design remains robust to actuator lag.</p>
+<figure class="paper-figure wide">
+  <img src="images/research/tt/ft_architecture.png" alt="Cascaded quadrotor control architecture" loading="lazy">
+  <figcaption>Cascaded control architecture: the outer loop computes thrust and desired attitude, and the inner loop tracks the attitude.</figcaption>
+</figure>
+<div class="figure-grid cols-3">
+  <figure class="figure-card">
+    <img src="images/research/tt/ft_helical3d.png" alt="Helical trajectory with finite-time tracking" loading="lazy">
+    <figcaption>Finite-time convergence onto a helical trajectory.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/tt/ft_compare_path.png" alt="Trajectory comparison with existing controllers" loading="lazy">
+    <figcaption>Comparison with existing finite-time controllers.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/tt/ft_compare_l2.png" alt="Position error norm comparison" loading="lazy">
+    <figcaption>Position error norm: faster convergence with the proposed designs.</figcaption>
+  </figure>
+</div>
+<h2>Autonomous Surface Vessels</h2>
+<h3>Robust Exact-time Trajectory Tracking for Autonomous Surface Vessels</h3>
+<p>Susan Basnet, Saurabh Kumar, and Shashi Ranjan Kumar, <a href="https://doi.org/10.1109/JOE.2025.3529062" target=&ldquo;blank&rdquo;>IEEE Journal of Oceanic Engineering</a>, Vol. 50, No. 2, 2025, pp. 1184&ndash;1195.</p>
+<p>A surface vessel moving in the horizontal plane is described by the 3-DOF model</p>
+<p style="text-align:center">
+\[ \dot{\boldsymbol{\eta}} = \mathbf{R}(\psi)\,\boldsymbol{\nu}, \qquad \mathbf{M}\dot{\boldsymbol{\nu}} + \mathbf{C}(\boldsymbol{\nu})\boldsymbol{\nu} + \mathbf{D}(\boldsymbol{\nu})\boldsymbol{\nu} = \boldsymbol{\tau} + \mathbf{b} \]
+</p><p>where \(\boldsymbol\eta=[x,y,\psi]^\top\) is the position and heading, \(\boldsymbol\nu=[u,v,r]^\top\) the surge, sway, and yaw rates, and \(\mathbf b\) the disturbance from wind, waves, and currents. The Coriolis and damping matrices are only partially known.</p>
+<p>Finite-time controllers converge at a time that depends on the initial state, and fixed-time controllers only bound it conservatively. This work achieves <b>exact-time</b> convergence: the designer picks the convergence time \(t_f\) before the mission. A two-layer sliding manifold with the time-varying gain \(\mathcal N_1/(t_f-t)\) starts on the manifold at \(t=0\), so there is no reaching phase, and then forces the pose error to follow</p>
+<p style="text-align:center">
+\[ \tilde{\boldsymbol{\eta}}(t) = \tilde{\boldsymbol{\eta}}(0)\left(1-\frac{t}{t_f}\right)^{\mathcal{N}_1} \]
+</p><p>which is exactly zero at \(t=t_f\) for any initial error. The design is given first for a known disturbance bound and then extended to unknown disturbances with a nonlinear disturbance observer. In simulations on the CyberShip II model, the vessel converges exactly at the chosen time from every initial condition tested, including 500 Monte Carlo runs, and gives the lowest tracking error in every channel compared with representative finite-time and fixed-time controllers.</p>
+<figure class="paper-figure narrow">
+  <img src="images/research/tt/usv_frames.png" alt="Surface vessel coordinate frames and reference trajectory" loading="lazy">
+  <figcaption>Earth and body frames of a surface vessel tracking a reference trajectory \(\boldsymbol\eta_d(t)\).</figcaption>
+</figure>
+<div class="figure-grid cols-4">
+  <figure class="figure-card">
+    <img src="images/research/tt/usv_figure8.png" alt="Figure-eight trajectory from two initial conditions" loading="lazy">
+    <figcaption>Figure-eight reference: both starting points converge exactly at \(t_f = 6\) s.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/tt/usv_tf_error.png" alt="Tracking errors for different convergence times" loading="lazy">
+    <figcaption>Errors vanish at each chosen convergence time \(t_f\).</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/tt/usv_comparison.png" alt="Trajectory comparison with finite-time and fixed-time controllers" loading="lazy">
+    <figcaption>Comparison with finite-time and fixed-time controllers.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/tt/usv_comparison_error.png" alt="Tracking error comparison" loading="lazy">
+    <figcaption>Tracking errors: no overshoot with the exact-time design.</figcaption>
+  </figure>
+</div>
 <h2>Relevant Publications</h2>
 <div class="pub-page-lists">
 <h3>Journal Papers</h3>
@@ -163,7 +241,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated October 6<sup>th</sup> 2026  04:37PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated October 7<sup>th</sup> 2026  04:26PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

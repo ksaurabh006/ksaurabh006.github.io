@@ -157,18 +157,25 @@ MathJax.Hub.Config({
 <div class="pf-sim" id="pe-tri">
   <div class="pf-sim-head">
     <div class="pf-sim-title">Try it: the triangle rule
-      <small>Drag the evader, pursuer or defender. Whenever \(\chi\in[90^\circ,270^\circ]\), D is inside the circle on EP and \(r_{EP}\) is the longest side.</small></div>
+      <small>Place E, P and D and release. The defender then holds the initial angle \(\chi(0)\) while closing on the pursuer.</small></div>
     <div class="pf-controls">
       <button data-tri="outside">\(\chi<90^\circ\)</button>
       <button data-tri="right">\(\chi=90^\circ\)</button>
       <button data-tri="inside" class="on">\(90^\circ<\chi<180^\circ\)</button>
       <button data-tri="reflex">\(\chi>180^\circ\)</button>
+      <span class="sep"></span>
+      <button data-act="reset">Restart</button>
+      <button data-act="play">❚❚ Pause</button>
     </div>
   </div>
-  <canvas class="pf-main" aria-label="Interactive triangle formed by the evader, pursuer and defender"></canvas>
+  <canvas class="pf-main" aria-label="Engagement in which the defender holds a constant angle chi while closing on the pursuer"></canvas>
   <div class="pf-legend"></div>
-  <div class="pf-below"><div class="pf-readout"></div></div>
-  <p class="pf-note">Proposition 1 of the paper: an angle inscribed on the diameter EP is a right angle, so the defender is inside the circle exactly when \(\chi\in[\pi/2,3\pi/2]\). Then the angle at D is the largest in the triangle and the opposite side \(r_{EP}\) is the longest, so \(r_{DP}<r_{EP}\). If the defender keeps closing on the pursuer while holding this angle, the triangle shrinks and \(r_{DP}\) reaches zero while \(r_{EP}\) is still positive.</p>
+  <div class="pf-below">
+    <canvas class="pf-chart-r"></canvas>
+    <canvas class="pf-chart-xi"></canvas>
+    <div class="pf-readout"></div>
+  </div>
+  <p class="pf-note">Proposition 1 of the paper: if the defender keeps a positive closing speed on the pursuer and holds \(\chi\in[\pi/2,3\pi/2]\), the pursuer is captured before it reaches the evader. Inside the circle on EP the angle at D is the largest in the triangle, so \(r_{EP}\) is the longest side. Holding \(\chi\) fixed makes the triangle PED shrink into smaller similar triangles (drawn every 1.5 s) until \(r_{DP}=0\) while \(r_{EP}\) is still positive. In the simulation the pursuer flies at the evader with PN, the evader flees along the EP line, and the defender starts on the heading that keeps \(\dot\chi=0\) with the fastest closing; the maneuver-level law of the paper then holds \(\chi^\star=\chi(0)\). Speeds are 200 m/s (P, D) and 100 m/s (E). Outside the circle, interception is not guaranteed.</p>
 </div>
 <p>The angle \(\beta\) has relative degree two, and both \(a_E\) and \(a_D\) enter its second derivative. The pursuer's acceleration \(a_P\) enters as an unknown bounded disturbance. The design uses a two-layer sliding manifold,</p>
 <p style="text-align:center">
@@ -325,7 +332,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated November 25<sup>th</sup> 2026  02:38PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated November 25<sup>th</sup> 2026  02:46PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

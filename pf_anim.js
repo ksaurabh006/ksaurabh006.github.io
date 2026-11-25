@@ -11,7 +11,7 @@
  *                  vs nested saturation (ASCC 2026 / AST 2026), same paths and starts.
  *  5. #pe-sim     : pursuer-evader-defender engagement (Cooperative Pursuit-Evasion page).
  *  6. #pe-multi   : 20 defenders vs 20 pursuers with one-to-one assignment.
- *  7. #pe-tri     : triangle rule (Proposition 1), drag E, P and D.
+ *  7. #pe-tri     : triangle rule (Proposition 1): hold chi(0) with positive closing speed.
  *
  * Everything is simulated in the browser from the guidance laws in the papers.
  */
@@ -1339,27 +1339,111 @@
     reset();
   }
 
-  /* ── Triangle rule (Proposition 1): drag E, P, D and watch chi, the circle on EP and the side lengths ── */
+  /* ── Triangle rule (Proposition 1): place E, P, D; the defender holds the initial chi with a positive
+        closing speed, and the shrinking triangles end with r_DP = 0 while r_EP > 0. ── */
   function peChi(E, P, D) {
     var lDP = Math.atan2(P[1] - D[1], P[0] - D[0]), lED = Math.atan2(D[1] - E[1], D[0] - E[0]);
     return ((Math.PI + lDP - lED) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
   }
   var TRI_PRESETS = {
-    outside: { E: [0, 0], P: [5, 0], D: [2.2, 3.1] },
+    outside: { E: [0, 0], P: [5, 0], D: [0.4, 2.5] },
     right:   { E: [0, 0], P: [5, 0], D: [2.5 - 2.5 * Math.cos(1.1), 2.5 * Math.sin(1.1)] },
-    inside:  { E: [0, 0], P: [5, 0], D: [3.2, 1.2] },
-    reflex:  { E: [0, 0], P: [5, 0], D: [2.4, -1.4] }
+    inside:  { E: [0, 0], P: [5, 0], D: [1.6, 1.1] },
+    reflex:  { E: [0, 0], P: [5, 0], D: [1.5, -1.2] }
   };
+  // Positions in km. The pursuer flies at the evader with PN (N = 5); the evader flees along the EP line.
+  // The defender starts on the heading that gives d(chi)/dt = 0 with the fastest closing on P, and then
+  // the maneuver-level law of the paper holds chi* = chi(0).
+  function triSimulate(p) {
+    var VP = 200, VD = 200, VE = 100, d = DEG, H = 0.002, every = 10, TMAX = 40, g = 9.8;
+    var xE = p.E[0] * 1000, yE = p.E[1] * 1000, xP = p.P[0] * 1000, yP = p.P[1] * 1000, xD = p.D[0] * 1000, yD = p.D[1] * 1000;
+    var gP = Math.atan2(yE - yP, xE - xP), gE = gP;
+    var chis = peChi(p.E, p.P, p.D);
+    var lDP0 = Math.atan2(yP - yD, xP - xD), lED0 = Math.atan2(yD - yE, xD - xE), R1 = Math.hypot(xP - xD, yP - yD), R2 = Math.hypot(xD - xE, yD - yE);
+    function bdot(gD) {
+      return (VP * Math.sin(gP - lDP0) - VD * Math.sin(gD - lDP0)) / R1 - (VD * Math.sin(gD - lED0) - VE * Math.sin(gE - lED0)) / R2;
+    }
+    var gD = lDP0, best = 0, prev = bdot(0);
+    for (var j = 1; j <= 3600; j++) {
+      var gg = j * 0.1 * d, cur = bdot(gg);
+      if ((prev <= 0) !== (cur <= 0)) {
+        var cl = VP * Math.cos(gP - lDP0) - VD * Math.cos(gg - lDP0);   // range rate; negative = closing
+        if (cl < best) { best = cl; gD = gg; }
+      }
+      prev = cur;
+    }
+    var o = { k1: 6, k2: 3, t1: 3, ts: 6, K: 5, marg: 0.2, tg: 20 }, S0 = null;
+    var rec = { E: [], P: [], D: [], gE: [], gP: [], gD: [], chi: [], rdp: [], rep: [], vc: [], t: [] };
+    var out = { rec: rec, end: 'timeout', tEnd: TMAX, chi0: chis / d };
+    for (var k = 0; ; k++) {
+      var t = k * H;
+      var RDP = Math.hypot(xP - xD, yP - yD), RED = Math.hypot(xD - xE, yD - yE), REP = Math.hypot(xP - xE, yP - yE);
+      var lDP = Math.atan2(yP - yD, xP - xD), lED = Math.atan2(yD - yE, xD - xE), lEP = Math.atan2(yP - yE, xP - xE);
+      var RDPd = VP * Math.cos(gP - lDP) - VD * Math.cos(gD - lDP);
+      var REPd = VP * Math.cos(gP - lEP) - VE * Math.cos(gE - lEP);
+      var REDd = VD * Math.cos(gD - lED) - VE * Math.cos(gE - lED);
+      var lDPd = (VP * Math.sin(gP - lDP) - VD * Math.sin(gD - lDP)) / RDP;
+      var lEPd = (VP * Math.sin(gP - lEP) - VE * Math.sin(gE - lEP)) / REP;
+      var lEDd = (VD * Math.sin(gD - lED) - VE * Math.sin(gE - lED)) / RED;
+      var chi = ((Math.PI + lDP - lED) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+      if (k % every === 0) {
+        rec.E.push([xE, yE]); rec.P.push([xP, yP]); rec.D.push([xD, yD]); rec.gE.push(gE); rec.gP.push(gP); rec.gD.push(gD);
+        rec.chi.push(chi / d); rec.rdp.push(RDP); rec.rep.push(REP); rec.vc.push(-RDPd); rec.t.push(t);
+      }
+      if (RDP <= 5) { out.end = 'intercept'; out.tEnd = t; break; }
+      if (REP <= 5) { out.end = 'evader hit'; out.tEnd = t; break; }
+      if (t >= TMAX) break;
+      var beta = Math.atan2(Math.sin(chi - chis), Math.cos(chi - chis)), bd = lDPd - lEDd, gdot, S, tl = o.ts - t;
+      if (tl > o.marg) { gdot = -o.k1 / tl * bd - o.k1 * beta / (tl * tl); S = bd + o.k1 / tl * beta; }
+      else { gdot = -o.k1 / o.marg * bd - o.k1 * beta / (o.marg * o.marg); S = bd + o.k1 / o.marg * beta; }
+      if (S0 === null) S0 = -S;
+      var hd = 0, ht = 0;
+      if (t < o.t1) { ht = S0 / Math.pow(o.t1, o.k2) * Math.pow(o.t1 - t, o.k2); hd = -S0 / Math.pow(o.t1, o.k2) * o.k2 * Math.pow(o.t1 - t, o.k2 - 1); }
+      var a1 = Math.cos(gE - lED) / RED, a2 = Math.cos(gD - lDP) / RDP + Math.cos(gD - lED) / RED;
+      var U = 2 * RDPd * lDPd / RDP - 2 * REDd * lEDd / RED + gdot - hd - o.K * Math.tanh(o.tg * (S + ht));
+      var amD = clamp(-U * a2 / (a2 * a2 + a1 * a1), -20 * g, 20 * g), amE = clamp(U * a1 / (a2 * a2 + a1 * a1), -10 * g, 10 * g);
+      var amP = clamp(-5 * REPd * lEPd, -20 * g, 20 * g);
+      xD += VD * Math.cos(gD) * H; yD += VD * Math.sin(gD) * H; gD += amD / VD * H;
+      xP += VP * Math.cos(gP) * H; yP += VP * Math.sin(gP) * H; gP += amP / VP * H;
+      xE += VE * Math.cos(gE) * H; yE += VE * Math.sin(gE) * H; gE += amE / VE * H;
+    }
+    return out;
+  }
+
   function initTri(root) {
     var cv = root.querySelector('canvas.pf-main'), out = root.querySelector('.pf-readout'), leg = root.querySelector('.pf-legend');
-    var pts = JSON.parse(JSON.stringify(TRI_PRESETS.inside)), drag = null, view = null, dirty = true;
+    var cvC = root.querySelector('canvas.pf-chart-r'), cvR = root.querySelector('canvas.pf-chart-xi');
+    var btnPlay = root.querySelector('[data-act="play"]');
+    var pts = JSON.parse(JSON.stringify(TRI_PRESETS.inside)), drag = null, view = null, res = null, t = 0, hold = 0, frame = 0;
     legend(leg, [{ color: CE, label: 'evader E' }, { color: CP, label: 'pursuer P' }, { color: CD, label: 'defender D' },
-      { color: 'rgba(22,163,74,0.45)', label: 'circle with diameter EP' }]);
+      { color: 'rgba(100,116,139,0.6)', label: 'triangle PED every 1.5 s' }, { color: 'rgba(22,163,74,0.45)', label: 'circle with diameter EP' }]);
 
     function mkView(w, h) {
-      var s = Math.min(w / 8, h / 5.6), cx = w / 2 - s * 2.5, cy = h / 2;
+      var s = Math.min(w / 8.8, h / 5.8), cx = w / 2 - s * 2.1, cy = h / 2;
       return { w: w, h: h, f: function (x, y) { return [cx + s * x, cy - s * y]; }, inv: function (px, py) { return [(px - cx) / s, (cy - py) / s]; } };
     }
+    function run() { res = triSimulate(pts); t = 0; hold = 0; }
+    function idx() { return Math.min(res.rec.t.length - 1, Math.floor(t / 0.02)); }
+    function km(q) { return [q[0] / 1000, q[1] / 1000]; }
+
+    function triangle(ctx, E, P, D, chiD, strong, th) {
+      var rEP = Math.hypot(P[0] - E[0], P[1] - E[1]), rDP = Math.hypot(P[0] - D[0], P[1] - D[1]), rED = Math.hypot(D[0] - E[0], D[1] - E[1]);
+      var inside = chiD >= 90 && chiD <= 270;
+      ctx.beginPath(); ctx.arc((E[0] + P[0]) / 2, (E[1] + P[1]) / 2, rEP / 2, 0, 7);
+      ctx.fillStyle = inside ? 'rgba(22,163,74,0.07)' : 'rgba(220,38,38,0.06)'; ctx.fill();
+      ctx.setLineDash([6, 5]); ctx.strokeStyle = inside ? 'rgba(22,163,74,0.6)' : 'rgba(220,38,38,0.55)'; ctx.lineWidth = 1.3; ctx.stroke(); ctx.setLineDash([]);
+      var longest = Math.max(rEP, rDP, rED);
+      [[E, P, rEP, th.muted], [E, D, rED, CE], [D, P, rDP, CP]].forEach(function (sd) {
+        ctx.strokeStyle = sd[3]; ctx.lineWidth = strong && sd[2] === longest ? 3.5 : 1.8;
+        ctx.beginPath(); ctx.moveTo(sd[0][0], sd[0][1]); ctx.lineTo(sd[1][0], sd[1][1]); ctx.stroke();
+      });
+      var aE = Math.atan2(-(E[1] - D[1]), E[0] - D[0]), chi = chiD * DEG;
+      ctx.strokeStyle = CD; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(D[0], D[1], 22, -aE, -(aE + chi), true); ctx.stroke();
+      var am = aE + chi / 2;
+      ctx.fillStyle = CD; ctx.font = '700 13px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('χ = ' + fmt(chiD, 0) + '°', D[0] + 46 * Math.cos(am), D[1] - 46 * Math.sin(am));
+    }
+
     function draw() {
       var f = fitCanvas(cv), ctx = f.ctx, w = f.w, h = f.h, th = theme();
       if (!view || view.w !== w || view.h !== h) view = mkView(w, h);
@@ -1367,45 +1451,79 @@
       ctx.strokeStyle = th.grid; ctx.lineWidth = 1;
       for (var gx = 0; gx < w; gx += 40) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke(); }
       for (var gy = 0; gy < h; gy += 40) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke(); }
-      var E = view.f(pts.E[0], pts.E[1]), P = view.f(pts.P[0], pts.P[1]), D = view.f(pts.D[0], pts.D[1]);
-      var chi = peChi(pts.E, pts.P, pts.D), chiD = chi / DEG, inside = chiD >= 90 && chiD <= 270;
-      var rEP = Math.hypot(pts.P[0] - pts.E[0], pts.P[1] - pts.E[1]), rDP = Math.hypot(pts.P[0] - pts.D[0], pts.P[1] - pts.D[1]),
-          rED = Math.hypot(pts.D[0] - pts.E[0], pts.D[1] - pts.E[1]);
-      // circle with diameter EP
-      ctx.beginPath(); ctx.arc((E[0] + P[0]) / 2, (E[1] + P[1]) / 2, Math.hypot(P[0] - E[0], P[1] - E[1]) / 2, 0, 7);
-      ctx.fillStyle = inside ? 'rgba(22,163,74,0.08)' : 'rgba(220,38,38,0.07)'; ctx.fill();
-      ctx.setLineDash([6, 5]); ctx.strokeStyle = inside ? 'rgba(22,163,74,0.65)' : 'rgba(220,38,38,0.6)'; ctx.lineWidth = 1.4; ctx.stroke(); ctx.setLineDash([]);
-      // triangle sides; the longest is drawn thick
-      var longest = Math.max(rEP, rDP, rED);
-      function side(A, B, r, col, lab) {
-        ctx.strokeStyle = col; ctx.lineWidth = r === longest ? 4 : 2;
-        ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.stroke();
-        var mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2, nx = -(B[1] - A[1]), ny = B[0] - A[0], nl = Math.hypot(nx, ny) || 1;
-        ctx.fillStyle = col; ctx.font = (r === longest ? '700 ' : '500 ') + '12px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(lab + ' = ' + fmt(r, 2) + ' km', mx + 16 * nx / nl, my + 16 * ny / nl);
-      }
-      side(E, P, rEP, th.muted, 'EP'); side(E, D, rED, CE, 'ED'); side(D, P, rDP, CP, 'DP');
-      // chi: rotate the ray D→E counterclockwise by chi to reach D→P
-      var aE = Math.atan2(-(E[1] - D[1]), E[0] - D[0]);
-      ctx.strokeStyle = CD; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(D[0], D[1], 26, -aE, -(aE + chi), true); ctx.stroke();
-      var am = aE + chi / 2;
-      ctx.fillStyle = CD; ctx.font = '700 13px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('χ = ' + fmt(chiD, 0) + '°', D[0] + 50 * Math.cos(am), D[1] - 50 * Math.sin(am));
-      [[E, CE, 'E'], [P, CP, 'P'], [D, CD, 'D']].forEach(function (q) {
-        ctx.beginPath(); ctx.arc(q[0][0], q[0][1], drag === q[2] ? 10 : 8, 0, 7); ctx.fillStyle = q[1]; ctx.fill();
-        ctx.lineWidth = 2; ctx.strokeStyle = th.bg; ctx.stroke();
-        ctx.fillStyle = q[1]; ctx.font = '700 13px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-        ctx.fillText(q[2], q[0][0] + 11, q[0][1] - 6);
-      });
+      function V(q) { return view.f(q[0], q[1]); }
       ctx.fillStyle = th.muted; ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-      ctx.fillText('drag E, P or D', 12, 10);
-      out.innerHTML =
-        '<div><span>angle χ</span><b>' + fmt(chiD, 1) + '°</b></div>' +
-        '<div><span>D relative to the circle</span><b style="color:' + (inside ? CD : CP) + '">' + (inside ? 'inside' : 'outside') + '</b></div>' +
-        '<div><span>longest side</span><b>' + (longest === rEP ? 'r<sub>EP</sub>' : longest === rDP ? 'r<sub>DP</sub>' : 'r<sub>ED</sub>') + '</b></div>' +
-        '<div><span>verdict</span>' + (inside ? '<b style="color:' + CD + '">r<sub>DP</sub> &lt; r<sub>EP</sub>: D reaches P first</b>'
-          : '<b style="color:' + CP + '">no guarantee</b>') + '</div>';
+      if (!res || drag) {
+        // set-up: the static triangle, draggable
+        triangle(ctx, V(pts.E), V(pts.P), V(pts.D), peChi(pts.E, pts.P, pts.D) / DEG, true, th);
+        [['E', CE], ['P', CP], ['D', CD]].forEach(function (q) {
+          var s = V(pts[q[0]]); ctx.beginPath(); ctx.arc(s[0], s[1], drag === q[0] ? 10 : 8, 0, 7); ctx.fillStyle = q[1]; ctx.fill();
+          ctx.lineWidth = 2; ctx.strokeStyle = th.bg; ctx.stroke();
+          ctx.font = '700 13px Inter, sans-serif'; ctx.textBaseline = 'bottom'; ctx.fillText(q[0], s[0] + 11, s[1] - 6);
+        });
+        ctx.fillStyle = th.muted; ctx.font = '11px Inter, sans-serif'; ctx.textBaseline = 'top';
+        ctx.fillText('drag E, P or D, then release to run', 12, 10);
+        return;
+      }
+      var r = res.rec, i = idx(), done = i === r.t.length - 1 && res.end !== 'timeout';
+      // ghost triangles every 1.5 s
+      ctx.lineWidth = 1; ctx.strokeStyle = isDark() ? 'rgba(148,163,184,0.35)' : 'rgba(100,116,139,0.35)';
+      for (var j = 0; j < i; j += 75) {
+        var gE_ = V(km(r.E[j])), gP_ = V(km(r.P[j])), gD_ = V(km(r.D[j]));
+        ctx.beginPath(); ctx.moveTo(gE_[0], gE_[1]); ctx.lineTo(gP_[0], gP_[1]); ctx.lineTo(gD_[0], gD_[1]); ctx.closePath(); ctx.stroke();
+      }
+      // trails and starting points (the starting points stay draggable)
+      ctx.lineWidth = 2.2;
+      [[r.E, CE], [r.P, CP], [r.D, CD]].forEach(function (s) {
+        ctx.strokeStyle = s[1]; ctx.beginPath();
+        for (var k = 0; k <= i; k++) { var q = V(km(s[0][k])); if (k === 0) ctx.moveTo(q[0], q[1]); else ctx.lineTo(q[0], q[1]); }
+        ctx.stroke();
+      });
+      [['E', CE], ['P', CP], ['D', CD]].forEach(function (q) { var s = V(pts[q[0]]); ctx.fillStyle = q[1]; ctx.fillRect(s[0] - 5, s[1] - 5, 10, 10); });
+      var E = V(km(r.E[i])), P = V(km(r.P[i])), D = V(km(r.D[i]));
+      if (!done) triangle(ctx, E, P, D, r.chi[i], true, th);
+      function hd(gv, at) { var a = V(km(at)), b = V([at[0] / 1000 + Math.cos(gv), at[1] / 1000 + Math.sin(gv)]); return Math.atan2(b[1] - a[1], b[0] - a[0]); }
+      drawPlane(ctx, E[0], E[1], hd(r.gE[i], r.E[i]), 11, CE, th.halo);
+      if (done && res.end === 'intercept') drawBurst(ctx, P[0], P[1], Math.min(1, hold / 1.2));
+      else { drawMissile(ctx, P[0], P[1], hd(r.gP[i], r.P[i]), 9, CP, th.halo); drawMissile(ctx, D[0], D[1], hd(r.gD[i], r.D[i]), 9, CD, th.halo); }
+      ctx.fillStyle = th.muted; ctx.font = '600 12px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('t = ' + fmt(r.t[i], 1) + ' s', 12, 10);
+      if (done) {
+        ctx.textAlign = 'right'; ctx.font = '600 13px Inter, sans-serif';
+        ctx.fillStyle = res.end === 'intercept' ? CD : CP;
+        ctx.fillText(res.end === 'intercept' ? 'Pursuer intercepted at t = ' + fmt(res.tEnd, 2) + ' s' : 'Evader captured at t = ' + fmt(res.tEnd, 2) + ' s', w - 12, 10);
+        ctx.fillStyle = th.muted; ctx.font = '12px Inter, sans-serif';
+        if (res.end === 'intercept') ctx.fillText('r_EP is still ' + fmt(r.rep[i] / 1000, 2) + ' km', w - 12, 28);
+      }
     }
+
+    function charts() {
+      var chi0 = res ? res.chi0 : peChi(pts.E, pts.P, pts.D) / DEG, inside = chi0 >= 90 && chi0 <= 270;
+      if (!res || drag) {
+        drawChart(cvC, 'angle χ (held at χ(0))', 'deg', 15, 0, 360, [], 0);
+        drawChart(cvR, 'ranges r_DP (green), r_EP (red)', 'km', 15, 0, 6, [], 0);
+        out.innerHTML = '<div><span>initial angle χ(0)</span><b>' + fmt(chi0, 1) + '°</b></div>' +
+          '<div><span>D relative to the circle</span><b style="color:' + (inside ? CD : CP) + '">' + (inside ? 'inside' : 'outside') + '</b></div>';
+        return;
+      }
+      var r = res.rec, i = idx(), T = Math.max(5, Math.ceil(r.t[r.t.length - 1] / 5) * 5);
+      var pc = [], a = [], b = [];
+      for (var j = 0; j <= i; j += 2) { pc.push([r.t[j], r.chi[j]]); a.push([r.t[j], r.rdp[j] / 1000]); b.push([r.t[j], r.rep[j] / 1000]); }
+      drawChart(cvC, 'angle χ (held at χ(0) = ' + fmt(chi0, 0) + '°)', 'deg', T, 0, 360, [{ color: CD, pts: pc }], r.t[i]);
+      var fc = fitCanvas(cvC), c = fc.ctx, ph = fc.h - 36;
+      function Y(v) { return 18 + ph * (1 - v / 360); }
+      c.fillStyle = 'rgba(22,163,74,0.10)'; c.fillRect(38, Y(270), fc.w - 46, Y(90) - Y(270));
+      drawChart(cvR, 'ranges r_DP (green), r_EP (red)', 'km', T, 0, Math.ceil(Math.max(r.rep[0], r.rdp[0]) / 1000), [{ color: CD, pts: a }, { color: CP, pts: b }], r.t[i]);
+      var last = i === r.t.length - 1;
+      var st = last && res.end === 'intercept' ? '<b style="color:' + CD + '">pursuer intercepted</b>' :
+        (last && res.end === 'evader hit' ? '<b style="color:' + CP + '">evader captured</b>' : '<b>in progress</b>');
+      out.innerHTML =
+        '<div><span>angle χ now / χ(0)</span><b>' + fmt(r.chi[i], 1) + '° / ' + fmt(chi0, 1) + '°</b></div>' +
+        '<div><span>closing speed on P</span><b style="color:' + (r.vc[i] > 0 ? CD : CP) + '">' + fmt(r.vc[i], 0) + ' m/s</b></div>' +
+        '<div><span>r<sub>DP</sub> / r<sub>EP</sub></span><b>' + fmt(r.rdp[i] / 1000, 2) + ' / ' + fmt(r.rep[i] / 1000, 2) + ' km</b></div>' +
+        '<div><span>status</span>' + st + '</div>';
+    }
+
     function pick(e) {
       var rc = cv.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top, best = null, bd = 24;
       ['D', 'P', 'E'].forEach(function (k) { var q = view.f(pts[k][0], pts[k][1]), dd = Math.hypot(q[0] - x, q[1] - y); if (dd < bd) { bd = dd; best = k; } });
@@ -1413,26 +1531,34 @@
     }
     cv.addEventListener('pointerdown', function (e) {
       if (!view) return; var p = pick(e); if (!p.k) return;
-      drag = p.k; cv.setPointerCapture(e.pointerId); e.preventDefault(); dirty = true; anim.kick();
+      drag = p.k; cv.setPointerCapture(e.pointerId); e.preventDefault(); anim.kick();
     });
     cv.addEventListener('pointermove', function (e) {
       if (!view) return; var p = pick(e);
       cv.style.cursor = drag ? 'grabbing' : (p.k ? 'grab' : 'default');
       if (!drag) return;
-      pts[drag] = [clamp(p.w[0], -1.2, 6.2), clamp(p.w[1], -2.6, 2.6)]; dirty = true; anim.kick();
+      pts[drag] = [clamp(p.w[0], -1.2, 6.2), clamp(p.w[1], -2.6, 2.6)]; anim.kick();
     });
-    ['pointerup', 'pointercancel'].forEach(function (ev) { cv.addEventListener(ev, function () { drag = null; dirty = true; anim.kick(); }); });
+    ['pointerup', 'pointercancel'].forEach(function (ev) {
+      cv.addEventListener(ev, function () { if (!drag) return; drag = null; run(); anim.kick(); });
+    });
     root.querySelectorAll('[data-tri]').forEach(function (b) {
       b.addEventListener('click', function () {
         root.querySelectorAll('[data-tri]').forEach(function (x) { x.classList.remove('on'); }); b.classList.add('on');
-        pts = JSON.parse(JSON.stringify(TRI_PRESETS[b.getAttribute('data-tri')])); dirty = true; anim.kick();
+        pts = JSON.parse(JSON.stringify(TRI_PRESETS[b.getAttribute('data-tri')])); run(); anim.kick();
       });
     });
-    var lastTheme = null, lastW = 0;
-    var anim = animator(root, function () {
-      var t = isDark(); if (t !== lastTheme || cv.clientWidth !== lastW) { lastTheme = t; lastW = cv.clientWidth; dirty = true; }
-      if (dirty) { draw(); dirty = false; }
+    root.querySelector('[data-act="reset"]').addEventListener('click', function () { t = 0; hold = 0; anim.kick(); });
+    var anim = animator(root, function (dt) {
+      if (res && !drag) {
+        var tEnd = res.rec.t[res.rec.t.length - 1];
+        if (t >= tEnd) { hold += dt; if (hold > 3) { t = 0; hold = 0; } } else t = Math.min(tEnd, t + dt * 1.5);
+      }
+      draw(); if (frame++ % 3 === 0) charts();
     });
+    btnPlay.addEventListener('click', function () { anim.paused = !anim.paused; btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause'; anim.kick(); });
+    btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause';
+    run();
   }
 
   function init() {

@@ -139,3 +139,5 @@
 .pf-ctl-label { font-size: 0.75rem; color: var(--muted); align-self: center; margin: 0 0.1rem 0 0.2rem; }
 .pf-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
 .pf-controls button:disabled:hover { border-color: var(--border); color: var(--text); }
+#pe-tri canvas.pf-main { touch-action: none; height: 380px; }
+#pe-tri .pf-below { grid-template-columns: 1fr; }

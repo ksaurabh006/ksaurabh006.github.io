@@ -154,6 +154,22 @@ MathJax.Hub.Config({
   <img src="images/research/pe/gtg.png" alt="Triangles inscribed in a circle illustrating the angle chi" loading="lazy">
   <figcaption>From the paper: as the engagement evolves (\(P_0E_0D_0\to P_2E_2D_2\)), keeping \(\chi\ge 90^\circ\) keeps the defender closer to the pursuer than the evader is.</figcaption>
 </figure>
+<div class="pf-sim" id="pe-tri">
+  <div class="pf-sim-head">
+    <div class="pf-sim-title">Try it: the triangle rule
+      <small>Drag the evader, pursuer or defender. Whenever \(\chi\in[90^\circ,270^\circ]\), D is inside the circle on EP and \(r_{EP}\) is the longest side.</small></div>
+    <div class="pf-controls">
+      <button data-tri="outside">\(\chi<90^\circ\)</button>
+      <button data-tri="right">\(\chi=90^\circ\)</button>
+      <button data-tri="inside" class="on">\(90^\circ<\chi<180^\circ\)</button>
+      <button data-tri="reflex">\(\chi>180^\circ\)</button>
+    </div>
+  </div>
+  <canvas class="pf-main" aria-label="Interactive triangle formed by the evader, pursuer and defender"></canvas>
+  <div class="pf-legend"></div>
+  <div class="pf-below"><div class="pf-readout"></div></div>
+  <p class="pf-note">Proposition 1 of the paper: an angle inscribed on the diameter EP is a right angle, so the defender is inside the circle exactly when \(\chi\in[\pi/2,3\pi/2]\). Then the angle at D is the largest in the triangle and the opposite side \(r_{EP}\) is the longest, so \(r_{DP}<r_{EP}\). If the defender keeps closing on the pursuer while holding this angle, the triangle shrinks and \(r_{DP}\) reaches zero while \(r_{EP}\) is still positive.</p>
+</div>
 <p>The angle \(\beta\) has relative degree two, and both \(a_E\) and \(a_D\) enter its second derivative. The pursuer's acceleration \(a_P\) enters as an unknown bounded disturbance. The design uses a two-layer sliding manifold,</p>
 <p style="text-align:center">
 \[ \underline{\mathcal S} = \dot\beta - g(t), \quad g(t) = -\frac{k_1\,\beta}{t^\star - t}, \qquad \bar{\mathcal S} = \underline{\mathcal S} + h(t), \quad h(t) = \frac{h(0)}{t_1^{k_2}}(t_1-t)^{k_2}, \]
@@ -309,7 +325,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated November 25<sup>th</sup> 2026  02:34PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated November 25<sup>th</sup> 2026  02:38PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

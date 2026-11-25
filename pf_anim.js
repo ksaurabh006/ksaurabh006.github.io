@@ -11,6 +11,7 @@
  *                  vs nested saturation (ASCC 2026 / AST 2026), same paths and starts.
  *  5. #pe-sim     : pursuer-evader-defender engagement (Cooperative Pursuit-Evasion page).
  *  6. #pe-multi   : 20 defenders vs 20 pursuers with one-to-one assignment.
+ *  7. #pe-tri     : triangle rule (Proposition 1), drag E, P and D.
  *
  * Everything is simulated in the browser from the guidance laws in the papers.
  */
@@ -1338,6 +1339,102 @@
     reset();
   }
 
+  /* ── Triangle rule (Proposition 1): drag E, P, D and watch chi, the circle on EP and the side lengths ── */
+  function peChi(E, P, D) {
+    var lDP = Math.atan2(P[1] - D[1], P[0] - D[0]), lED = Math.atan2(D[1] - E[1], D[0] - E[0]);
+    return ((Math.PI + lDP - lED) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+  }
+  var TRI_PRESETS = {
+    outside: { E: [0, 0], P: [5, 0], D: [2.2, 3.1] },
+    right:   { E: [0, 0], P: [5, 0], D: [2.5 - 2.5 * Math.cos(1.1), 2.5 * Math.sin(1.1)] },
+    inside:  { E: [0, 0], P: [5, 0], D: [3.2, 1.2] },
+    reflex:  { E: [0, 0], P: [5, 0], D: [2.4, -1.4] }
+  };
+  function initTri(root) {
+    var cv = root.querySelector('canvas.pf-main'), out = root.querySelector('.pf-readout'), leg = root.querySelector('.pf-legend');
+    var pts = JSON.parse(JSON.stringify(TRI_PRESETS.inside)), drag = null, view = null, dirty = true;
+    legend(leg, [{ color: CE, label: 'evader E' }, { color: CP, label: 'pursuer P' }, { color: CD, label: 'defender D' },
+      { color: 'rgba(22,163,74,0.45)', label: 'circle with diameter EP' }]);
+
+    function mkView(w, h) {
+      var s = Math.min(w / 8, h / 5.6), cx = w / 2 - s * 2.5, cy = h / 2;
+      return { w: w, h: h, f: function (x, y) { return [cx + s * x, cy - s * y]; }, inv: function (px, py) { return [(px - cx) / s, (cy - py) / s]; } };
+    }
+    function draw() {
+      var f = fitCanvas(cv), ctx = f.ctx, w = f.w, h = f.h, th = theme();
+      if (!view || view.w !== w || view.h !== h) view = mkView(w, h);
+      ctx.fillStyle = th.bg; ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = th.grid; ctx.lineWidth = 1;
+      for (var gx = 0; gx < w; gx += 40) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke(); }
+      for (var gy = 0; gy < h; gy += 40) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke(); }
+      var E = view.f(pts.E[0], pts.E[1]), P = view.f(pts.P[0], pts.P[1]), D = view.f(pts.D[0], pts.D[1]);
+      var chi = peChi(pts.E, pts.P, pts.D), chiD = chi / DEG, inside = chiD >= 90 && chiD <= 270;
+      var rEP = Math.hypot(pts.P[0] - pts.E[0], pts.P[1] - pts.E[1]), rDP = Math.hypot(pts.P[0] - pts.D[0], pts.P[1] - pts.D[1]),
+          rED = Math.hypot(pts.D[0] - pts.E[0], pts.D[1] - pts.E[1]);
+      // circle with diameter EP
+      ctx.beginPath(); ctx.arc((E[0] + P[0]) / 2, (E[1] + P[1]) / 2, Math.hypot(P[0] - E[0], P[1] - E[1]) / 2, 0, 7);
+      ctx.fillStyle = inside ? 'rgba(22,163,74,0.08)' : 'rgba(220,38,38,0.07)'; ctx.fill();
+      ctx.setLineDash([6, 5]); ctx.strokeStyle = inside ? 'rgba(22,163,74,0.65)' : 'rgba(220,38,38,0.6)'; ctx.lineWidth = 1.4; ctx.stroke(); ctx.setLineDash([]);
+      // triangle sides; the longest is drawn thick
+      var longest = Math.max(rEP, rDP, rED);
+      function side(A, B, r, col, lab) {
+        ctx.strokeStyle = col; ctx.lineWidth = r === longest ? 4 : 2;
+        ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.stroke();
+        var mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2, nx = -(B[1] - A[1]), ny = B[0] - A[0], nl = Math.hypot(nx, ny) || 1;
+        ctx.fillStyle = col; ctx.font = (r === longest ? '700 ' : '500 ') + '12px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(lab + ' = ' + fmt(r, 2) + ' km', mx + 16 * nx / nl, my + 16 * ny / nl);
+      }
+      side(E, P, rEP, th.muted, 'EP'); side(E, D, rED, CE, 'ED'); side(D, P, rDP, CP, 'DP');
+      // chi: rotate the ray D→E counterclockwise by chi to reach D→P
+      var aE = Math.atan2(-(E[1] - D[1]), E[0] - D[0]);
+      ctx.strokeStyle = CD; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(D[0], D[1], 26, -aE, -(aE + chi), true); ctx.stroke();
+      var am = aE + chi / 2;
+      ctx.fillStyle = CD; ctx.font = '700 13px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('χ = ' + fmt(chiD, 0) + '°', D[0] + 50 * Math.cos(am), D[1] - 50 * Math.sin(am));
+      [[E, CE, 'E'], [P, CP, 'P'], [D, CD, 'D']].forEach(function (q) {
+        ctx.beginPath(); ctx.arc(q[0][0], q[0][1], drag === q[2] ? 10 : 8, 0, 7); ctx.fillStyle = q[1]; ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = th.bg; ctx.stroke();
+        ctx.fillStyle = q[1]; ctx.font = '700 13px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+        ctx.fillText(q[2], q[0][0] + 11, q[0][1] - 6);
+      });
+      ctx.fillStyle = th.muted; ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('drag E, P or D', 12, 10);
+      out.innerHTML =
+        '<div><span>angle χ</span><b>' + fmt(chiD, 1) + '°</b></div>' +
+        '<div><span>D relative to the circle</span><b style="color:' + (inside ? CD : CP) + '">' + (inside ? 'inside' : 'outside') + '</b></div>' +
+        '<div><span>longest side</span><b>' + (longest === rEP ? 'r<sub>EP</sub>' : longest === rDP ? 'r<sub>DP</sub>' : 'r<sub>ED</sub>') + '</b></div>' +
+        '<div><span>verdict</span>' + (inside ? '<b style="color:' + CD + '">r<sub>DP</sub> &lt; r<sub>EP</sub>: D reaches P first</b>'
+          : '<b style="color:' + CP + '">no guarantee</b>') + '</div>';
+    }
+    function pick(e) {
+      var rc = cv.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top, best = null, bd = 24;
+      ['D', 'P', 'E'].forEach(function (k) { var q = view.f(pts[k][0], pts[k][1]), dd = Math.hypot(q[0] - x, q[1] - y); if (dd < bd) { bd = dd; best = k; } });
+      return { k: best, w: view.inv(x, y) };
+    }
+    cv.addEventListener('pointerdown', function (e) {
+      if (!view) return; var p = pick(e); if (!p.k) return;
+      drag = p.k; cv.setPointerCapture(e.pointerId); e.preventDefault(); dirty = true; anim.kick();
+    });
+    cv.addEventListener('pointermove', function (e) {
+      if (!view) return; var p = pick(e);
+      cv.style.cursor = drag ? 'grabbing' : (p.k ? 'grab' : 'default');
+      if (!drag) return;
+      pts[drag] = [clamp(p.w[0], -1.2, 6.2), clamp(p.w[1], -2.6, 2.6)]; dirty = true; anim.kick();
+    });
+    ['pointerup', 'pointercancel'].forEach(function (ev) { cv.addEventListener(ev, function () { drag = null; dirty = true; anim.kick(); }); });
+    root.querySelectorAll('[data-tri]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        root.querySelectorAll('[data-tri]').forEach(function (x) { x.classList.remove('on'); }); b.classList.add('on');
+        pts = JSON.parse(JSON.stringify(TRI_PRESETS[b.getAttribute('data-tri')])); dirty = true; anim.kick();
+      });
+    });
+    var lastTheme = null, lastW = 0;
+    var anim = animator(root, function () {
+      var t = isDark(); if (t !== lastTheme || cv.clientWidth !== lastW) { lastTheme = t; lastW = cv.clientWidth; dirty = true; }
+      if (dirty) { draw(); dirty = false; }
+    });
+  }
+
   function init() {
     var a = document.getElementById('pf-sim2d'); if (a) initSim2D(a);
     var b = document.getElementById('pf-sim3d'); if (b) initSim3D(b);
@@ -1345,6 +1442,7 @@
     var d = document.getElementById('pf-ct'); if (d) initCT(d);
     var e = document.getElementById('pe-sim'); if (e) initPE(e);
     var m = document.getElementById('pe-multi'); if (m) initPEMulti(m);
+    var tr = document.getElementById('pe-tri'); if (tr) initTri(tr);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

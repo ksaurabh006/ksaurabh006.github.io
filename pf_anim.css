@@ -134,3 +134,8 @@
 [data-theme="dark"] .pf-banner { background: linear-gradient(100deg, #13233f, #1e3a8a); }
 [data-theme="dark"] #approach-ct + .pf-banner { background: linear-gradient(100deg, #13233f, #78350f); }
 @media (max-width: 700px) { .pf-approaches { grid-template-columns: 1fr; } }
+
+/* control labels and disabled buttons (pursuit-evasion page) */
+.pf-ctl-label { font-size: 0.75rem; color: var(--muted); align-self: center; margin: 0 0.1rem 0 0.2rem; }
+.pf-controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+.pf-controls button:disabled:hover { border-color: var(--border); color: var(--text); }

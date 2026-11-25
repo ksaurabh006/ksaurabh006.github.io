@@ -9,6 +9,8 @@
  *                  (AIAA JGCD 2026 / SciTech 2026).
  *  4. #pf-ct     : cross-track guidance, terminal sliding mode (AIAA GNC 2023)
  *                  vs nested saturation (ASCC 2026 / AST 2026), same paths and starts.
+ *  5. #pe-sim     : pursuer-evader-defender engagement (Cooperative Pursuit-Evasion page).
+ *  6. #pe-multi   : 20 defenders vs 20 pursuers with one-to-one assignment.
  *
  * Everything is simulated in the browser from the guidance laws in the papers.
  */
@@ -891,11 +893,410 @@
     reset();
   }
 
+  /* ════════════════════════════════════════════════════════════════
+     5. PURSUER–EVADER–DEFENDER ENGAGEMENT (Kumar, Kumar & Sinha, JAIS)
+        Direct port of the paper's simulation code: maneuver-level (MLC) and
+        information-level (ILC) cooperation, delayed a_E, three pursuer laws.
+     ════════════════════════════════════════════════════════════════ */
+  var CE = '#2563eb', CP = '#dc2626', CD = '#16a34a';
+  var PE_V = { D: 200, P: 200, E: 100 };
+
+  function drawMissile(ctx, x, y, a, size, color, halo) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(a); ctx.scale(size / 10, size / 10);
+    ctx.beginPath();
+    ctx.moveTo(12, 0); ctx.lineTo(4, 2.2); ctx.lineTo(-8, 2.2); ctx.lineTo(-12, 6); ctx.lineTo(-12, -6);
+    ctx.lineTo(-8, -2.2); ctx.lineTo(4, -2.2); ctx.closePath();
+    ctx.lineWidth = 3; ctx.strokeStyle = halo; ctx.stroke(); ctx.fillStyle = color; ctx.fill();
+    ctx.restore();
+  }
+  function drawBurst(ctx, x, y, k) {
+    for (var i = 0; i < 10; i++) {
+      var a = i / 10 * 2 * Math.PI, r0 = 4 + 10 * k, r1 = 8 + 22 * k;
+      ctx.strokeStyle = i % 2 ? '#f59e0b' : '#dc2626'; ctx.lineWidth = 2; ctx.globalAlpha = Math.max(0, 1 - k * 0.7);
+      ctx.beginPath(); ctx.moveTo(x + r0 * Math.cos(a), y + r0 * Math.sin(a)); ctx.lineTo(x + r1 * Math.cos(a), y + r1 * Math.sin(a)); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // One engagement. opt: {mode, chi (deg), tau (s), plaw, D0: [x, y] or null}
+  function peSimulate(opt) {
+    var ilc = opt.mode === 'ilc', d = DEG, H = 0.002, REC = 0.02, every = Math.round(REC / H), TMAX = 30;
+    var G = ilc ? { k1: 3, k2: 3, t1: 5, ts: 9, K: 1, marg: 0.1, N: 3, lED: 45, gD: 0 }
+                : { k1: 6, k2: 3, t1: 3, ts: 6, K: 5, marg: 0.2, N: 5, lED: -45, gD: 30 };
+    var xE = 0, yE = 0, gE = 45 * d;
+    var xD = opt.D0 ? opt.D0[0] : 500 * Math.cos(G.lED * d), yD = opt.D0 ? opt.D0[1] : 500 * Math.sin(G.lED * d), gD = G.gD * d;
+    var xP = 5000, yP = 0, gP = 180 * d;
+    var chis = opt.chi * d, S0 = null, he0 = null, amEh = [], nDel = Math.round(opt.tau / H);
+    var rec = { E: [], P: [], D: [], gE: [], gP: [], gD: [], chi: [], rdp: [], rep: [], t: [] };
+    var out = { rec: rec, end: 'timeout', tEnd: TMAX };
+    for (var k = 0; ; k++) {
+      var t = k * H;
+      var RDP = Math.hypot(xP - xD, yP - yD), RED = Math.hypot(xD - xE, yD - yE), REP = Math.hypot(xP - xE, yP - yE);
+      var lDP = Math.atan2(yP - yD, xP - xD), lED = Math.atan2(yD - yE, xD - xE), lEP = Math.atan2(yP - yE, xP - xE);
+      var RDPd = PE_V.P * Math.cos(gP - lDP) - PE_V.D * Math.cos(gD - lDP);
+      var REPd = PE_V.P * Math.cos(gP - lEP) - PE_V.E * Math.cos(gE - lEP);
+      var REDd = PE_V.D * Math.cos(gD - lED) - PE_V.E * Math.cos(gE - lED);
+      var lDPd = (PE_V.P * Math.sin(gP - lDP) - PE_V.D * Math.sin(gD - lDP)) / RDP;
+      var lEPd = (PE_V.P * Math.sin(gP - lEP) - PE_V.E * Math.sin(gE - lEP)) / REP;
+      var lEDd = (PE_V.D * Math.sin(gD - lED) - PE_V.E * Math.sin(gE - lED)) / RED;
+      var chi = ((Math.PI + lDP - lED) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+      if (k % every === 0) {
+        rec.E.push([xE, yE]); rec.P.push([xP, yP]); rec.D.push([xD, yD]);
+        rec.gE.push(gE); rec.gP.push(gP); rec.gD.push(gD);
+        rec.chi.push(chi / d); rec.rdp.push(RDP); rec.rep.push(REP); rec.t.push(t);
+      }
+      if (RDP <= 2) { out.end = 'intercept'; out.tEnd = t; break; }
+      if (REP <= 2) { out.end = 'evader hit'; out.tEnd = t; break; }
+      if (t >= TMAX) break;
+      var beta = chi - chis, bd = lDPd - lEDd, gdot, S, tl = G.ts - t;
+      if (tl > G.marg) { gdot = -G.k1 / tl * bd - G.k1 * beta / (tl * tl); S = bd + G.k1 / tl * beta; }
+      else { gdot = -G.k1 / G.marg * bd - G.k1 * beta / (G.marg * G.marg); S = bd + G.k1 / G.marg * beta; }
+      if (S0 === null) S0 = -S;
+      var ht = 0, hd = 0;
+      if (t < G.t1) { ht = S0 / Math.pow(G.t1, G.k2) * Math.pow(G.t1 - t, G.k2); hd = -S0 / Math.pow(G.t1, G.k2) * G.k2 * Math.pow(G.t1 - t, G.k2 - 1); }
+      var Si = S + ht;
+      var a1 = Math.cos(gE - lED) / RED, a2 = Math.cos(gD - lDP) / RDP + Math.cos(gD - lED) / RED;
+      var amD, amE;
+      if (ilc) {
+        // Theorem 3: evader nulls its LOS rate to the pursuer at t2 (decoy)
+        if (he0 === null) he0 = -lEPd;
+        var hE = 0, hEd = 0;
+        if (t < 4) { hE = he0 / 64 * Math.pow(4 - t, 3); hEd = -he0 / 64 * 3 * Math.pow(4 - t, 2); }
+        amE = REP / Math.cos(gE - lEP) * (-2 * REPd * lEPd / REP + hEd + Math.tanh(10 * (lEPd + hE)));
+        amE = clamp(amE, -98, 98);
+        amEh.push(amE);
+        var amEd = amEh.length > nDel ? amEh[amEh.length - 1 - nDel] : 0;   // defender receives a_E(t − τ)
+        // Theorem 4: defender law using the evader's (delayed) command
+        amD = (-2 * RDPd * lDPd / RDP + 2 * REDd * lEDd / RED + a1 * amEd - gdot + hd + G.K * Math.tanh(10 * Si)) / a2;
+      } else {
+        // Theorems 1–2: net cooperative control U, split by weighted minimum-norm allocation
+        var U = 2 * RDPd * lDPd / RDP - 2 * REDd * lEDd / RED + gdot - hd - G.K * Math.tanh(10 * Si);
+        amD = -U * a2 / (a2 * a2 + a1 * a1); amE = clamp(U * a1 / (a2 * a2 + a1 * a1), -98, 98);
+      }
+      var amP;
+      if (opt.plaw === 'ppg') amP = PE_V.P * lEPd - 0.5 * (gP - lEP);
+      else if (opt.plaw === 'dpg') amP = PE_V.P * lEPd - (gP - lEP - Math.PI / 3);
+      else amP = -G.N * REPd * lEPd;
+      amD = clamp(amD, -196, 196); amP = clamp(amP, -196, 196);
+      xD += PE_V.D * Math.cos(gD) * H; yD += PE_V.D * Math.sin(gD) * H; gD += amD / PE_V.D * H;
+      xP += PE_V.P * Math.cos(gP) * H; yP += PE_V.P * Math.sin(gP) * H; gP += amP / PE_V.P * H;
+      xE += PE_V.E * Math.cos(gE) * H; yE += PE_V.E * Math.sin(gE) * H; gE += amE / PE_V.E * H;
+    }
+    out.G = G;
+    return out;
+  }
+
+  function fitView(pts, w, h, pad) {
+    var mnx = 1e9, mny = 1e9, mxx = -1e9, mxy = -1e9;
+    pts.forEach(function (p) { mnx = Math.min(mnx, p[0]); mxx = Math.max(mxx, p[0]); mny = Math.min(mny, p[1]); mxy = Math.max(mxy, p[1]); });
+    var s = Math.min((w - 2 * pad) / Math.max(mxx - mnx, 1), (h - 2 * pad) / Math.max(mxy - mny, 1));
+    var ox = (w - s * (mxx - mnx)) / 2 - s * mnx, oy = (h + s * (mxy - mny)) / 2 + s * mny;
+    return { w: w, h: h, s: s, f: function (x, y) { return [ox + s * x, oy - s * y]; },
+      inv: function (px, py) { return [(px - ox) / s, (oy - py) / s]; } };
+  }
+  function polyline(ctx, view, pts, upto) {
+    ctx.beginPath();
+    for (var j = 0; j <= upto && j < pts.length; j++) { var q = view.f(pts[j][0], pts[j][1]); if (j === 0) ctx.moveTo(q[0], q[1]); else ctx.lineTo(q[0], q[1]); }
+    ctx.stroke();
+  }
+
+  function initPE(root) {
+    var cv = root.querySelector('canvas.pf-main');
+    var cvC = root.querySelector('canvas.pf-chart-r');
+    var cvR = root.querySelector('canvas.pf-chart-xi');
+    var out = root.querySelector('.pf-readout');
+    var leg = root.querySelector('.pf-legend');
+    var btnPlay = root.querySelector('[data-act="play"]');
+    var opt = { mode: 'ilc', chi: 180, tau: 0, plaw: 'png', D0: null };
+    var res, t = 0, hold = 0, view = null;
+    legend(leg, [{ color: CE, label: 'evader E' }, { color: CP, label: 'pursuer P' }, { color: CD, label: 'defender D' },
+      { color: 'rgba(22,163,74,0.45)', label: 'circle on EP (D inside ⇒ χ ∈ [90°, 270°])' }]);
+
+    function reset() {
+      res = peSimulate(opt); t = 0; hold = 0; view = null;
+      root.querySelectorAll('[data-tau]').forEach(function (b) { b.disabled = opt.mode !== 'ilc'; });
+    }
+    function idx() { return Math.min(res.rec.t.length - 1, Math.floor(t / 0.02)); }
+
+    function draw() {
+      var f = fitCanvas(cv), ctx = f.ctx, w = f.w, h = f.h, th = theme(), r = res.rec;
+      if (!view || view.w !== w || view.h !== h) view = fitView(r.E.concat(r.P, r.D, [[0, 600], [0, -600]]), w, h, 34);
+      ctx.fillStyle = th.bg; ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = th.grid; ctx.lineWidth = 1;
+      for (var gx = 0; gx < w; gx += 40) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke(); }
+      for (var gy = 0; gy < h; gy += 40) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke(); }
+      var i = idx(), E = view.f(r.E[i][0], r.E[i][1]), P = view.f(r.P[i][0], r.P[i][1]), D = view.f(r.D[i][0], r.D[i][1]);
+      var done = res.end === 'intercept' && i === r.t.length - 1;
+      // circle with diameter EP
+      var inside = r.chi[i] >= 90 && r.chi[i] <= 270;
+      if (!done) {
+        ctx.save(); ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.clip();
+        ctx.beginPath(); ctx.arc((E[0] + P[0]) / 2, (E[1] + P[1]) / 2, Math.hypot(P[0] - E[0], P[1] - E[1]) / 2, 0, 7);
+        ctx.fillStyle = inside ? 'rgba(22,163,74,0.07)' : 'rgba(220,38,38,0.07)'; ctx.fill();
+        ctx.setLineDash([6, 5]); ctx.strokeStyle = inside ? 'rgba(22,163,74,0.6)' : 'rgba(220,38,38,0.6)'; ctx.lineWidth = 1.3; ctx.stroke(); ctx.setLineDash([]);
+        ctx.restore();
+      }
+      // trails
+      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = CE; polyline(ctx, view, r.E, i);
+      ctx.strokeStyle = CP; polyline(ctx, view, r.P, i);
+      ctx.strokeStyle = CD; polyline(ctx, view, r.D, i);
+      [[r.E[0], CE], [r.P[0], CP], [r.D[0], CD]].forEach(function (s) { var q = view.f(s[0][0], s[0][1]); ctx.fillStyle = s[1]; ctx.fillRect(q[0] - 4, q[1] - 4, 8, 8); });
+      if (!done) {
+        // lines of sight and the angle chi at D
+        ctx.setLineDash([4, 4]); ctx.lineWidth = 1.2;
+        ctx.strokeStyle = 'rgba(37,99,235,0.7)'; ctx.beginPath(); ctx.moveTo(D[0], D[1]); ctx.lineTo(E[0], E[1]); ctx.stroke();
+        ctx.strokeStyle = 'rgba(220,38,38,0.7)'; ctx.beginPath(); ctx.moveTo(D[0], D[1]); ctx.lineTo(P[0], P[1]); ctx.stroke();
+        ctx.setLineDash([]);
+        var aE = Math.atan2(E[1] - D[1], E[0] - D[0]), aP = Math.atan2(P[1] - D[1], P[0] - D[0]);
+        ctx.strokeStyle = CD; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(D[0], D[1], 20, aE, aP, true); ctx.stroke();
+        ctx.fillStyle = CD; ctx.font = '600 11px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+        ctx.fillText('χ = ' + fmt(r.chi[i], 0) + '°', D[0] + 24, D[1] - 6);
+      }
+      function heading(g, at) { var q = view.f(at[0] + Math.cos(g), at[1] + Math.sin(g)), o = view.f(at[0], at[1]); return Math.atan2(q[1] - o[1], q[0] - o[0]); }
+      drawPlane(ctx, E[0], E[1], heading(r.gE[i], r.E[i]), 11, CE, th.halo);
+      if (done) {
+        var k = Math.min(1, hold / 1.2); drawBurst(ctx, P[0], P[1], k);
+      } else {
+        drawMissile(ctx, P[0], P[1], heading(r.gP[i], r.P[i]), 9, CP, th.halo);
+        drawMissile(ctx, D[0], D[1], heading(r.gD[i], r.D[i]), 9, CD, th.halo);
+      }
+      ctx.font = '600 12px Inter, sans-serif'; ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+      ctx.fillStyle = CE; ctx.fillText('E', E[0] + 10, E[1] + 8);
+      if (!done) { ctx.fillStyle = CP; ctx.fillText('P', P[0] + 10, P[1] + 8); ctx.fillStyle = CD; ctx.fillText('D', D[0] + 10, D[1] + 8); }
+      ctx.fillStyle = th.muted; ctx.fillText('t = ' + fmt(r.t[i], 1) + ' s', 12, 10);
+      ctx.font = '11px Inter, sans-serif'; ctx.fillText('click to move the defender’s starting point', 12, h - 20);
+      if (done) {
+        ctx.font = '600 13px Inter, sans-serif'; ctx.fillStyle = CD; ctx.textAlign = 'right';
+        ctx.fillText('Pursuer intercepted at t = ' + fmt(res.tEnd, 2) + ' s', w - 12, 10);
+        ctx.fillStyle = th.muted; ctx.font = '12px Inter, sans-serif';
+        ctx.fillText('evader is ' + fmt(r.rep[i] / 1000, 2) + ' km away', w - 12, 28);
+      }
+    }
+
+    function charts() {
+      var r = res.rec, i = idx(), T = Math.ceil(r.t[r.t.length - 1] / 5) * 5 || 5;
+      var pc = []; for (var j = 0; j <= i; j += 2) pc.push([r.t[j], r.chi[j]]);
+      drawChart(cvC, 'angle χ (target χ* = ' + opt.chi + '°)', 'deg', T, 0, 360, [{ color: CD, pts: pc }], r.t[i]);
+      var fc = fitCanvas(cvC), c = fc.ctx, ph = fc.h - 36;
+      function Y(v) { return 18 + ph * (1 - v / 360); }
+      c.fillStyle = 'rgba(22,163,74,0.10)'; c.fillRect(38, Y(270), fc.w - 46, Y(90) - Y(270));
+      c.strokeStyle = CD; c.setLineDash([5, 4]); c.beginPath(); c.moveTo(38, Y(opt.chi)); c.lineTo(fc.w - 8, Y(opt.chi)); c.stroke(); c.setLineDash([]);
+      var tsx = 38 + (fc.w - 46) * res.G.ts / T;
+      c.strokeStyle = 'rgba(100,116,139,0.6)'; c.beginPath(); c.moveTo(tsx, 18); c.lineTo(tsx, 18 + ph); c.stroke();
+      c.fillStyle = theme().muted; c.font = '10px Inter, sans-serif'; c.textAlign = 'left'; c.fillText('t* = ' + res.G.ts + ' s', tsx + 3, 22);
+      var a = [], b = []; for (j = 0; j <= i; j += 2) { a.push([r.t[j], r.rdp[j] / 1000]); b.push([r.t[j], r.rep[j] / 1000]); }
+      drawChart(cvR, 'ranges r_DP (green), r_EP (red)', 'km', T, 0, Math.ceil(Math.max(r.rep[0], r.rdp[0]) / 1000), [{ color: CD, pts: a }, { color: CP, pts: b }], r.t[i]);
+      var st = res.end === 'intercept' && i === r.t.length - 1 ? '<b style="color:#16a34a">intercepted</b>' :
+        (res.end === 'evader hit' && i === r.t.length - 1 ? '<b style="color:#dc2626">evader hit</b>' : '<b>in progress</b>');
+      out.innerHTML =
+        '<div><span>angle χ</span><b>' + fmt(r.chi[i], 1) + '°</b></div>' +
+        '<div><span>status</span>' + st + '</div>' +
+        '<div><span>range r<sub>DP</sub></span><b>' + fmt(r.rdp[i], 0) + ' m</b></div>' +
+        '<div><span>range r<sub>EP</sub></span><b>' + fmt(r.rep[i], 0) + ' m</b></div>';
+    }
+
+    var frame = 0;
+    var anim = animator(root, function (dt) {
+      var tEnd = res.rec.t[res.rec.t.length - 1];
+      if (t >= tEnd) { hold += dt; if (hold > 2.5) { t = 0; hold = 0; } } else t = Math.min(tEnd, t + dt);
+      draw(); if (frame++ % 3 === 0) charts();
+    });
+    function group(attr, key, parse) {
+      root.querySelectorAll('[' + attr + ']').forEach(function (b) {
+        b.addEventListener('click', function () {
+          root.querySelectorAll('[' + attr + ']').forEach(function (x) { x.classList.remove('on'); });
+          b.classList.add('on'); opt[key] = parse(b.getAttribute(attr));
+          if (key === 'mode') opt.D0 = null;
+          reset(); anim.kick();
+        });
+      });
+    }
+    group('data-mode', 'mode', String); group('data-chi', 'chi', Number); group('data-tau', 'tau', Number); group('data-plaw', 'plaw', String);
+    cv.addEventListener('click', function (e) {
+      if (!view) return;
+      var rc = cv.getBoundingClientRect(), p = view.inv(e.clientX - rc.left, e.clientY - rc.top);
+      opt.D0 = p; reset(); anim.kick();
+    });
+    root.querySelector('[data-act="reset"]').addEventListener('click', function () { opt.D0 = null; reset(); anim.kick(); });
+    btnPlay.addEventListener('click', function () { anim.paused = !anim.paused; btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause'; anim.kick(); });
+    btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause';
+    reset();
+  }
+
+  /* ── one-to-one assignment: Hungarian, greedy, auction (as in the paper's code) ── */
+  function assignHungarian(C) {
+    var n = C.length, INF = 1e18, u = new Array(n + 1).fill(0), v = new Array(n + 1).fill(0), p = new Array(n + 1).fill(0), way = new Array(n + 1).fill(0);
+    for (var i = 1; i <= n; i++) {
+      p[0] = i; var j0 = 0, minv = new Array(n + 1).fill(INF), used = new Array(n + 1).fill(false);
+      do {
+        used[j0] = true; var i0 = p[j0], delta = INF, j1 = 0;
+        for (var j = 1; j <= n; j++) if (!used[j]) {
+          var cur = C[i0 - 1][j - 1] - u[i0] - v[j];
+          if (cur < minv[j]) { minv[j] = cur; way[j] = j0; }
+          if (minv[j] < delta) { delta = minv[j]; j1 = j; }
+        }
+        for (j = 0; j <= n; j++) { if (used[j]) { u[p[j]] += delta; v[j] -= delta; } else minv[j] -= delta; }
+        j0 = j1;
+      } while (p[j0] !== 0);
+      do { var jj = way[j0]; p[j0] = p[jj]; j0 = jj; } while (j0);
+    }
+    var a = new Array(n); for (var jx = 1; jx <= n; jx++) a[p[jx] - 1] = jx - 1; return a;
+  }
+  function assignGreedy(C) {
+    var n = C.length, a = new Array(n).fill(-1), rowUsed = [], colUsed = [];
+    for (var k = 0; k < n; k++) {
+      var best = 1e18, bi = -1, bj = -1;
+      for (var i = 0; i < n; i++) if (!rowUsed[i]) for (var j = 0; j < n; j++) if (!colUsed[j] && C[i][j] < best) { best = C[i][j]; bi = i; bj = j; }
+      a[bi] = bj; rowUsed[bi] = colUsed[bj] = true;
+    }
+    return a;
+  }
+  function assignAuction(C) {
+    var n = C.length, mx = 0, i, j;
+    C.forEach(function (r) { r.forEach(function (c) { mx = Math.max(mx, c); }); });
+    var price = new Array(n).fill(0), owner = new Array(n).fill(-1), a = new Array(n).fill(-1), queue = [], eps = 1 / (n + 1), it = 0;
+    for (i = 0; i < n; i++) queue.push(i);
+    while (queue.length && it++ < n * n * 10) {
+      i = queue.shift();
+      var best = -1e18, second = -1e18, jb = 0;
+      for (j = 0; j < n; j++) { var val = (mx - C[i][j]) - price[j]; if (val > best) { second = best; best = val; jb = j; } else if (val > second) second = val; }
+      price[jb] += best - second + eps;
+      if (owner[jb] >= 0) { a[owner[jb]] = -1; queue.push(owner[jb]); }
+      owner[jb] = i; a[i] = jb;
+    }
+    // as in the paper's code: anyone left unassigned after the iteration cap takes a free pursuer
+    var free = []; for (j = 0; j < n; j++) if (a.indexOf(j) < 0) free.push(j);
+    for (i = 0; i < n; i++) if (a[i] < 0) a[i] = free.shift();
+    return a;
+  }
+
+  function initPEMulti(root) {
+    var cv = root.querySelector('canvas.pf-main');
+    var out = root.querySelector('.pf-readout');
+    var leg = root.querySelector('.pf-legend');
+    var btnPlay = root.querySelector('[data-act="play"]');
+    var N = 20, H = 0.001, REC = 0.02, every = Math.round(REC / H), TMAX = 30, method = 'hungarian';
+    var res, t = 0, hold = 0, view = null;
+    legend(leg, [{ color: CE, label: 'evader' }, { color: CP, label: 'pursuers' }, { color: CD, label: 'defenders' }, { color: 'rgba(100,116,139,0.6)', label: 'initial assignment' }]);
+
+    function lin(a, b, k) { return a + (b - a) * k / (N - 1); }
+    function simulate() {
+      var D0 = [], P0 = [], i, j;
+      for (i = 0; i < N; i++) {
+        var lED = lin(-60, 80, i) * DEG, rED = lin(100, 500, i), lEP = lin(-20, 20, i) * DEG, rEP = lin(4000, 5000, i);
+        D0.push([rED * Math.cos(lED), rED * Math.sin(lED)]); P0.push([rEP * Math.cos(lEP), rEP * Math.sin(lEP)]);
+      }
+      var C = D0.map(function (d) { return P0.map(function (p) { return Math.hypot(d[0] - p[0], d[1] - p[1]); }); });
+      var asg = method === 'hungarian' ? assignHungarian(C) : (method === 'greedy' ? assignGreedy(C) : (method === 'auction' ? assignAuction(C) : D0.map(function (_, k) { return k; })));
+      var J = 0; for (i = 0; i < N; i++) J += C[i][asg[i]];
+      var pairs = [];
+      for (i = 0; i < N; i++) pairs.push({ xD: D0[i][0], yD: D0[i][1], gD: 0, xP: P0[asg[i]][0], yP: P0[asg[i]][1], gP: Math.PI,
+        Dtr: [], Ptr: [], cap: null, S0: null, from: D0[i], to: P0[asg[i]] });
+      var xE = 0, yE = 0, gE = Math.PI / 2, Etr = [], k1 = 3, k2 = 3, t1 = 4, ts = 8, K = 1, eps = 0.1;
+      var n = Math.round(TMAX / H);
+      for (var k = 0; k <= n; k++) {
+        var t = k * H, rec = k % every === 0;
+        if (rec) Etr.push([xE, yE]);
+        pairs.forEach(function (q) {
+          if (rec) { q.Dtr.push([q.xD, q.yD]); q.Ptr.push([q.xP, q.yP]); }
+          if (q.cap !== null) return;
+          var RDP = Math.hypot(q.xP - q.xD, q.yP - q.yD), RED = Math.hypot(q.xD - xE, q.yD - yE), REP = Math.hypot(q.xP - xE, q.yP - yE);
+          if (RDP <= 1) { q.cap = t; return; }
+          var lDP = Math.atan2(q.yP - q.yD, q.xP - q.xD), lED = Math.atan2(q.yD - yE, q.xD - xE), lEP = Math.atan2(q.yP - yE, q.xP - xE);
+          var RDPd = PE_V.P * Math.cos(q.gP - lDP) - PE_V.D * Math.cos(q.gD - lDP);
+          var REPd = PE_V.P * Math.cos(q.gP - lEP) - PE_V.E * Math.cos(gE - lEP);
+          var REDd = PE_V.D * Math.cos(q.gD - lED) - PE_V.E * Math.cos(gE - lED);
+          var lDPd = (PE_V.P * Math.sin(q.gP - lDP) - PE_V.D * Math.sin(q.gD - lDP)) / RDP;
+          var lEPd = (PE_V.P * Math.sin(q.gP - lEP) - PE_V.E * Math.sin(gE - lEP)) / REP;
+          var lEDd = (PE_V.D * Math.sin(q.gD - lED) - PE_V.E * Math.sin(gE - lED)) / RED;
+          var chi = ((Math.PI + lDP - lED) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI), beta = chi - Math.PI, bd = lDPd - lEDd;
+          var tl = Math.max(ts - t, eps), gdot = -k1 / tl * bd - k1 * beta / (tl * tl), S = bd + k1 / tl * beta;
+          if (q.S0 === null) q.S0 = -S;
+          var ht = 0, hd = 0;
+          if (t < t1) { ht = q.S0 / Math.pow(t1, k2) * Math.pow(t1 - t, k2); hd = -q.S0 / Math.pow(t1, k2) * k2 * Math.pow(t1 - t, k2 - 1); }
+          var a2 = Math.cos(q.gD - lDP) / RDP + Math.cos(q.gD - lED) / RED;
+          var amD = clamp((-2 * RDPd * lDPd / RDP + 2 * REDd * lEDd / RED - gdot + hd + K * Math.tanh(30 * (S + ht))) / a2, -196, 196);
+          var amP = clamp(-3 * REPd * lEPd, -196, 196);
+          q.xD += PE_V.D * Math.cos(q.gD) * H; q.yD += PE_V.D * Math.sin(q.gD) * H; q.gD += amD / PE_V.D * H;
+          q.xP += PE_V.P * Math.cos(q.gP) * H; q.yP += PE_V.P * Math.sin(q.gP) * H; q.gP += amP / PE_V.P * H;
+        });
+        xE += PE_V.E * Math.cos(gE) * H; yE += PE_V.E * Math.sin(gE) * H;
+        if (pairs.every(function (q) { return q.cap !== null; }) && k % every === 0) break;
+      }
+      return { pairs: pairs, E: Etr, J: J };
+    }
+    function reset() { res = simulate(); t = 0; hold = 0; view = null; }
+
+    function draw() {
+      var f = fitCanvas(cv), ctx = f.ctx, w = f.w, h = f.h, th = theme();
+      if (!view || view.w !== w || view.h !== h) {
+        var pts = res.E.slice(); res.pairs.forEach(function (q) { pts = pts.concat(q.Dtr, q.Ptr); });
+        view = fitView(pts, w, h, 30);
+      }
+      ctx.fillStyle = th.bg; ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = th.grid; ctx.lineWidth = 1;
+      for (var gx = 0; gx < w; gx += 40) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke(); }
+      for (var gy = 0; gy < h; gy += 40) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke(); }
+      var i = Math.min(res.E.length - 1, Math.floor(t / REC)), caught = 0, last = 0;
+      // initial assignment
+      ctx.strokeStyle = 'rgba(100,116,139,0.35)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+      res.pairs.forEach(function (q) { var a = view.f(q.from[0], q.from[1]), b = view.f(q.to[0], q.to[1]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); });
+      ctx.setLineDash([]);
+      ctx.lineWidth = 1.6;
+      res.pairs.forEach(function (q) {
+        var m = Math.min(i, q.Dtr.length - 1);
+        ctx.strokeStyle = 'rgba(220,38,38,0.85)'; polyline(ctx, view, q.Ptr, m);
+        ctx.strokeStyle = 'rgba(22,163,74,0.9)'; polyline(ctx, view, q.Dtr, m);
+        var hit = q.cap !== null && q.cap <= i * REC;
+        var P = view.f(q.Ptr[m][0], q.Ptr[m][1]);
+        if (hit) {
+          caught++; last = Math.max(last, q.cap);
+          ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2; ctx.beginPath();
+          ctx.moveTo(P[0] - 5, P[1] - 5); ctx.lineTo(P[0] + 5, P[1] + 5); ctx.moveTo(P[0] + 5, P[1] - 5); ctx.lineTo(P[0] - 5, P[1] + 5); ctx.stroke(); ctx.lineWidth = 1.6;
+        } else {
+          var P2 = q.Ptr[Math.max(0, m - 1)], D = view.f(q.Dtr[m][0], q.Dtr[m][1]), D2 = q.Dtr[Math.max(0, m - 1)];
+          var pa = view.f(P2[0], P2[1]), da = view.f(D2[0], D2[1]);
+          ctx.fillStyle = CP; ctx.beginPath(); ctx.arc(P[0], P[1], 3, 0, 7); ctx.fill();
+          ctx.fillStyle = CD; ctx.beginPath(); ctx.arc(D[0], D[1], 3, 0, 7); ctx.fill();
+        }
+      });
+      ctx.strokeStyle = CE; ctx.lineWidth = 2.4; polyline(ctx, view, res.E, i);
+      var E = view.f(res.E[i][0], res.E[i][1]);
+      drawPlane(ctx, E[0], E[1], -Math.PI / 2, 11, CE, th.halo);
+      ctx.fillStyle = th.muted; ctx.font = '600 12px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('t = ' + fmt(i * REC, 1) + ' s', 12, 10);
+      out.innerHTML =
+        '<div><span>assignment</span><b>' + ({ hungarian: 'Hungarian', greedy: 'greedy', auction: 'auction', none: 'none (index order)' })[method] + '</b></div>' +
+        '<div><span>total initial D–P distance J</span><b>' + fmt(res.J / 1000, 1) + ' km</b></div>' +
+        '<div><span>pursuers intercepted</span><b style="color:' + (caught === N ? '#16a34a' : 'inherit') + '">' + caught + ' / ' + N + '</b></div>' +
+        '<div><span>last interception</span><b>' + (caught ? fmt(last, 2) + ' s' : '—') + '</b></div>';
+    }
+
+    var anim = animator(root, function (dt) {
+      var tEnd = (res.E.length - 1) * REC;
+      if (t >= tEnd) { hold += dt; if (hold > 2.5) { t = 0; hold = 0; } } else t = Math.min(tEnd, t + dt);
+      draw();
+    });
+    root.querySelectorAll('[data-asg]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        root.querySelectorAll('[data-asg]').forEach(function (x) { x.classList.remove('on'); });
+        b.classList.add('on'); method = b.getAttribute('data-asg'); reset(); anim.kick();
+      });
+    });
+    root.querySelector('[data-act="reset"]').addEventListener('click', function () { t = 0; hold = 0; anim.kick(); });
+    btnPlay.addEventListener('click', function () { anim.paused = !anim.paused; btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause'; anim.kick(); });
+    btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause';
+    reset();
+  }
+
   function init() {
     var a = document.getElementById('pf-sim2d'); if (a) initSim2D(a);
     var b = document.getElementById('pf-sim3d'); if (b) initSim3D(b);
     var c = document.getElementById('pf-sat'); if (c) initSat(c);
     var d = document.getElementById('pf-ct'); if (d) initCT(d);
+    var e = document.getElementById('pe-sim'); if (e) initPE(e);
+    var m = document.getElementById('pe-multi'); if (m) initPEMulti(m);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

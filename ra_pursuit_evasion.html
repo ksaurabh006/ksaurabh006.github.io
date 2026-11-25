@@ -14,6 +14,8 @@
 </script>
 <link rel="stylesheet" href="main.css" type="text/css" />
 <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="pf_anim.css" type="text/css" />
+<script src="pf_anim.js" type="text/javascript"></script>
 <!--- <title>Cooperative Pursuit-Evasion</title> --->
 <title>Saurabh Kumar Cooperative Pursuit-Evasion IIT Bombay</title>
 <meta name="description" content="Saurabh Kumar Cooperative Pursuit-Evasion IIT Bombay &mdash; Postdoctoral Fellow, Department of Aerospace Engineering. Research in guidance and control of autonomous vehicles, nonlinear control systems, and cooperative pursuit-evasion.">
@@ -73,31 +75,197 @@ MathJax.Hub.Config({
 </div>
 <div class="ra-back"><a href="research.html">&larr; All Research Areas</a></div>
 <h2>Overview</h2>
-<p>Pursuit-evasion problems involve one or more pursuers trying to capture one or more evaders, each acting in their own interest. My research formulates <b>multi-agent nonlinear guidance strategies</b> for cooperative pursuit-evasion scenarios, with theoretically guaranteed conditions for capture (by pursuers) and evasion (by the evader).</p>
-<p>The work uses <b>differential game theory</b> and <b>nonlinear guidance principles</b> to derive strategies that are both computationally tractable and formally verifiable. Applications include cooperative interception, active aircraft defence, and autonomous vehicle coordination.</p>
-<h2>Guidance Formulation</h2>
-<p>Consider a three-agent planar engagement between a pursuer (\(P\)), an evader (\(E\)), and a defender (\(D\)), each evolving as a nonholonomic agent steered by its lateral acceleration \(a_\ell\):</p>
-<p style="text-align:center">
-\[ \dot x_\ell = v_\ell\cos\gamma_\ell,\quad \dot y_\ell = v_\ell\sin\gamma_\ell,\quad \dot\gamma_\ell = \frac{a_\ell}{v_\ell}, \quad \ell\in\{P,E,D\} \]
-</p><p>Classical geometric guidance strategies require the defender, pursuer, and evader to become exactly collinear (a defender–pursuer–evader angle of \(\pi\)) to guarantee interception. My work relaxes this requirement to convergence of the angle \(\chi\) into the wider admissible interval \([\pi/2,\,3\pi/2]\) within a user-specified time, which still guarantees the defender intercepts the pursuer before it reaches the evader — without needing a noisy time-to-go estimate or any assumption on the pursuer's strategy.</p>
-<figure class="paper-figure">
-  <img src="images/research/pursuit_evasion_geometry.png" alt="Three-body pursuit-evasion engagement geometry" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-  <div class="paper-figure-placeholder">Figure not yet added &mdash; save <code>pursuit_evasion_geometry.png</code> to <code>images/research/</code></div>
-  <figcaption>Geometry of the three-body pursuer&ndash;evader&ndash;defender engagement, showing the line-of-sight angles and the defender&ndash;pursuer&ndash;evader angle &chi;.</figcaption>
-</figure>
+<p>Pursuit-evasion problems involve one or more pursuers trying to capture one or more evaders, each acting in its own interest. My research develops <b>cooperative nonlinear guidance</b> for the three-body version of this problem, often called <i>active aircraft defence</i>. A pursuer \(P\) chases an evader \(E\), and the evader is protected by a defender \(D\) that must intercept the pursuer first. The evader and the defender form a team. They do not know the pursuer's guidance law, and the defender has no speed advantage: \(v_P = v_D &gt; v_E\).</p>
+<p>Classical line-of-sight guidance puts the defender exactly on the line from the evader to the pursuer. That is a demanding geometric target, and many nonlinear alternatives need an estimate of time-to-go, which is noisy in practice. My approach asks for a much weaker geometric condition, reaches it at a time the designer chooses, and needs neither time-to-go nor any knowledge of how the pursuer steers.</p>
+<div class="pf-steps">
+  <div class="pf-step"><h4>A wide target, not a collision line</h4><p>Let \(\chi\) be the angle at the defender between its lines of sight to the evader and to the pursuer. If \(\chi\in[\pi/2,\,3\pi/2]\), the defender lies inside the circle whose diameter is EP, so EP is the longest side of the triangle and the defender reaches the pursuer first.</p></div>
+  <div class="pf-step"><h4>Reach it at a chosen time</h4><p>A dual-layer sliding manifold drives \(\beta=\chi-\chi^\star\) to zero <em>exactly</em> at a user-set time \(t^\star\), from any initial geometry and with no reaching phase. \(\chi^\star\) can be anywhere in the admissible interval.</p></div>
+  <div class="pf-step"><h4>Cooperate at two levels</h4><p>The evader and defender either co-design their maneuvers (maneuver-level), or the evader flies on its own and shares only its command (information-level). The second form tolerates communication delay.</p></div>
+</div>
+
+<div class="pf-sim" id="pe-sim">
+  <div class="pf-sim-head">
+    <div class="pf-sim-title">Try it: the defender protects the evader
+      <small>The paper's guidance laws, simulated live. Click the canvas to start the defender somewhere else.</small></div>
+    <div class="pf-controls">
+      <button data-mode="ilc" class="on">Information-level</button>
+      <button data-mode="mlc">Maneuver-level</button>
+    </div>
+  </div>
+  <div class="pf-sim-head" style="margin-top:-0.3rem">
+    <div class="pf-controls">
+      <span class="pf-ctl-label">\(\chi^\star\)</span>
+      <button data-chi="150">150°</button>
+      <button data-chi="180" class="on">180°</button>
+      <button data-chi="200">200°</button>
+      <span class="sep"></span>
+      <span class="pf-ctl-label">delay \(\tau\)</span>
+      <button data-tau="0" class="on">0</button>
+      <button data-tau="0.6">0.6 s</button>
+      <button data-tau="1">1 s</button>
+      <span class="sep"></span>
+      <span class="pf-ctl-label">pursuer</span>
+      <button data-plaw="png" class="on">PN</button>
+      <button data-plaw="ppg">pure pursuit</button>
+      <button data-plaw="dpg">deviated pursuit</button>
+      <span class="sep"></span>
+      <button data-act="reset">Restart</button>
+      <button data-act="play">❚❚ Pause</button>
+    </div>
+  </div>
+  <canvas class="pf-main" aria-label="Animated three-body engagement between a pursuer, an evader and a defender"></canvas>
+  <div class="pf-legend"></div>
+  <div class="pf-below">
+    <canvas class="pf-chart-r"></canvas>
+    <canvas class="pf-chart-xi"></canvas>
+    <div class="pf-readout"></div>
+  </div>
+  <p class="pf-note">Simulated in your browser with the laws and parameters of the paper: \(v_P=v_D=200\) m/s, \(v_E=100\) m/s, acceleration limits 20 g (P, D) and 10 g (E). Pursuer at 5 km and defender 500 m from the evader. Information-level: \(t_2=4\) s, \(t_1=5\) s, \(t^\star=9\) s. Maneuver-level: \(t_1=3\) s, \(t^\star=6\) s. The dashed circle has EP as its diameter. It turns green while the defender is inside it, i.e. while \(\chi\in[90^\circ,270^\circ]\). The delay \(\tau\) applies to the evader command received by the defender (information-level only).</p>
+</div>
+<h2>How the Work Developed</h2>
+<div class="pf-timeline">
+  <div class="pf-tl-item"><a href="https://doi.org/10.1109/ICC61519.2023.10442728"><div class="pf-tl-year">2023 &middot; ICC</div><div class="pf-tl-name">Active aircraft defence</div><div class="pf-tl-what">Cooperative strategy with exact-time convergence</div></a></div>
+  <div class="pf-tl-item"><a href="https://doi.org/10.48550/arXiv.2402.06176"><div class="pf-tl-year">2024 &middot; arXiv</div><div class="pf-tl-name">Guaranteed pursuit-evasion</div><div class="pf-tl-what">Cooperative nonlinear guidance strategies</div></a></div>
+  <div class="pf-tl-item"><a href="https://doi.org/10.2514/6.2025-2233"><div class="pf-tl-year">2025 &middot; AIAA GNC</div><div class="pf-tl-name">Enclosing moving targets</div><div class="pf-tl-what">Geometric guidance</div></a></div>
+  <div class="pf-tl-item key"><a href="#jais"><div class="pf-tl-year">2026 &middot; JAIS</div><div class="pf-tl-name">Delay-robust information structures</div><div class="pf-tl-what">Prescribed-time geometric guidance, maneuver- and information-level cooperation, many-on-many</div></a></div>
+</div>
 <h2>Key Contributions</h2>
 <ul>
-<li><p>Nonlinear cooperative guidance strategies for guaranteed pursuit-evasion with multiple pursuers.</p>
+<li><p>A <b>relaxed geometric capture condition</b>: the defender only needs \(\chi\in[\pi/2,3\pi/2]\), not exact collinearity with the evader and the pursuer.</p>
 </li>
-<li><p>Active aircraft defence using cooperative exact-time convergent guidance.</p>
+<li><p><b>Prescribed-time</b> convergence of \(\chi\) to any chosen \(\chi^\star\) at a user-set time, independent of the initial geometry, with no time-to-go estimate.</p>
 </li>
-<li><p>Geometric guidance for enclosing and tracking moving targets.</p>
+<li><p>Guarantees that hold <b>whatever guidance law the pursuer uses</b>, with no speed advantage for the defender.</p>
 </li>
-<li><p>Formal proofs of capture guarantees under realistic vehicle constraints.</p>
+<li><p>Two cooperation structures: <b>maneuver-level</b> (jointly designed, optimally allocated commands) and <b>information-level</b> (the evader acts as a decoy and shares only its command).</p>
 </li>
-<li><p>Prescribed-time cooperative geometric guidance for three-agent pursuer-evader-defender engagements, robust to delayed maneuver information exchange.</p>
+<li><p><b>Robustness to communication delay</b>, proved with a Lyapunov&ndash;Krasovskii argument.</p>
+</li>
+<li><p>Extension to <b>many pursuers and many defenders</b>, using one-to-one assignment (Hungarian, greedy, or auction).</p>
 </li>
 </ul>
+<a id="jais"></a>
+<h2>Prescribed-Time Cooperative Geometric Guidance</h2>
+<h3>Cooperative Geometric Guidance under Delay-Robust Information Structures for Pursuit-Evasion</h3>
+<p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, Journal of Aerospace Information Systems, 2026 (under revision).</p>
+<p>Each agent \(\ell\in\{P,E,D\}\) is a nonholonomic vehicle steered by its lateral acceleration,</p>
+<p style="text-align:center">
+\[ \dot x_\ell = v_\ell\cos\gamma_\ell,\qquad \dot y_\ell = v_\ell\sin\gamma_\ell,\qquad \dot\gamma_\ell = \frac{a_\ell}{v_\ell}. \]
+</p><p>The geometry is captured by one angle at the defender,</p>
+<p style="text-align:center">
+\[ \chi = \pi + \lambda_{DP} - \lambda_{ED}, \qquad \beta = \chi - \chi^\star, \]
+</p><p>where \(\lambda_{DP}\) and \(\lambda_{ED}\) are the line-of-sight angles from the defender to the pursuer and from the evader to the defender. If the defender keeps closing on the pursuer and holds \(\chi\in[\pi/2,3\pi/2]\), then it lies inside the circle with diameter EP. The side \(r_{EP}\) is then the longest side of a shrinking triangle, so the pursuer is caught before it reaches the evader. Classical line-of-sight guidance is the special case \(\chi^\star=\pi\).</p>
+<figure class="paper-figure wide">
+  <img src="images/research/pe/pe_geometry.svg" alt="Pursuer, evader and defender with the angle chi and the circle on EP" loading="lazy">
+  <figcaption>Three-body geometry. The defender lies inside the circle with diameter EP exactly when \(\chi\in[\pi/2,3\pi/2]\).</figcaption>
+</figure>
+<figure class="paper-figure narrow">
+  <img src="images/research/pe/gtg.png" alt="Triangles inscribed in a circle illustrating the angle chi" loading="lazy">
+  <figcaption>From the paper: as the engagement evolves (\(P_0E_0D_0\to P_2E_2D_2\)), keeping \(\chi\ge 90^\circ\) keeps the defender closer to the pursuer than the evader is.</figcaption>
+</figure>
+<p>The angle \(\beta\) has relative degree two, and both \(a_E\) and \(a_D\) enter its second derivative. The pursuer's acceleration \(a_P\) enters as an unknown bounded disturbance. The design uses a two-layer sliding manifold,</p>
+<p style="text-align:center">
+\[ \underline{\mathcal S} = \dot\beta - g(t), \quad g(t) = -\frac{k_1\,\beta}{t^\star - t}, \qquad \bar{\mathcal S} = \underline{\mathcal S} + h(t), \quad h(t) = \frac{h(0)}{t_1^{k_2}}(t_1-t)^{k_2}, \]
+</p><p>with \(h(t)=0\) after \(t_1&lt;t^\star\) and \(h(0) = -\underline{\mathcal S}(0)\), so the outer manifold starts at zero and there is no reaching phase. On the manifold the error obeys</p>
+<p style="text-align:center">
+\[ \beta(t) = \frac{\beta(0)}{t^{\star\,k_1}}\left(t^\star - t\right)^{k_1}, \]
+</p><p>which is exactly zero at \(t=t^\star\) for any \(\beta(0)\).</p>
+<h3>Maneuver-Level Cooperation</h3>
+<p>The evader and defender share full relative-state information and design a net cooperative input</p>
+<p style="text-align:center">
+\[ \mathcal U = \frac{2\dot r_{DP}\dot\lambda_{DP}}{r_{DP}} - \frac{2\dot r_{ED}\dot\lambda_{ED}}{r_{ED}} + \dot g - \dot h - \mathcal K\,\mathrm{sign}(\bar{\mathcal S}), \qquad \mathcal K &gt; \sup_t \frac{a_P^{\max}}{r_{DP}}, \]
+</p><p>which keeps \(\bar{\mathcal S}=0\) for all time. The paper then splits \(\mathcal U\) between the evader and the defender by minimizing the weighted effort \(\sqrt{(a_E/\Sigma_E)^2 + (a_D/\Sigma_D)^2}\), which gives closed-form commands for both. Simulations confirm interception against proportional navigation, pure pursuit, and deviated pursuit, from different initial geometries, with reduced acceleration limits, and in 1000 Monte Carlo runs.</p>
+<div class="figure-grid cols-3">
+  <figure class="figure-card">
+    <img src="images/research/pe/mlc_diff_chi_trajectory.png" alt="Trajectories for different chi star with maneuver-level cooperation" loading="lazy">
+    <figcaption>Interception for different \(\chi^\star\).</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pe/mlc_diff_chi_s_beta.png" alt="Sliding manifold and beta converging at prescribed time" loading="lazy">
+    <figcaption>The manifold and \(\beta\): zero exactly at \(t^\star=6\) s.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pe/mlc_diff_guidance_trajectory.png" alt="Pursuer using different guidance laws" loading="lazy">
+    <figcaption>The pursuer switches guidance law; the defender still intercepts.</figcaption>
+  </figure>
+</div>
+<h3>Information-Level Cooperation</h3>
+<p>Here the evader maneuvers on its own as a decoy. Its command drives its line-of-sight rate to the pursuer to zero exactly at a prescribed time \(t_2\):</p>
+<p style="text-align:center">
+\[ a_E = \frac{r_{EP}}{\cos\delta_{EP}}\left(-\frac{2\dot r_{EP}\dot\lambda_{EP}}{r_{EP}} + \dot h_E + \mathcal K_1\,\mathrm{sign}(\mathcal S_E)\right), \qquad \mathcal S_E = \dot\lambda_{EP} + h_E(t). \]
+</p><p>The only thing shared with the defender is the scalar command \(a_E\), which the defender folds into its own law:</p>
+<p style="text-align:center">
+\[ a_D = \left[-\frac{2\dot r_{DP}\dot\lambda_{DP}}{r_{DP}} + \frac{2\dot r_{ED}\dot\lambda_{ED}}{r_{ED}} + \frac{\cos\delta_{ED}}{r_{ED}}a_E - \dot g + \dot h + \mathcal K\,\mathrm{sign}(\bar{\mathcal S})\right]\frac{r_{ED}\,r_{DP}}{r_{DP}\cos\delta_{DE} + r_{ED}\cos\delta_{DP}}. \]
+</p><p>The guarantee does not require the pursuer to take the bait.</p>
+<div class="figure-grid">
+  <figure class="figure-card">
+    <img src="images/research/pe/ilc_diff_chi_trajectory.png" alt="Trajectories for different chi star with information-level cooperation" loading="lazy">
+    <figcaption>Information-level cooperation for \(\chi^\star = 150^\circ, 180^\circ, 200^\circ\).</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pe/ilc_diff_chi_s_beta.png" alt="Sliding manifold and beta for information-level cooperation" loading="lazy">
+    <figcaption>The manifold reaches zero at \(t_1=5\) s and \(\beta\) at \(t^\star=9\) s.</figcaption>
+  </figure>
+</div>
+<h3>Robustness to Communication Delay</h3>
+<p>In practice the defender receives the evader's command late, as \(a_E(t-\tau)\). Using a Lyapunov&ndash;Krasovskii functional, the paper shows that the sliding dynamics remain input-to-state stable. The manifold converges to a small set whose size grows with \(\tau\), provided</p>
+<p style="text-align:center">
+\[ \mathcal K &gt; \sup_t\left(\frac{a_P^{\max}}{r_{DP}} + \frac{\tau\,\dot a_E^{\max}}{r_{ED}}\right) + \eta, \qquad \eta&gt;0. \]
+</p><p>If the evader's command is constant, the delay causes no mismatch at all. In simulation the defender intercepts the pursuer for delays of up to 1 s.</p>
+<div class="figure-grid cols-3">
+  <figure class="figure-card">
+    <img src="images/research/pe/ilc_delay_trajectory.png" alt="Interception under communication delay" loading="lazy">
+    <figcaption>Interception with \(\tau = 0,\ 0.3,\ 0.6,\ 1\) s.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pe/defender_capture_initial_range_map.png" alt="Monte Carlo initial ranges, all captured" loading="lazy">
+    <figcaption>Monte Carlo: 1000 random initial ranges and angles, defender wins all 1000.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pe/defender_final_rep_survival_proof.png" alt="Final evader-pursuer range in Monte Carlo runs" loading="lazy">
+    <figcaption>Evader&ndash;pursuer range at interception: the evader is never reached.</figcaption>
+  </figure>
+</div>
+<h2>Many Pursuers, Many Defenders</h2>
+<p>The same guidance scales to \(M\) defenders protecting one evader from \(M\) pursuers. Each defender is paired with one pursuer at \(t=0\) by minimizing the total initial separation</p>
+<p style="text-align:center">
+\[ J(\sigma) = \sum_{i=1}^{M} \big\|\mathbf r_{P_{\sigma(i)}}(0) - \mathbf r_{D_i}(0)\big\|, \]
+</p><p>and then runs the information-level law against its pursuer. The paper solves the assignment with the Hungarian algorithm (optimal), a greedy nearest-pair rule, and an auction algorithm, and all pursuers are intercepted with each of them. The guidance needs only a one-to-one pairing, not a particular assignment method.</p>
+<div class="pf-sim" id="pe-multi">
+  <div class="pf-sim-head">
+    <div class="pf-sim-title">Try it: 20 defenders against 20 pursuers
+      <small>Choose how defenders are paired with pursuers. The dashed lines show the initial pairing.</small></div>
+    <div class="pf-controls">
+      <button data-asg="hungarian" class="on">Hungarian</button>
+      <button data-asg="greedy">Greedy</button>
+      <button data-asg="auction">Auction</button>
+      <span class="sep"></span>
+      <button data-act="reset">Restart</button>
+      <button data-act="play">❚❚ Pause</button>
+    </div>
+  </div>
+  <canvas class="pf-main" aria-label="Animated engagement of twenty defenders and twenty pursuers"></canvas>
+  <div class="pf-legend"></div>
+  <div class="pf-below" style="grid-template-columns:1fr">
+    <div class="pf-readout" style="grid-template-columns:repeat(4,1fr)"></div>
+  </div>
+  <p class="pf-note">Initial conditions as in the paper: pursuers 4&ndash;5 km away within \(\pm20^\circ\), defenders 100&ndash;500 m from the evader between \(-60^\circ\) and \(80^\circ\), evader flying straight north. Each defender uses the information-level law with \(\chi^\star=180^\circ\) and \(t^\star=8\) s, and each pursuer uses proportional navigation.</p>
+</div>
+
+<div class="figure-grid cols-3">
+  <figure class="figure-card">
+    <img src="images/research/pe/multiagent_trajectory.png" alt="Twenty defenders and twenty pursuers with Hungarian assignment" loading="lazy">
+    <figcaption>Hungarian assignment.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pe/greedy_trajectory.png" alt="Twenty defenders and twenty pursuers with greedy assignment" loading="lazy">
+    <figcaption>Greedy assignment.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pe/auction_trajectory.png" alt="Twenty defenders and twenty pursuers with auction assignment" loading="lazy">
+    <figcaption>Auction assignment.</figcaption>
+  </figure>
+</div>
 <h2>Relevant Publications</h2>
 <div class="pub-page-lists">
 <h3>Journal Papers</h3>
@@ -150,7 +318,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated November 25<sup>th</sup> 2026  12:21PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated November 25<sup>th</sup> 2026  12:53PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

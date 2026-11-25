@@ -977,7 +977,7 @@
     var xD = o.rED * Math.cos(o.lED * d), yD = o.rED * Math.sin(o.lED * d), gD = o.gD * d;
     var xP = o.rEP * Math.cos(o.lEP * d), yP = o.rEP * Math.sin(o.lEP * d), gP = o.gP * d;
     var chis = o.chi * d, S0 = null, he0 = null, amEh = [], nDel = Math.round((o.tau || 0) / H);
-    var rec = { E: [], P: [], D: [], gE: [], gP: [], gD: [], chi: [], rdp: [], rep: [], t: [] };
+    var rec = { E: [], P: [], D: [], gE: [], gP: [], gD: [], chi: [], rdp: [], rep: [], vc: [], t: [] };
     var out = { rec: rec, end: 'timeout', tEnd: TMAX };
     for (var k = 0; ; k++) {
       var t = k * H;
@@ -993,7 +993,7 @@
       if (k % every === 0) {
         rec.E.push([xE, yE]); rec.P.push([xP, yP]); rec.D.push([xD, yD]);
         rec.gE.push(gE); rec.gP.push(gP); rec.gD.push(gD);
-        rec.chi.push(chi / d); rec.rdp.push(RDP); rec.rep.push(REP); rec.t.push(t);
+        rec.chi.push(chi / d); rec.rdp.push(RDP); rec.rep.push(REP); rec.vc.push(-RDPd); rec.t.push(t);
       }
       if (RDP <= 2) { out.end = 'intercept'; out.tEnd = t; break; }
       if (REP <= 2) { out.end = 'evader hit'; out.tEnd = t; break; }
@@ -1148,6 +1148,7 @@
       c.strokeStyle = 'rgba(100,116,139,0.6)'; c.beginPath(); c.moveTo(tsx, 18); c.lineTo(tsx, 18 + ph); c.stroke();
       c.fillStyle = theme().muted; c.font = '10px Inter, sans-serif'; c.textAlign = 'left'; c.fillText('t* = ' + res.G.ts + ' s', tsx + 3, 22);
       var a = [], b = []; for (j = 0; j <= i; j += 2) { a.push([r.t[j], r.rdp[j] / 1000]); b.push([r.t[j], r.rep[j] / 1000]); }
+      var vmin = Infinity; for (j = 0; j <= i; j++) vmin = Math.min(vmin, r.vc[j]);
       drawChart(cvR, 'ranges r_DP (green), r_EP (red)', 'km', T, 0, Math.ceil(Math.max(r.rep[0], r.rdp[0]) / 1000), [{ color: CD, pts: a }, { color: CP, pts: b }], r.t[i]);
       var st = res.end === 'intercept' && i === r.t.length - 1 ? '<b style="color:#16a34a">intercepted</b>' :
         (res.end === 'evader hit' && i === r.t.length - 1 ? '<b style="color:#dc2626">evader hit</b>' : '<b>in progress</b>');
@@ -1155,7 +1156,8 @@
         '<div><span>angle χ</span><b>' + fmt(r.chi[i], 1) + '°</b></div>' +
         '<div><span>status</span>' + st + '</div>' +
         '<div><span>range r<sub>DP</sub></span><b>' + fmt(r.rdp[i], 0) + ' m</b></div>' +
-        '<div><span>range r<sub>EP</sub></span><b>' + fmt(r.rep[i], 0) + ' m</b></div>';
+        '<div><span>range r<sub>EP</sub></span><b>' + fmt(r.rep[i], 0) + ' m</b></div>' +
+        '<div><span>closing speed of D on P (lowest so far)</span><b style="color:' + (vmin > 0 ? CD : CP) + '">' + fmt(r.vc[i], 0) + ' m/s (' + fmt(vmin, 0) + ')</b></div>';
     }
 
     var frame = 0;

@@ -1064,7 +1064,15 @@
     legend(leg, [{ color: CE, label: 'evader E' }, { color: CP, label: 'pursuer P' }, { color: CD, label: 'defender D' },
       { color: 'rgba(22,163,74,0.45)', label: 'circle on EP (D inside ⇒ χ ∈ [90°, 270°])' }]);
 
-    function reset() { res = peSimulate(peOptions(mode, si, ci)); t = 0; hold = 0; view = null; }
+    var custD = null;   // defender start picked by clicking the plot: { rED, lED } relative to E
+    function opts() { var o = peOptions(mode, si, ci); if (custD) { o.rED = custD.rED; o.lED = custD.lED; } return o; }
+    function reset() { res = peSimulate(opts()); t = 0; hold = 0; view = null; }
+    function showDesc() {
+      var o = peOptions(mode, si, ci);
+      desc.innerHTML = PE_SCN[mode][si].desc + (custD
+        ? ' <b style="color:' + CD + '">Defender moved to ' + fmt(custD.rED, 0) + ' m, LOS ' + fmt(custD.lED, 0) + '°</b> (paper: ' + o.rED + ' m, ' + o.lED + '°; pick a case to restore).'
+        : ' <i>Click the plot to start the defender somewhere else. It succeeds from near the evader or between the evader and the pursuer.</i>');
+    }
     function buttons(row, items, cur, pick) {
       row.innerHTML = '';
       items.forEach(function (it, j) {
@@ -1074,9 +1082,9 @@
     }
     function build() {
       var list = PE_SCN[mode], sc = list[si];
-      buttons(rowS, list, si, function (j) { si = j; ci = list[j].on || 0; build(); });
-      buttons(rowC, sc.cases, ci, function (j) { ci = j; build(); });
-      desc.innerHTML = sc.desc;
+      buttons(rowS, list, si, function (j) { si = j; ci = list[j].on || 0; custD = null; build(); });
+      buttons(rowC, sc.cases, ci, function (j) { ci = j; custD = null; build(); });
+      showDesc();
       reset(); if (anim) anim.kick();
     }
     function idx() { return Math.min(res.rec.t.length - 1, Math.floor(t / 0.02)); }
@@ -1133,6 +1141,10 @@
         ctx.fillText('Pursuer intercepted at t = ' + fmt(res.tEnd, 2) + ' s', w - 12, 10);
         ctx.fillStyle = th.muted; ctx.font = '12px Inter, sans-serif';
         ctx.fillText('evader is ' + fmt(r.rep[i] / 1000, 2) + ' km away', w - 12, 28);
+      } else if (i === r.t.length - 1) {
+        ctx.font = '600 13px Inter, sans-serif'; ctx.fillStyle = '#dc2626'; ctx.textAlign = 'right';
+        ctx.fillText(res.end === 'evader hit' ? 'Pursuer reached the evader at t = ' + fmt(res.tEnd, 2) + ' s' : 'No interception within ' + fmt(res.tEnd, 0) + ' s', w - 12, 10);
+        if (custD) { ctx.fillStyle = th.muted; ctx.font = '12px Inter, sans-serif'; ctx.fillText('the defender started too far from the E–P line', w - 12, 28); }
       }
     }
 
@@ -1149,8 +1161,10 @@
       c.fillStyle = theme().muted; c.font = '10px Inter, sans-serif'; c.textAlign = 'left'; c.fillText('t* = ' + res.G.ts + ' s', tsx + 3, 22);
       var a = [], b = []; for (j = 0; j <= i; j += 2) { a.push([r.t[j], r.rdp[j] / 1000]); b.push([r.t[j], r.rep[j] / 1000]); }
       drawChart(cvR, 'ranges r_DP (green), r_EP (red)', 'km', T, 0, Math.ceil(Math.max(r.rep[0], r.rdp[0]) / 1000), [{ color: CD, pts: a }, { color: CP, pts: b }], r.t[i]);
-      var st = res.end === 'intercept' && i === r.t.length - 1 ? '<b style="color:#16a34a">intercepted</b>' :
-        (res.end === 'evader hit' && i === r.t.length - 1 ? '<b style="color:#dc2626">evader hit</b>' : '<b>in progress</b>');
+      var last = i === r.t.length - 1;
+      var st = res.end === 'intercept' && last ? '<b style="color:#16a34a">intercepted</b>' :
+        (res.end === 'evader hit' && last ? '<b style="color:#dc2626">evader hit</b>' :
+        (last ? '<b style="color:#dc2626">no interception</b>' : '<b>in progress</b>'));
       out.innerHTML =
         '<div><span>angle χ</span><b>' + fmt(r.chi[i], 1) + '°</b></div>' +
         '<div><span>status</span>' + st + '</div>' +
@@ -1167,8 +1181,19 @@
     root.querySelectorAll('[data-mode]').forEach(function (b) {
       b.addEventListener('click', function () {
         root.querySelectorAll('[data-mode]').forEach(function (x) { x.classList.remove('on'); });
-        b.classList.add('on'); mode = b.getAttribute('data-mode'); si = 0; ci = PE_SCN[mode][0].on || 0; build();
+        b.classList.add('on'); mode = b.getAttribute('data-mode'); si = 0; ci = PE_SCN[mode][0].on || 0; custD = null; build();
       });
+    });
+    // click the plot to choose where the defender starts (relative to the evader, which starts at the origin)
+    cv.style.cursor = 'crosshair';
+    cv.addEventListener('click', function (ev) {
+      if (!view) draw();
+      var rc = cv.getBoundingClientRect(), wp = view.inv(ev.clientX - rc.left, ev.clientY - rc.top);
+      var o = peOptions(mode, si, ci), xP = o.rEP * Math.cos(o.lEP * DEG), yP = o.rEP * Math.sin(o.lEP * DEG);
+      var r = Math.hypot(wp[0], wp[1]);
+      if (r < 100 || Math.hypot(wp[0] - xP, wp[1] - yP) < 300) return;   // too close to E or P to start
+      custD = { rED: Math.round(r / 10) * 10, lED: Math.round(Math.atan2(wp[1], wp[0]) / DEG) };
+      showDesc(); reset(); anim.kick();
     });
     root.querySelector('[data-act="reset"]').addEventListener('click', function () { reset(); anim.kick(); });
     btnPlay.addEventListener('click', function () { anim.paused = !anim.paused; btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause'; anim.kick(); });

@@ -14,16 +14,18 @@
 </script>
 <link rel="stylesheet" href="main.css" type="text/css" />
 <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
-<!--- <title>Path Following Guidance</title> --->
-<title>Saurabh Kumar Path Following Guidance IIT Bombay</title>
-<meta name="description" content="Saurabh Kumar Path Following Guidance IIT Bombay &mdash; Postdoctoral Fellow, Department of Aerospace Engineering. Research in guidance and control of autonomous vehicles, nonlinear control systems, and cooperative pursuit-evasion.">
+<link rel="stylesheet" href="pf_anim.css" type="text/css" />
+<script src="pf_anim.js" type="text/javascript"></script>
+<!--- <title>Path Following Guidance</title> --->
+<title>Saurabh Kumar Path Following Guidance IIT Bombay</title>
+<meta name="description" content="Saurabh Kumar Path Following Guidance IIT Bombay &mdash; Postdoctoral Fellow, Department of Aerospace Engineering. Research in guidance and control of autonomous vehicles, nonlinear control systems, and cooperative pursuit-evasion.">
 <meta property="og:site_name" content="Saurabh Kumar, IIT Bombay">
-<meta property="og:title" content="Saurabh Kumar Path Following Guidance IIT Bombay">
+<meta property="og:title" content="Saurabh Kumar Path Following Guidance IIT Bombay">
 <meta property="og:description" content="Postdoctoral Fellow, Dept. of Aerospace Engineering, IIT Bombay. Research in guidance and control of autonomous vehicles, nonlinear control systems, and cooperative pursuit-evasion.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://ksaurabh006.github.io/images/sk_headshot.jpg">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Saurabh Kumar Path Following Guidance IIT Bombay">
+<meta name="twitter:title" content="Saurabh Kumar Path Following Guidance IIT Bombay">
 <meta name="twitter:description" content="Postdoctoral Fellow, Dept. of Aerospace Engineering, IIT Bombay. Research in guidance and control of autonomous vehicles, nonlinear control systems, and cooperative pursuit-evasion.">
 <!-- MathJax -->
 <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async>
@@ -69,70 +71,346 @@ MathJax.Hub.Config({
 <div id="layout-content-container">
 <div id="layout-content">
 <div id="toptitle">
-<h1>Path Following Guidance</h1>
+<h1>Path Following Guidance</h1>
+<div id="subtitle"></div>
 </div>
-<div class="ra-back"><a href="research.html">&larr; All Research Areas</a></div>
-<h2>Overview</h2>
-<p>Path following guidance addresses the problem of designing control laws that steer an autonomous vehicle to converge to and travel along a desired geometric path, without a timing requirement. Unlike trajectory tracking, path following does not require the vehicle to be at a specific point at a specific time, making it more suitable for vehicles with bounded control inputs and under environmental disturbances.</p>
-<p>My work in this area focuses on developing <b>nonlinear guidance laws</b> for UAVs and autonomous surface vessels to follow arbitrary 3D paths. Key contributions include handling <b>bounded lateral acceleration constraints</b>, robustness against <b>wind disturbances</b>, and providing formal <b>convergence guarantees</b> using Lyapunov-based analysis.</p>
-<h2>Key Contributions</h2>
+<div class="ra-back"><a href="research.html">&larr; All Research Areas</a></div>
+<p></p>
+<h2>Overview</h2>
+<p>
+Path following asks a vehicle to converge to a geometric path and then travel along it, with no requirement on <i>when</i> it reaches each point. This makes it a natural fit for UAVs, whose speed and turn rate are limited and which are pushed around by wind. Most classical methods compute the cross-track error to the closest point on the path. That projection is ill-defined near points of high curvature, and it usually requires the curvature of the path or a separate law for each path segment (line, arc, &hellip;).
+
+My approach recasts path following as a <b>pursuit problem</b>. A <i>pseudo-target</i> moves along the desired path, and the UAV is guided to rendezvous with it and then fly with it. The guidance law needs only the range and line-of-sight angle to that point, so it works for <b>any smooth path without knowledge of its curvature</b> and with no switching between path segments. Using fixed-time stability theory, the convergence time is bounded by a constant that the designer sets through the gains and that does not depend on where the UAV starts.
+</p>
+<div class="pf-steps">
+  <div class="pf-step"><h4>Place a pseudo-target</h4><p>A reference point S moves along the path with speed \(v_r\). Its turn rate, i.e. the path curvature, is unknown to the UAV, only bounded.</p></div>
+  <div class="pf-step"><h4>Turn onto a pursuit course</h4><p>The turn-rate command drives the look angle \(\xi=\theta-\chi\) between the UAV's course and the line of sight to zero in fixed time.</p></div>
+  <div class="pf-step"><h4>Close the range</h4><p>The speed command drives the range \(r\) to zero in fixed time. With \(r=0\) the UAV sits on the path and flies along it with the pseudo-target.</p></div>
+</div>
+
+<div class="pf-sim" id="pf-sim2d">
+  <div class="pf-sim-head">
+    <div class="pf-sim-title">Try it: fixed-time path following in wind
+      <small>The guidance law below, simulated live in your browser. Click anywhere on the canvas to launch another UAV.</small></div>
+    <div class="pf-controls">
+      <button data-scen="curvy" class="on">Curvy path</button>
+      <button data-scen="sturn">S-turn</button>
+      <button data-scen="line">Straight line</button>
+      <span class="sep"></span>
+      <button data-act="wind" class="on">Wind: on</button>
+      <button data-act="reset">Restart</button>
+      <button data-act="play">❚❚ Pause</button>
+    </div>
+  </div>
+  <canvas class="pf-main" aria-label="Animated simulation of UAVs converging onto a curved path"></canvas>
+  <div class="pf-legend"></div>
+  <div class="pf-below">
+    <canvas class="pf-chart-r"></canvas>
+    <canvas class="pf-chart-xi"></canvas>
+    <div class="pf-readout"></div>
+  </div>
+  <p class="pf-note">Simulated with the guidance law of Kumar, Sinha &amp; Kumar (AST 2024) and the paper's gains (\(\mathcal M_1=20,\ \mathcal N_1=5,\ \mathcal M_2=50,\ \mathcal N_2=25,\ \alpha_i=1.01,\ \beta_i=0.9\)). The curvy path and the starts C1&ndash;C3 are those of the paper's first scenario, with a 15 m/s wind. Ground speed is limited to 10&ndash;50 m/s and turn rate to \(\pm4\) rad/s. The look angle (red arc) vanishes first, and then the range closes. The design accounts for the wind explicitly, so the ground track is the same with the wind on or off. What changes is the airspeed and the heading: watch the aircraft crab into the wind.</p>
+</div>
+<p></p>
+<h2>How the Work Developed</h2>
+<p></p>
+<div class="pf-timeline">
+  <div class="pf-tl-item"><a href="https://doi.org/10.1016/j.ifacol.2023.03.036"><div class="pf-tl-year">2022 &middot; IFAC</div><div class="pf-tl-name">Separate guidance and control</div><div class="pf-tl-what">Cross-track error, terminal sliding mode, finite-time autopilot loop</div></a></div>
+  <div class="pf-tl-item"><a href="https://doi.org/10.2514/6.2023-1055"><div class="pf-tl-year">2023 &middot; AIAA SciTech</div><div class="pf-tl-name">Robust path following</div><div class="pf-tl-what">Curvature treated as a bounded disturbance</div></a></div>
+  <div class="pf-tl-item key"><a href="#wind"><div class="pf-tl-year">2024 &middot; AST</div><div class="pf-tl-name">Pseudo-target guidance in wind</div><div class="pf-tl-what">Fixed-time, curvature-free, wind built into the design</div></a></div>
+  <div class="pf-tl-item key"><a href="#three-d"><div class="pf-tl-year">2024 &middot; JGCD</div><div class="pf-tl-name">Three-dimensional guidance</div><div class="pf-tl-what">Coupled pitch&ndash;yaw design, optimal turn allocation</div></a></div>
+  <div class="pf-tl-item key"><a href="#bounded"><div class="pf-tl-year">2026 &middot; JGCD / SciTech</div><div class="pf-tl-name">Bounded inputs</div><div class="pf-tl-what">Speed and turn rates provably within limits, 2D and 3D</div></a></div>
+  <div class="pf-tl-item"><a href="https://www.sciencedirect.com/science/article/pii/S1270963826012617"><div class="pf-tl-year">2026 &middot; AST</div><div class="pf-tl-name">Bounded lateral acceleration</div><div class="pf-tl-what">Fixed-wing UAVs with limited lateral acceleration</div></a></div>
+</div>
+<p></p>
+<h2>Key Contributions</h2>
+<p></p>
 <ul>
-<li><p>Three-dimensional nonlinear path following guidance for UAVs with formal stability proofs.</p>
+<li><p>A pursuit-based formulation in which the path is the trajectory of a pseudo-target, so the same law follows straight lines, arcs, and arbitrary smooth curves <b>without curvature information or switching</b>.</p>
 </li>
-<li><p>Robust path following in the presence of wind and external disturbances.</p>
+<li><p><b>Fixed-time convergence</b> of the range and look angle, with a settling-time bound that is independent of the initial conditions and is set before the mission.</p>
 </li>
-<li><p>Guidance designs that respect bounded control input constraints.</p>
+<li><p>Explicit treatment of <b>wind</b> through the wind triangle, including time-varying wind, rather than as an unmodeled disturbance.</p>
 </li>
-<li><p>Generic path-following framework applicable to various vehicle models.</p>
+<li><p>A fully coupled <b>three-dimensional</b> design, with an optimal split of the turning effort between the pitch and yaw channels.</p>
 </li>
-<li><p>Extension to bounded lateral acceleration constraints for fixed-wing UAVs.</p>
-</li>
-<li><p>Input-constrained planar path-following guidance for practical onboard implementation.</p>
+<li><p><b>Bounded-input</b> designs that keep speed and angular rates strictly inside prescribed limits, covering both fixed-wing (\(V_0&gt;0\)) and multirotor (\(V_0=0\)) UAVs.
+</p>
 </li>
 </ul>
-<h2>Robust Path-following Guidance for an Autonomous Vehicle in the Presence of Wind</h2>
-<p>Saurabh Kumar, Abhinav Sinha, and Shashi Ranjan Kumar, <a href="https://doi.org/10.1016/j.ast.2024.109225" target=&ldquo;blank&rdquo;>Aerospace Science and Technology</a>, Vol. 150, 2024, pp. 109225.</p>
-<div class="video-card video-single">
-  <video controls preload="metadata" poster="videos/path-following/curvilinear_constantwind_final.jpg">
-    <source src="videos/path-following/curvilinear_constantwind_final.mp4" type="video/mp4">
-  </video>
-  <p class="video-card-caption">Path-following along a curvilinear path under a constant wind disturbance.</p>
-</div>
-<h2>Three-Dimensional Path Following Nonlinear Guidance for Unmanned Aerial Vehicles</h2>
-<p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/1.G007964" target=&ldquo;blank&rdquo;>AIAA Journal of Guidance, Control, and Dynamics</a>, Vol. 47, No. 6, 2024, pp. 1231&ndash;1240.</p>
-<div class="video-card video-single">
-  <video controls preload="metadata" poster="videos/path-following/3D_Merged_all.jpg">
-    <source src="videos/path-following/3D_Merged_all.mp4" type="video/mp4">
-  </video>
-  <p class="video-card-caption">Three-dimensional path-following simulations for the UAV.</p>
-</div>
-<h2>Relevant Publications</h2>
-<div class="pub-page-lists">
-<h3>Journal Papers</h3>
+<a id="wind"></a>
+<p></p>
+<h2>Planar Path Following in Wind</h2>
+<p></p>
+<h3>Robust Path-following Guidance for an Autonomous Vehicle in the Presence of Wind</h3>
+<p>
+Saurabh Kumar, Abhinav Sinha, and Shashi Ranjan Kumar, <a href="https://doi.org/10.1016/j.ast.2024.109225" target=&ldquo;blank&rdquo;>Aerospace Science and Technology</a>, Vol. 150, 2024, 109225.
+
+The UAV moves in the horizontal plane with ground speed \(v_g\), course \(\chi\), and course rate \(\omega_g\). The pseudo-target \(S\) moves along the path with known speed \(v_r\) and an unknown but bounded turn rate \(\omega_r\). With \(r\) the range to \(S\) and \(\theta\) the line-of-sight (LOS) angle, the engagement is described by
+</p>
+<p style="text-align:center">
+\[ \dot r = v_r\cos(\theta-\psi_r) - v_g\cos(\theta-\chi), \qquad \dot\theta = \frac{-v_r\sin(\theta-\psi_r) + v_g\sin\xi}{r}, \qquad \xi = \theta-\chi. \]
+</p><p></p>
+<figure class="paper-figure wide">
+  <img src="images/research/pf/pf_geometry.svg" alt="Planar engagement geometry between the UAV and the pseudo-target" loading="lazy">
+  <figcaption>Engagement geometry. The UAV regulates two variables: the range \(r\) with its speed, and the look angle \(\xi\) with its turn rate.</figcaption>
+</figure>
+<p>
+The ground speed is designed so that the range obeys a fixed-time reaching law,
+</p>
+<p style="text-align:center">
+\[ v_g = \frac{v_r\cos(\theta-\psi_r) + \mathcal M_1 r^{\alpha_1} + \mathcal N_1 r^{\beta_1}}{\cos(\theta-\chi)} \quad\Longrightarrow\quad \dot r = -\left(\mathcal M_1 r^{\alpha_1} + \mathcal N_1 r^{\beta_1}\right), \]
+</p><p>
+and the course rate does the same for the look angle,
+</p>
+<p style="text-align:center">
+\[ \omega_g = \frac{v_r}{r}\big(\tan\xi\cos(\theta-\psi_r) - \sin(\theta-\psi_r)\big) + \frac{\tan\xi}{r}\left(\mathcal M_1 r^{\alpha_1} + \mathcal N_1 r^{\beta_1}\right) + \left(\mathcal M_2|\xi|^{\alpha_2} + \mathcal N_2|\xi|^{\beta_2}\right)\mathrm{sign}(\xi), \]
+</p><p>
+with \(\alpha_i&gt;1\) and \(0&lt;\beta_i&lt;1\). Neither command uses \(\omega_r\), so no curvature information is needed. By a fixed-time stability argument (Polyakov), the range and look angle reach zero within
+</p>
+<p style="text-align:center">
+\[ T_i \le \frac{1}{\mathcal M_i(\alpha_i-1)} + \frac{1}{\mathcal N_i(1-\beta_i)}, \qquad i = 1,2, \]
+</p><p>
+whatever the initial range and heading. Choosing \(T_2 &lt; T_1\) aligns the UAV with the LOS before it reaches the path, which keeps the commands bounded. In steady state the course matches the path tangent (\(\chi\to\psi_r\)) and the ground speed matches the pseudo-target (\(v_g\to v_r\)).
+
+Wind enters through the wind triangle. Given the ground velocity the guidance asks for and the wind \(\mathbf w=(w_x,w_y)\), the UAV flies the airspeed and heading
+</p>
+<p style="text-align:center">
+\[ v_a = \sqrt{v_g^2 - 2v_g(w_x\cos\chi + w_y\sin\chi) + v_w^2}, \qquad \psi_a = \chi + \sin^{-1}\!\left(\frac{w_x\sin\chi - w_y\cos\chi}{v_a}\right). \]
+</p><p></p>
+<figure class="paper-figure narrow">
+  <img src="images/research/pf/pf_wind_triangle.svg" alt="Wind triangle relating airspeed, wind, and ground speed" loading="lazy">
+  <figcaption>Wind triangle. The UAV points its nose along \(\psi_a\) so that air velocity plus wind gives the commanded ground velocity.</figcaption>
+</figure>
+<p>
+The paper evaluates the law under a strong constant wind (60% of the ground speed), time-varying wind, minimum-radius turns, a time-varying pseudo-target speed, autopilot lag, and noisy initial conditions and wind estimates (200-run Monte Carlo). It also compares the law with asymptotic and finite-time variants and with existing guidance laws.
+</p>
+<div class="figure-grid cols-4">
+  <figure class="figure-card">
+    <img src="images/research/pf/wind_path.png" alt="Three UAVs converging onto a curvilinear path in strong wind" loading="lazy">
+    <figcaption>Three starts converge onto a curvy path in a 15 m/s wind.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pf/wind_sturn.png" alt="UAV following a minimum-radius S-turn" loading="lazy">
+    <figcaption>Minimum-radius S-turn in wind.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pf/wind_montecarlo.png" alt="Monte Carlo runs with perturbed initial positions" loading="lazy">
+    <figcaption>Monte Carlo: 200 runs with &plusmn;10% error in the initial position.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pf/wind_comparison.png" alt="Comparison with an existing curvilinear path-following law" loading="lazy">
+    <figcaption>Comparison with an existing curvilinear path-following law.</figcaption>
+  </figure>
+</div>
+<div class="video-card video-single">
+  <video controls preload="metadata" poster="videos/path-following/curvilinear_constantwind_final.jpg">
+    <source src="videos/path-following/curvilinear_constantwind_final.mp4" type="video/mp4">
+  </video>
+  <p class="video-card-caption">Simulation video from the paper: path following along a curvilinear path under a constant wind.</p>
+</div>
+<p></p>
+<a id="three-d"></a>
+<p></p>
+<h2>Three-Dimensional Path Following</h2>
+<p></p>
+<h3>Three-Dimensional Path Following Nonlinear Guidance for Unmanned Aerial Vehicles</h3>
+<p>
+Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/1.G007964" target=&ldquo;blank&rdquo;>AIAA Journal of Guidance, Control, and Dynamics</a>, Vol. 47, No. 6, 2024, pp. 1231&ndash;1240.
+
+In three dimensions the LOS has an azimuth \(\psi\) and an elevation \(\theta\), and the UAV's velocity makes lead angles \(\psi_U\) and \(\theta_U\) with it. Common practice splits the problem into decoupled horizontal and vertical planes. This work keeps the full pitch&ndash;yaw coupling of the engagement:
+</p>
+<p style="text-align:center">
+\[ \dot r = V_T\cos\theta_T\cos\psi_T - V_U\cos\theta_U\cos\psi_U, \]
+</p><p></p>
+<p style="text-align:center">
+\[ \dot\theta = \frac{V_T\sin\theta_T - V_U\sin\theta_U}{r}, \qquad \dot\psi = \frac{V_T\cos\theta_T\sin\psi_T - V_U\cos\theta_U\sin\psi_U}{r\cos\theta}. \]
+</p><p></p>
+<figure class="paper-figure wide">
+  <img src="images/research/pf/ft3d_geometry.png" alt="Three-dimensional engagement geometry with UAV, pseudo-target, and frames" loading="lazy">
+  <figcaption>Three-dimensional engagement: inertial, body, and LOS frames, and the effective heading angle \(\sigma_U\).</figcaption>
+</figure>
+<p>
+The key variable is the <b>effective heading angle</b> \(\sigma_U\), the single angle between the UAV's velocity and the LOS, defined by \(\cos\sigma_U = \cos\psi_U\cos\theta_U\). The speed command
+</p>
+<p style="text-align:center">
+\[ V_U = \frac{V_T\cos\theta_T\cos\psi_T + \mathcal M_1 r^{\alpha_1} + \mathcal N_1 r^{\beta_1}}{\cos\theta_U\cos\psi_U} \]
+</p><p>
+closes the range in fixed time. An auxiliary input \(\Sigma = \sin\theta_U\cos\psi_U\,\omega_U^z + \sin\psi_U\,\omega_U^y\) is designed so that
+</p>
+<p style="text-align:center">
+\[ \dot\sigma_U = -\left(\mathcal M_2|\sigma_U|^{\alpha_2} + \mathcal N_2|\sigma_U|^{\beta_2}\right)\mathrm{sign}(\sigma_U), \]
+</p><p>
+which puts the UAV on a pursuit course in fixed time. One \(\Sigma\) can be produced by infinitely many pairs of pitch and yaw rates. The paper chooses the pair that minimizes the weighted turning effort \(\sqrt{(\omega_U^z/\Upsilon_z)^2 + (\omega_U^y/\Upsilon_y)^2}\), which gives closed-form commands and lets the designer bias effort toward the yaw or the pitch channel. The paper also shows that the apparent singularity at \(\sigma_U = \pm\pi/2\) is not an attractor, so the commands stay well defined.
+</p>
+<div class="pf-sim" id="pf-sim3d">
+  <div class="pf-sim-head">
+    <div class="pf-sim-title">Try it: three-dimensional path following
+      <small>The fixed-time 3D law, simulated live. Drag to rotate the view.</small></div>
+    <div class="pf-controls">
+      <button data-scen="helix" class="on">Helix-like path</button>
+      <button data-scen="line">Straight line, 4 starts</button>
+      <span class="sep"></span>
+      <button data-act="reset">Restart</button>
+      <button data-act="play">❚❚ Pause</button>
+    </div>
+  </div>
+  <canvas class="pf-main" aria-label="Rotating 3D animation of a UAV converging onto a helix-like path"></canvas>
+  <div class="pf-legend"></div>
+  <div class="pf-below">
+    <canvas class="pf-chart-r"></canvas>
+    <canvas class="pf-chart-xi"></canvas>
+    <div class="pf-readout"></div>
+  </div>
+  <p class="pf-note">Settings of the paper's helix scenario: the pseudo-target flies at \(V_T=25\) m/s with body rates \(\omega_T^y=\sin t\), \(\omega_T^z=\cos t\). Gains are \(\mathcal M_1=\mathcal N_1=0.5,\ \mathcal M_2=\mathcal N_2=100\), with \(V_U\le 40\) m/s and turn rate \(\le 3\) rad/s. The turn is allocated with \(\Upsilon_y=\Upsilon_z\), i.e. minimum net angular speed. The straight-line case uses the four starts S1&ndash;S4 of the paper's Table 1. Shadows on the ground plane help read depth.</p>
+</div>
+
+<div class="figure-grid cols-4">
+  <figure class="figure-card">
+    <img src="images/research/pf/ft3d_helix.png" alt="UAV following a helix-like path in 3D" loading="lazy">
+    <figcaption>Helix-like path: converged within about 10 s.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pf/ft3d_generic.png" alt="UAV following an arbitrary smooth path in 3D" loading="lazy">
+    <figcaption>Arbitrary smooth path built from straight, turning, and oscillating segments.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pf/ft3d_stline.png" alt="UAV following a straight line from four initial conditions" loading="lazy">
+    <figcaption>Straight line from four very different initial configurations.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pf/ft3d_comparison.png" alt="Comparison with a classical guidance law" loading="lazy">
+    <figcaption>Planar comparison: a classical cross-track law fails to converge on this curve.</figcaption>
+  </figure>
+</div>
+<div class="video-card video-single">
+  <video controls preload="metadata" poster="videos/path-following/3D_Merged_all.jpg">
+    <source src="videos/path-following/3D_Merged_all.mp4" type="video/mp4">
+  </video>
+  <p class="video-card-caption">Simulation videos from the paper: three-dimensional path following.</p>
+</div>
+<p></p>
+<a id="bounded"></a>
+<p></p>
+<h2>Path Following with Bounded Inputs</h2>
+<p></p>
+<h3>Three-dimensional Nonlinear Path-following Guidance with Bounded Input Constraints</h3>
+<p>
+Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/1.G008792" target=&ldquo;blank&rdquo;>AIAA Journal of Guidance, Control, and Dynamics</a>, Vol. 49, No. 1, 2026, pp. 198&ndash;215.
+
+A real UAV cannot fly faster than \(V_U^{\max}\), a fixed-wing aircraft cannot fly slower than its stall speed \(V_0\), and the angular rates are limited. Clipping a command at its limit breaks the stability proof. This work instead builds the limits into the design. Each input is generated by a smooth saturation model. For the speed, with the shifted variable \(\mathcal U = V_U - (V_0+V_U^{\max})/2\) and \(\mathcal U^{\max} = (V_U^{\max}-V_0)/2\),
+</p>
+<p style="text-align:center">
+\[ \dot{\mathcal U} = \mathcal K_1\left[1-\left(\frac{\mathcal U}{\mathcal U^{\max}}\right)^{\gamma}\right]\mathcal U^{c} - \mathcal K_1\mathcal K_2\,\mathcal U, \qquad \gamma \text{ even}, \]
+</p><p>
+and similarly for the pitch and yaw rates. The gain on the command vanishes as the input approaches its limit, so <b>any finite command</b> keeps the actual input strictly inside \(V_0 &lt; V_U &lt; V_U^{\max}\) and \(|\omega_U^{y,z}| &lt; \omega_U^{\max}\).
+</p>
+<div class="pf-sim" id="pf-sat">
+  <div class="pf-sim-head">
+    <div class="pf-sim-title">Try it: the saturation model
+      <small>Turn up the command; the actual speed never leaves the band.</small></div>
+    <div class="pf-controls"><button data-act="play">❚❚ Pause</button></div>
+  </div>
+  <canvas aria-label="Commanded and actual speed through the saturation model"></canvas>
+  <div class="pf-sat-row" style="margin-top:0.6rem">
+    <span>command aggressiveness</span>
+    <input type="range" min="1" max="40" value="12" aria-label="Command aggressiveness">
+    <span class="pf-sat-gain">12&times;</span>
+    <span class="pf-key"><i></i>command \(V_U^c\)</span>
+    <span class="pf-key"><i class="solid"></i>actual \(V_U\)</span>
+  </div>
+  <p class="pf-note">Illustrative command signal passed through the speed saturation model with \(V_0=3\) m/s, \(V_U^{\max}=25\) m/s, \(\mathcal K_1=2,\ \mathcal K_2=0.5,\ \gamma=2\).</p>
+</div>
+<p>
+Because the saturation model sits between the command and the vehicle, each loop gains a relative degree. The commands are therefore designed by backstepping, with a virtual input for each loop that drives the range and the two lead angles \(\psi_U\), \(\theta_U\) to zero in fixed time. Unlike the 2024 design, the lead angles are regulated individually, so no allocation step is needed. For instance, the speed command is
+</p>
+<p style="text-align:center">
+\[ \mathcal U^{c} = \frac{\mathcal K_1\mathcal K_2\,\mathcal U + \dot\chi + |x|\cos\theta_U\cos\psi_U - \left(\mathcal M_1 x^{\alpha_1} + \mathcal N_1 x^{\beta_1}\right)}{\mathcal K_1\left[1-(\mathcal U/\mathcal U^{\max})^{\gamma}\right]}, \qquad x = \mathcal U - \chi, \]
+</p><p>
+where \(\chi\) is the virtual speed that would close the range in fixed time. Setting \(V_0=0\) gives a multirotor that may hover. Setting \(V_0&gt;0\) gives a fixed-wing UAV that must keep flying above stall.
+</p>
+<figure class="paper-figure wide">
+  <img src="images/research/pf/bi3d_block.png" alt="Block diagram of the bounded-input path-following guidance" loading="lazy">
+  <figcaption>Guidance architecture: the commanded laws feed the input-saturation models, whose outputs drive the UAV.</figcaption>
+</figure>
+<div class="figure-grid cols-4">
+  <figure class="figure-card">
+    <img src="images/research/pf/bi3d_helix.png" alt="Bounded-input UAV following a helix-like path" loading="lazy">
+    <figcaption>Helix-like path with \(V_0=3\) m/s: on the path in about 12 s.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pf/bi3d_speed.png" alt="Commanded and actual speed within bounds" loading="lazy">
+    <figcaption>The commanded speed may be large; the actual speed stays within its bounds.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pf/bi3d_stline.png" alt="Straight-line following from five initial configurations" loading="lazy">
+    <figcaption>Straight line from five initial configurations.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pf/bi3d_helix_hover.png" alt="Helix-like path with V0 = 0" loading="lazy">
+    <figcaption>\(V_0=0\): the multirotor case, where the speed may drop to zero.</figcaption>
+  </figure>
+</div>
+<p></p>
+<h3>Path Following Guidance with Bounded Control</h3>
+<p>
+Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/6.2026-1947" target=&ldquo;blank&rdquo;>AIAA GNC Conference</a>, Orlando, USA, 2026.
+
+The planar counterpart of the design above. The speed and turn-rate saturation models are combined with backstepping laws that drive the look angle \(\zeta=\theta-\chi_U\) and then the range \(r\) to zero in fixed time. Both the linear speed and the turn rate stay within their bounds at all times.
+</p>
+<div class="figure-grid">
+  <figure class="figure-card">
+    <img src="images/research/pf/bi2d_path.png" alt="UAV converging onto a curvilinear path with bounded control" loading="lazy">
+    <figcaption>Curvilinear path with bounded speed and turn rate.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pf/bi2d_speed.png" alt="UAV linear speed within bounds" loading="lazy">
+    <figcaption>Linear speed stays within its bounds and settles to the pseudo-target's speed.</figcaption>
+  </figure>
+</div>
+<p></p>
+<h2>Earlier Work: Cross-track Sliding Mode Guidance</h2>
+<p>
+My first designs used the classical cross-track error \(d\), the perpendicular distance to the path, whose dynamics under a lateral acceleration \(a_m\) are \(\ddot d = a_m\cos(\psi-\psi_d) + \Delta\). The curvature term \(\Delta\) is treated as a bounded disturbance. A nonsingular terminal sliding surface
+</p>
+<p style="text-align:center">
+\[ \mathcal S = d + \frac{1}{\beta}\,\dot d^{\,p/q}, \qquad 1 &lt; \frac{p}{q} &lt; 2 \]
+</p><p>
+gives finite-time convergence to the path. The IFAC 2022 paper pairs this guidance loop with a separate finite-time autopilot loop. The SciTech 2023 paper adds robustness to disturbances and autopilot lag. These designs still rely on projecting onto the path. That limitation motivated the pseudo-target formulation used in all the later work.
+</p>
+<h2>Relevant Publications</h2>
+<p></p>
+<div class="pub-page-lists">
+<p></p>
+<h3>Journal Papers</h3>
+<p></p>
 <ol>
-<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/1.G008792" target=&ldquo;blank&rdquo;>Three-dimensional Nonlinear Path-following Guidance with Bounded Input Constraints</a>, AIAA Journal of Guidance, Control, and Dynamics, Vol. 49, No. 1, 2026, pp. 198&ndash;215.</p>
+<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/1.G008792" target=&ldquo;blank&rdquo;>Three-dimensional Nonlinear Path-following Guidance with Bounded Input Constraints</a>, AIAA Journal of Guidance, Control, and Dynamics, Vol. 49, No. 1, 2026, pp. 198&ndash;215.</p>
 </li>
-<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/1.G007964" target=&ldquo;blank&rdquo;>Three-Dimensional Path Following Nonlinear Guidance for Unmanned Aerial Vehicles</a>, AIAA Journal of Guidance, Control, and Dynamics, Vol. 47, No. 6, 2024, pp. 1231&ndash;1240.</p>
+<li><p>Vinay Kathiriya, Saurabh Kumar, and Shashi Ranjan Kumar, <a href="https://www.sciencedirect.com/science/article/pii/S1270963826012617" target=&ldquo;blank&rdquo;>Path-Following Guidance for Unmanned Aerial Vehicle with Bounded Lateral Acceleration</a>, Aerospace Science and Technology, 2026, pp. 1&ndash;17.</p>
 </li>
-<li><p>Saurabh Kumar, Abhinav Sinha, and Shashi Ranjan Kumar, <a href="https://doi.org/10.1016/j.ast.2024.109225" target=&ldquo;blank&rdquo;>Robust Path-following Guidance for an Autonomous Vehicle in the Presence of Wind</a>, Aerospace Science and Technology, Vol. 150, 2024, pp. 109225.</p>
+<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/1.G007964" target=&ldquo;blank&rdquo;>Three-Dimensional Path Following Nonlinear Guidance for Unmanned Aerial Vehicles</a>, AIAA Journal of Guidance, Control, and Dynamics, Vol. 47, No. 6, 2024, pp. 1231&ndash;1240.</p>
 </li>
-<li><p>Vinay Kathiriya, Saurabh Kumar, and Shashi Ranjan Kumar, <a href="https://www.sciencedirect.com/science/article/pii/S1270963826012617" target=&ldquo;blank&rdquo;>Path-Following Guidance for Unmanned Aerial Vehicle with Bounded Lateral Acceleration</a>, Aerospace Science and Technology, 2026, pp. 1&ndash;17.</p>
+<li><p>Saurabh Kumar, Abhinav Sinha, and Shashi Ranjan Kumar, <a href="https://doi.org/10.1016/j.ast.2024.109225" target=&ldquo;blank&rdquo;>Robust Path-following Guidance for an Autonomous Vehicle in the Presence of Wind</a>, Aerospace Science and Technology, Vol. 150, 2024, pp. 109225.
+</p>
 </li>
 </ol>
-<h3>Conference Papers</h3>
+<h3>Conference Papers</h3>
+<p></p>
 <ol>
-<li><p>Vinay Kathiriya, Saurabh Kumar, Shashi Ranjan Kumar, Input Constrained Planar Path-Following Guidance for Unmanned Aerial Vehicles, Asian Control Conference, Bali, Indonesia, 2026.</p>
+<li><p>Vinay Kathiriya, Saurabh Kumar, Shashi Ranjan Kumar, Input Constrained Planar Path-Following Guidance for Unmanned Aerial Vehicles, Asian Control Conference, Bali, Indonesia, 2026.</p>
 </li>
-<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/6.2026-1947" target=&ldquo;blank&rdquo;>Path Following Guidance with Bounded Control</a>, AIAA GNC Conference, Orlando, USA, 2026.</p>
+<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/6.2026-1947" target=&ldquo;blank&rdquo;>Path Following Guidance with Bounded Control</a>, AIAA GNC Conference, Orlando, USA, 2026.</p>
 </li>
-<li><p>Saurabh Kumar, Abhinav Sinha, and Shashi Ranjan Kumar, <a href="https://doi.org/10.2514/6.2024-1593" target=&ldquo;blank&rdquo;>Generic Path-following Guidance for an Autonomous Vehicle</a>, AIAA GNC Conference, Orlando, USA, 2024.</p>
+<li><p>Saurabh Kumar, Abhinav Sinha, and Shashi Ranjan Kumar, <a href="https://doi.org/10.2514/6.2024-1593" target=&ldquo;blank&rdquo;>Generic Path-following Guidance for an Autonomous Vehicle</a>, AIAA GNC Conference, Orlando, USA, 2024.</p>
 </li>
-<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/6.2023-1055" target=&ldquo;blank&rdquo;>Robust Path-following Guidance for an Unmanned Vehicle</a>, AIAA GNC Conference, National Harbor, MD, USA, 2023.</p>
+<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/6.2023-1055" target=&ldquo;blank&rdquo;>Robust Path-following Guidance for an Unmanned Vehicle</a>, AIAA GNC Conference, National Harbor, MD, USA, 2023.</p>
 </li>
-<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.1016/j.ifacol.2023.03.036" target=&ldquo;blank&rdquo;>Separate Guidance and Control Design for Autonomous Path-following</a>, IFAC-PapersOnLine, Vol. 55, No. 22, 2022, pp. 212&ndash;217.</p>
+<li><p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.1016/j.ifacol.2023.03.036" target=&ldquo;blank&rdquo;>Separate Guidance and Control Design for Autonomous Path-following</a>, IFAC-PapersOnLine, Vol. 55, No. 22, 2022, pp. 212&ndash;217.
+</p>
 </li>
 </ol>
-</div>
+</div>
 </div> <!-- <div id="layout-content"> -->
 <div id="footer-container">
 <div id="footer">
@@ -168,7 +446,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 24<sup>th</sup> 2026  08:38PM (Time Zone: IST), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated November 25<sup>th</sup> 2026  11:03AM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

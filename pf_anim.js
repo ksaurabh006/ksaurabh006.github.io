@@ -7,6 +7,8 @@
  *                  (Kumar, Kumar & Sinha, AIAA JGCD 2024).
  *  3. #pf-sat    : smooth input-saturation model used by the bounded-input designs
  *                  (AIAA JGCD 2026 / SciTech 2026).
+ *  4. #pf-ct     : cross-track guidance, terminal sliding mode (AIAA GNC 2023)
+ *                  vs nested saturation (ASCC 2026 / AST 2026), same paths and starts.
  *
  * Everything is simulated in the browser from the guidance laws in the papers.
  */
@@ -695,10 +697,202 @@
     }
   }
 
+  /* ════════════════════════════════════════════════════════════════
+     4. CROSS-TRACK GUIDANCE: terminal sliding mode (AIAA GNC 2023) vs
+        nested saturation (ASCC 2026 / AST 2026), same paths and starts.
+     ════════════════════════════════════════════════════════════════ */
+  function initCT(root) {
+    var cv = root.querySelector('canvas.pf-main');
+    var cvA = root.querySelector('canvas.pf-chart-r');
+    var cvP = root.querySelector('canvas.pf-chart-xi');
+    var out = root.querySelector('.pf-readout');
+    var leg = root.querySelector('.pf-legend');
+    var btnPlay = root.querySelector('[data-act="play"]');
+    var V = 10, H = 0.002, AMAX = 10, REC = 0.02;
+
+    var PATHS = {
+      line: { T: 22, starts: [[20, 10, 45], [10, 30, 80], [15, -15, 135], [0, 40, 60]],
+        geo: function (x, y) {
+          var pd = Math.PI / 4, d = -x * Math.sin(pd) + y * Math.cos(pd);
+          return { d: d, psid: pd, foot: [x + d * Math.sin(pd), y - d * Math.cos(pd)], rate: function () { return 0; } };
+        },
+        sample: function () { var p = []; for (var s = -400; s <= 400; s += 4) p.push([s * Math.SQRT1_2, s * Math.SQRT1_2]); return p; } },
+      circle: { T: 20, starts: [[20, 20, 60], [10, 10, 45], [30, 20, 100], [-25, -40, 130]],
+        geo: function (x, y) {
+          var Rp = Math.hypot(x, y), R = 20;
+          return { d: Rp - R, psid: Math.atan2(-x, y), foot: [x * R / Rp, y * R / Rp],
+            rate: function (xd, yd) { return (x * yd - y * xd) / (Rp * Rp); } };
+        },
+        sample: function () { var p = []; for (var a = 0; a <= 2 * Math.PI + 0.01; a += 0.03) p.push([20 * Math.cos(a), 20 * Math.sin(a)]); return p; } },
+      sine: { T: 22, starts: [[10, -10, 60], [5, 15, 30], [-15, 5, 45], [15, 5, 80]],
+        geo: function (x, y) {
+          var A = 10, w = 2 * Math.PI / 100, s = A * w * Math.cos(w * x), n = Math.sqrt(1 + s * s);
+          var d = (y - A * Math.sin(w * x)) / n, pd = Math.atan(s);
+          return { d: d, psid: pd, foot: [x + d * Math.sin(pd), y - d * Math.cos(pd)],
+            rate: function (xd) { return -A * w * w * Math.sin(w * x) * xd / (n * n); } };
+        },
+        sample: function () { var p = []; for (var x = -60; x <= 400; x += 2) p.push([x, 10 * Math.sin(2 * Math.PI / 100 * x)]); return p; } }
+    };
+    function sat(s, M) { return s > M ? M : (s < -M ? -M : s); }
+    function spow(v, e) { return Math.pow(Math.abs(v), e) * sgn(v); }
+
+    // Terminal sliding mode (Kumar, Kumar & Sinha, AIAA GNC 2023), gains from the paper's simulation code.
+    function amSMC(g, psi) {
+      var circ = key === 'circle', p = 15, q = 13, beta = circ ? 5 : 2, eta = circ ? 50 : 20, c = circ ? 5 : 1;
+      var z = psi - g.psid, dd = V * Math.sin(z);
+      var s = g.d + spow(dd, p / q) / beta;
+      var am = (-1 / Math.cos(z)) * (beta * (p / q) * spow(dd, 2 - p / q) + eta * Math.tanh(c * s));
+      return sat(am, 50);
+    }
+    // Nested saturation (Kathiriya, Kumar & Kumar, ASCC 2026 / AST 2026), k1 = k2 = 1, M2' = 10, M1 = M2/2.1.
+    function amNS(g, psi, rate) {
+      var k1 = 1, k2 = 1, z = psi - g.psid, cz = Math.cos(z), d1 = g.d, d2 = V * Math.sin(z);
+      var h1 = k1 * k2 * d1 + k2 * d2, h2 = k1 * d2;
+      var M2 = Math.abs((AMAX - V * Math.abs(rate)) * cz), M1 = M2 / 2.1;
+      var u = -sat(h2 + sat(h1, M1), M2);
+      return Math.abs(cz) < 1e-6 ? V * rate : (u + V * rate * cz) / cz;
+    }
+
+    function simulate() {
+      var P = PATHS[key], res = [];
+      P.starts.forEach(function (st) {
+        var x = st[0], y = st[1], psi = st[2] * DEG, n = Math.round(P.T / H), every = Math.round(REC / H);
+        var rec = { xy: [], foot: [], d: [], dd: [], am: [], psi: [] };
+        for (var k = 0; k <= n; k++) {
+          var g = P.geo(x, y), xd = V * Math.cos(psi), yd = V * Math.sin(psi), rate = g.rate(xd, yd);
+          var am = law === 'smc' ? amSMC(g, psi) : amNS(g, psi, rate);
+          if (k % every === 0) {
+            rec.xy.push([x, y]); rec.foot.push(g.foot); rec.d.push(g.d); rec.dd.push(V * Math.sin(psi - g.psid));
+            rec.am.push(am); rec.psi.push(psi);
+          }
+          x += xd * H; y += yd * H; psi += am / V * H;
+        }
+        res.push(rec);
+      });
+      return res;
+    }
+
+    var key = 'line', law = 'ns', runs, t = 0, hold = 0, view = null, pathPts;
+    function reset() {
+      runs = simulate(); t = 0; hold = 0; view = null;
+      pathPts = PATHS[key].sample();
+      legend(leg, [{ color: AMBER, label: 'closest point' }, { color: '#dc2626', label: 'cross-track error d' }].concat(
+        runs.map(function (_, k) { return { color: COLORS[k], label: 'Case ' + (k + 1) }; })));
+    }
+
+    function computeView(w, h) {
+      var mnx = 1e9, mny = 1e9, mxx = -1e9, mxy = -1e9;
+      runs.forEach(function (r) { r.xy.forEach(function (p) { mnx = Math.min(mnx, p[0]); mxx = Math.max(mxx, p[0]); mny = Math.min(mny, p[1]); mxy = Math.max(mxy, p[1]); }); });
+      if (key === 'circle') { mnx = Math.min(mnx, -22); mxx = Math.max(mxx, 22); mny = Math.min(mny, -22); mxy = Math.max(mxy, 22); }
+      var pad = 26, s = Math.min((w - 2 * pad) / (mxx - mnx), (h - 2 * pad) / (mxy - mny));
+      var ox = (w - s * (mxx - mnx)) / 2 - s * mnx, oy = (h + s * (mxy - mny)) / 2 + s * mny;
+      view = { w: w, h: h, f: function (x, y) { return [ox + s * x, oy - s * y]; } };
+    }
+
+    function idx() { return Math.min(runs[0].xy.length - 1, Math.floor(t / REC)); }
+
+    function draw() {
+      var f = fitCanvas(cv), ctx = f.ctx, w = f.w, h = f.h, th = theme();
+      if (!view || view.w !== w || view.h !== h) computeView(w, h);
+      ctx.fillStyle = th.bg; ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = th.grid; ctx.lineWidth = 1;
+      for (var gx = 0; gx < w; gx += 40) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke(); }
+      for (var gy = 0; gy < h; gy += 40) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke(); }
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.clip();
+      ctx.strokeStyle = th.path; ctx.lineWidth = 2.2; ctx.setLineDash([7, 6]); ctx.beginPath();
+      pathPts.forEach(function (p, k) { var q = view.f(p[0], p[1]); if (k === 0) ctx.moveTo(q[0], q[1]); else ctx.lineTo(q[0], q[1]); });
+      ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+      var i = idx();
+      runs.forEach(function (r, k) {
+        ctx.strokeStyle = COLORS[k]; ctx.lineWidth = 2.2; ctx.beginPath();
+        for (var j = 0; j <= i; j++) { var q = view.f(r.xy[j][0], r.xy[j][1]); if (j === 0) ctx.moveTo(q[0], q[1]); else ctx.lineTo(q[0], q[1]); }
+        ctx.stroke();
+        var s0 = view.f(r.xy[0][0], r.xy[0][1]); ctx.fillStyle = COLORS[k]; ctx.fillRect(s0[0] - 4, s0[1] - 4, 8, 8);
+      });
+      runs.forEach(function (r, k) {
+        var P = view.f(r.xy[i][0], r.xy[i][1]), F = view.f(r.foot[i][0], r.foot[i][1]);
+        if (Math.abs(r.d[i]) > 0.3) {
+          ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(P[0], P[1]); ctx.lineTo(F[0], F[1]); ctx.stroke();
+          ctx.fillStyle = AMBER; ctx.beginPath(); ctx.arc(F[0], F[1], 4, 0, 7); ctx.fill();
+        }
+        var H2 = view.f(r.xy[i][0] + Math.cos(r.psi[i]), r.xy[i][1] + Math.sin(r.psi[i]));
+        drawPlane(ctx, P[0], P[1], Math.atan2(H2[1] - P[1], H2[0] - P[0]), 10, COLORS[k], th.halo);
+      });
+      ctx.fillStyle = th.muted; ctx.font = '600 12px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('t = ' + fmt(i * REC, 1) + ' s', 12, 10);
+    }
+
+    function charts() {
+      var T = PATHS[key].T, i = idx(), th = theme();
+      var series = runs.map(function (r, k) {
+        var pts = []; for (var j = 0; j <= i; j += 3) pts.push([j * REC, r.am[j]]); return { color: COLORS[k], pts: pts };
+      });
+      drawChart(cvA, 'lateral acceleration a_m (band: ±10)', 'm/s²', T, -30, 30, series, i * REC);
+      var fa = fitCanvas(cvA), ca = fa.ctx, ph = fa.h - 18 - 18;
+      function Ya(v) { return 18 + ph * (1 - (v + 30) / 60); }
+      ca.fillStyle = isDark() ? 'rgba(96,165,250,0.12)' : 'rgba(37,99,235,0.08)';
+      ca.fillRect(38, Ya(AMAX), fa.w - 46, Ya(-AMAX) - Ya(AMAX));
+
+      // phase plane d vs d-dot
+      var fp = fitCanvas(cvP), c2 = fp.ctx, w = fp.w, h = fp.h;
+      c2.fillStyle = th.bg; c2.fillRect(0, 0, w, h);
+      var dm = 1; runs.forEach(function (r) { r.d.forEach(function (v) { dm = Math.max(dm, Math.abs(v)); }); });
+      dm = Math.ceil(dm / 10) * 10;
+      var Lp = 38, Rp = 8, Tq = 18, Bq = 18, pw = w - Lp - Rp, pq = h - Tq - Bq;
+      function X2(v) { return Lp + pw * (v + dm) / (2 * dm); }
+      function Y2(v) { return Tq + pq * (1 - (v + V) / (2 * V)); }
+      c2.strokeStyle = th.axis; c2.lineWidth = 1;
+      c2.beginPath(); c2.moveTo(X2(0), Tq); c2.lineTo(X2(0), Tq + pq); c2.moveTo(Lp, Y2(0)); c2.lineTo(w - Rp, Y2(0)); c2.stroke();
+      c2.font = '10px Inter, sans-serif'; c2.fillStyle = th.muted; c2.textAlign = 'center'; c2.textBaseline = 'top';
+      c2.fillText(-dm, X2(-dm) + 10, h - Bq + 4); c2.fillText(dm, X2(dm) - 10, h - Bq + 4); c2.fillText('d (m)', X2(0) + 22, h - Bq + 4);
+      c2.textAlign = 'right'; c2.textBaseline = 'middle';
+      c2.fillText(V, Lp - 5, Y2(V)); c2.fillText(-V, Lp - 5, Y2(-V)); c2.fillText(0, Lp - 5, Y2(0));
+      c2.textAlign = 'left'; c2.textBaseline = 'top'; c2.fillStyle = th.text; c2.font = '600 11px Inter, sans-serif';
+      c2.fillText('phase plane: ḋ (m/s) vs d', Lp, 3);
+      runs.forEach(function (r, k) {
+        c2.strokeStyle = COLORS[k]; c2.lineWidth = 1.6; c2.beginPath();
+        for (var j = 0; j <= i; j += 2) { var X = X2(r.d[j]), Yv = Y2(r.dd[j]); if (j === 0) c2.moveTo(X, Yv); else c2.lineTo(X, Yv); }
+        c2.stroke();
+        c2.fillStyle = COLORS[k]; c2.beginPath(); c2.arc(X2(r.d[i]), Y2(r.dd[i]), 3, 0, 7); c2.fill();
+      });
+
+      var peak = 0, dmax = 0;
+      runs.forEach(function (r) { for (var j = 0; j <= i; j++) peak = Math.max(peak, Math.abs(r.am[j])); dmax = Math.max(dmax, Math.abs(r.d[i])); });
+      out.innerHTML =
+        '<div><span>law</span><b>' + (law === 'ns' ? 'nested saturation' : 'terminal sliding mode') + '</b></div>' +
+        '<div><span>largest |d| now</span><b>' + fmt(dmax, 1) + ' m</b></div>' +
+        '<div><span>peak |a<sub>m</sub>| so far</span><b style="color:' + (peak > AMAX + 0.05 ? '#dc2626' : '#16a34a') + '">' + fmt(peak, 1) + ' m/s²</b></div>' +
+        '<div><span>bound a<sub>max</sub></span><b>' + AMAX + ' m/s²</b></div>';
+    }
+
+    var frame = 0;
+    var anim = animator(root, function (dt) {
+      if (t >= PATHS[key].T) { hold += dt; if (hold > 1.6) { t = 0; hold = 0; } } else t += dt;
+      draw(); if (frame++ % 3 === 0) charts();
+    });
+    root.querySelectorAll('[data-scen]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        root.querySelectorAll('[data-scen]').forEach(function (x) { x.classList.remove('on'); });
+        b.classList.add('on'); key = b.getAttribute('data-scen'); reset(); anim.kick();
+      });
+    });
+    root.querySelectorAll('[data-law]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        root.querySelectorAll('[data-law]').forEach(function (x) { x.classList.remove('on'); });
+        b.classList.add('on'); law = b.getAttribute('data-law'); reset(); anim.kick();
+      });
+    });
+    root.querySelector('[data-act="reset"]').addEventListener('click', function () { t = 0; hold = 0; anim.kick(); });
+    btnPlay.addEventListener('click', function () { anim.paused = !anim.paused; btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause'; anim.kick(); });
+    btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause';
+    reset();
+  }
+
   function init() {
     var a = document.getElementById('pf-sim2d'); if (a) initSim2D(a);
     var b = document.getElementById('pf-sim3d'); if (b) initSim3D(b);
     var c = document.getElementById('pf-sat'); if (c) initSat(c);
+    var d = document.getElementById('pf-ct'); if (d) initCT(d);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

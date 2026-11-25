@@ -1657,6 +1657,11 @@
     return rec;
   }
 
+  // filled square marking an initial position, outlined so it stands out on any trail
+  function startMark(ctx, q, color, halo) {
+    ctx.fillStyle = color; ctx.fillRect(q[0] - 5, q[1] - 5, 10, 10);
+    ctx.strokeStyle = halo; ctx.lineWidth = 1.5; ctx.strokeRect(q[0] - 5, q[1] - 5, 10, 10);
+  }
   function drawShip(ctx, x, y, a, size, color, halo) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(a);
     ctx.beginPath(); ctx.moveTo(size * 1.3, 0); ctx.lineTo(size * 0.4, -size * 0.55); ctx.lineTo(-size, -size * 0.55);
@@ -1704,7 +1709,7 @@
       var conv = r0.t[i] >= scn.tf;
       runs.forEach(function (r, k) {
         ctx.strokeStyle = COL[k]; ctx.lineWidth = 2; polyline(ctx, view, r.pos, i);
-        var s0 = view.f(r.pos[0][0], r.pos[0][1]); ctx.fillStyle = COL[k]; ctx.fillRect(s0[0] - 4, s0[1] - 4, 8, 8);
+        startMark(ctx, view.f(r.pos[0][0], r.pos[0][1]), COL[k], th.halo);
         var q = view.f(r.pos[i][0], r.pos[i][1]), q2 = view.f(r.pos[i][0] + Math.cos(r.pos[i][2]), r.pos[i][1] + Math.sin(r.pos[i][2]));
         drawShip(ctx, q[0], q[1], Math.atan2(q2[1] - q[1], q2[0] - q[0]), 10, COL[k], th.halo);
       });
@@ -2177,6 +2182,7 @@ function qblfInv4(M) {
       line(full, full.length - 1, 'rgba(37,99,235,0.35)', 1.5, [5, 5]);
       line(res.ref, i, '#2563eb', 2.2);
       line(res.pos, i, '#c026d3', 2);
+      startMark(ctx, V(res.pos[0]), '#c026d3', th.halo);
       // shadow of the quad on the ground and its drop line
       var p = res.pos[i], g0 = V([p[0], p[1], 0]), pp = V(p);
       ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(g0[0], g0[1]); ctx.lineTo(pp[0], pp[1]); ctx.stroke();
@@ -2752,6 +2758,7 @@ function qftSimulate(scn, controller, opts) {
       line(function (k) { return at(runs[0].r, 'ref', k); }, i, '#2563eb', 2.2);
       runs.slice().reverse().forEach(function (x) {
         line(function (k) { return at(x.r, 'pos', k); }, i, QFT_COL[x.c], x.c === 'M2' || runs.length === 1 ? 2.2 : 1.6);
+        startMark(ctx, V(at(x.r, 'pos', 0)), QFT_COL[x.c], th.halo);
         var p = at(x.r, 'pos', i), pp = V(p), a = at(x.r, 'ang', i);
         var cph = Math.cos(a[0]), sph = Math.sin(a[0]), cth = Math.cos(a[1]), sth = Math.sin(a[1]), cps = Math.cos(a[2]), sps = Math.sin(a[2]);
         var Rm = [[cth * cps, sph * sth * cps - cph * sps], [cth * sps, sph * sth * sps + cph * cps], [-sth, sph * cth]];

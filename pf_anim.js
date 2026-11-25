@@ -12,6 +12,9 @@
  *  5. #pe-sim     : pursuer-evader-defender engagement (Cooperative Pursuit-Evasion page).
  *  6. #pe-multi   : 20 defenders vs 20 pursuers with one-to-one assignment.
  *  7. #pe-tri     : triangle rule (Proposition 1): hold chi(0) with positive closing speed.
+ *  8. #tt-usv     : exact-time tracking of a surface vessel (Trajectory Tracking page).
+ *  9. #tt-blf     : BLF-constrained quadrotor tracking (JGCD 2026).
+ * 10. #tt-ft      : finite-time quadrotor tracking and reaching-law comparison (IMechE G 2025).
  *
  * Everything is simulated in the browser from the guidance laws in the papers.
  */
@@ -1561,6 +1564,1227 @@
     run();
   }
 
+  /* ── Exact-time trajectory tracking of a surface vessel (Basnet, Kumar & Kumar, IEEE JOE 2025).
+        Port of Exact_Time_with_disturbance.m / exact_time_without_disturbance.m on CyberShip II. ── */
+  var USV_P = (function () {
+    var m = 23.8, Iz = 1.76, xg = 0.046, Xud = -2.0, Yvd = -10, Yrd = 0, Nvd = 0, Nrd = -1;
+    return { m11: m - Xud, m22: m - Yvd, m23: m * xg - Yrd, m32: m * xg - Nvd, m33: Iz - Nrd,
+      Xu: -0.72253, Xuu: -1.32742, Yv: -0.88965, Yvv: -36.47287, Nv: 0.0313, Nvv: 3.95645, Yrv: -0.805, Yr: -7.250,
+      Yvr: -0.845, Yrr: -3.450, Nrv: 0.130, Nr: -1.9, Nvr: 0.08, Nrr: -0.75 };
+  })();
+  var USV_REF = {
+    ellipse: function (t) { return [[4 * Math.sin(0.02 * t), 2.5 * (1 - Math.cos(0.02 * t)), 0.02 * t],
+      [0.08 * Math.cos(0.02 * t), 0.05 * Math.sin(0.02 * t), 0.02], [-0.0016 * Math.sin(0.02 * t), 0.001 * Math.cos(0.02 * t), 0]]; },
+    infinity: function (t) { return [[2 * Math.cos(0.1 * t), Math.sin(0.2 * t), 0.02 * t],
+      [-0.2 * Math.sin(0.1 * t), 0.2 * Math.cos(0.2 * t), 0.02], [-0.02 * Math.cos(0.1 * t), -0.04 * Math.sin(0.2 * t), 0]]; }
+  };
+  var USV_SCN = [
+    { label: 'Known disturbance bound', ref: 'ellipse', obs: false, tf: 10, T: 150,
+      desc: 'Reference x<sub>d</sub> = 4 sin 0.02t, y<sub>d</sub> = 2.5(1 − cos 0.02t), ψ<sub>d</sub> = 0.02t. The vessel starts at (2, −3) m with ψ = π/6 and is at rest. t<sub>f</sub> = 10 s, t<sub>1</sub> = 5 s, with a time-varying disturbance whose bound is known.',
+      cases: [{ label: 'start (2, −3), ψ = 30°', ic: [2, -3, Math.PI / 6] }] },
+    { label: 'Disturbance observer', ref: 'ellipse', obs: true, tf: 10, T: 150,
+      desc: 'Same reference and start, but the disturbance bound is unknown: a disturbance observer estimates it, and the model has a 10% error in its Coriolis and damping terms. t<sub>f</sub> = 10 s.',
+      cases: [{ label: 'start (2, −3), ψ = 30°', ic: [2, -3, Math.PI / 6] }] },
+    { label: 'Infinity-shaped reference', ref: 'infinity', obs: true, tf: 6, T: 70,
+      desc: 'Reference x<sub>d</sub> = 2 cos 0.1t, y<sub>d</sub> = sin 0.2t, ψ<sub>d</sub> = 0.02t, with rapidly changing curvature. Two starting points, both at rest with ψ = π/3; t<sub>f</sub> = 6 s.',
+      cases: [{ label: 'case 1: (−2, 1.5)', ic: [-2, 1.5, Math.PI / 3] }, { label: 'case 2: (1, −1)', ic: [1, -1, Math.PI / 3] }] }
+  ];
+  function m3v(A, v) { return [A[0][0] * v[0] + A[0][1] * v[1] + A[0][2] * v[2], A[1][0] * v[0] + A[1][1] * v[1] + A[1][2] * v[2], A[2][0] * v[0] + A[2][1] * v[1] + A[2][2] * v[2]]; }
+  function m3inv(A) {
+    var a = A[0][0], b = A[0][1], c = A[0][2], d = A[1][0], e = A[1][1], f = A[1][2], g = A[2][0], h = A[2][1], i = A[2][2];
+    var C0 = e * i - f * h, C1 = -(d * i - f * g), C2 = d * h - e * g, det = a * C0 + b * C1 + c * C2;
+    return [[C0 / det, -(b * i - c * h) / det, (b * f - c * e) / det], [C1 / det, (a * i - c * g) / det, -(a * f - c * d) / det],
+            [C2 / det, -(a * h - b * g) / det, (a * e - b * d) / det]];
+  }
+  function usvSimulate(scn, ic) {
+    var P = USV_P, H = 0.001, every = 20, N1 = 3, N = 2, t1 = 5, tf = scn.tf, obs = scn.obs;
+    var dbar = obs ? 2.8 : 0.8, e = 0.8, hi = obs ? 0.32 : 0.032, k0 = 0.8, ref = USV_REF[scn.ref];
+    var M = [[P.m11, 0, 0], [0, P.m22, P.m23], [0, P.m32, P.m33]], Mi = m3inv(M);
+    var eta1 = ic.slice(), eta2 = [0, 0, 0], tau = [0, 0, 0], uav = [0, 0, 0], beta = [0, 0, 0];
+    var rec = { t: [], pos: [], ref: [], err: [], tau: [] }, nSteps = Math.round(scn.T / H);
+    for (var k = 0; k <= nSteps; k++) {
+      var t = k * H, rd = ref(t), ed = rd[0], edd = rd[1], eddd = rd[2];
+      var c = Math.cos(eta1[2]), s = Math.sin(eta1[2]);
+      var R = [[c, -s, 0], [s, c, 0], [0, 0, 1]], Rt = [[c, s, 0], [-s, c, 0], [0, 0, 1]];
+      var u = eta2[0], v = eta2[1], r = eta2[2];
+      var D = [[-P.Xu - P.Xuu * Math.abs(u), 0, 0],
+               [0, -P.Yv - P.Yvv * Math.abs(v) - P.Yrv * Math.abs(r), -P.Yr - P.Yvr * Math.abs(v) - P.Yrr * Math.abs(r)],
+               [0, -P.Nv - P.Nvv * Math.abs(v) - P.Nrv * Math.abs(r), -P.Nr - P.Nvr * Math.abs(v) - P.Nrr * Math.abs(r)]];
+      var Cm = [[0, 0, -P.m22 * v - P.m23 * r], [0, 0, P.m11 * u], [P.m22 * v + P.m23 * r, -P.m11 * u, 0]];
+      var CD = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+      for (var a = 0; a < 3; a++) for (var b = 0; b < 3; b++) CD[a][b] = Cm[a][b] + D[a][b];
+      var Seta = [-r * eta2[1], r * eta2[0], 0];
+      var cdTerm = m3v(R, m3v(Mi, m3v(CD, m3v(Rt, eta2))));
+      var f = [Seta[0] - cdTerm[0], Seta[1] - cdTerm[1], Seta[2] - cdTerm[2]];
+      var d1 = 1.3 + 2 * Math.sin(0.02 * t) + 1.5 * Math.sin(0.1 * t) * 0.05;
+      var d2 = -0.9 + 2 * Math.sin(0.02 * t - Math.PI / 6) + 1.5 * Math.sin(0.3 * t) * 0.05;
+      var d3 = -Math.sin(0.09 * t + Math.PI / 3) - 4 * Math.sin(0.01 * t) * 0.02;
+      var dtt = [0.1 * d1, 0.1 * d2, 0.1 * d3];
+      var RMt = m3v(R, m3v(Mi, tau));
+      var eta2dot = [], j;
+      for (j = 0; j < 3; j++) eta2dot.push(f[j] + (obs ? 0.1 * cdTerm[j] : 0) + RMt[j] + dtt[j]);
+      var e1 = [eta1[0] - ed[0], eta1[1] - ed[1], eta1[2] - ed[2]], e2 = [eta2[0] - edd[0], eta2[1] - edd[1], eta2[2] - edd[2]];
+      if (k % every === 0) {
+        rec.t.push(t); rec.pos.push(eta1.slice()); rec.ref.push(ed.slice()); rec.err.push(e1.slice()); rec.tau.push(tau.slice());
+      }
+      var y = [0, 0, 0], yd = [0, 0, 0], z = [0, 0, 0], zd = [0, 0, 0], si = [], sv = [];
+      for (j = 0; j < 3; j++) {
+        if (t < tf - 0.02) { y[j] = -N1 / (tf - t) * e1[j]; yd[j] = (-N1 * (tf - t) * e2[j] - N1 * e1[j]) / ((tf - t) * (tf - t)); }
+        sv.push(e2[j] - y[j]);
+        if (t < t1 - H / 2) { z[j] = -sv[j]; zd[j] = -N / (t1 - t) * z[j]; }   // A recomputed each step, as in the code
+        si.push(sv[j] + z[j]);
+      }
+      var dhat = obs ? [beta[0] + k0 * eta2[0], beta[1] + k0 * eta2[1], beta[2] + k0 * eta2[2]] : dtt;
+      var inner = [], uavd = [];
+      for (j = 0; j < 3; j++) {
+        inner.push(-f[j] + eddd[j] + yd[j] - zd[j] - dhat[j]);
+        uavd.push((-uav[j] + (dbar + e) * Math.tanh(100 * si[j])) / hi);
+      }
+      var MRt = function (w) { return m3v(M, m3v(Rt, w)); };
+      var tau1 = MRt(inner), tau2 = MRt(uav);
+      var tauN = [tau1[0] - tau2[0], tau1[1] - tau2[1], tau1[2] - tau2[2]];
+      if (obs) {
+        var RMtn = m3v(R, m3v(Mi, tauN));
+        for (j = 0; j < 3; j++) beta[j] += (-k0 * beta[j] - k0 * (f[j] + RMtn[j] + k0 * eta2[j])) * H;
+      }
+      for (j = 0; j < 3; j++) { eta1[j] += eta2[j] * H; eta2[j] += eta2dot[j] * H; uav[j] += uavd[j] * H; }
+      tau = tauN;
+    }
+    return rec;
+  }
+
+  function drawShip(ctx, x, y, a, size, color, halo) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(a);
+    ctx.beginPath(); ctx.moveTo(size * 1.3, 0); ctx.lineTo(size * 0.4, -size * 0.55); ctx.lineTo(-size, -size * 0.55);
+    ctx.lineTo(-size, size * 0.55); ctx.lineTo(size * 0.4, size * 0.55); ctx.closePath();
+    ctx.fillStyle = color; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = halo; ctx.stroke();
+    ctx.restore();
+  }
+  function initUSV(root) {
+    var cv = root.querySelector('canvas.pf-main'), cvA = root.querySelector('canvas.pf-chart-r'), cvB = root.querySelector('canvas.pf-chart-xi');
+    var out = root.querySelector('.pf-readout'), leg = root.querySelector('.pf-legend'), rowS = root.querySelector('.tt-scn'), desc = root.querySelector('.tt-desc');
+    var btnPlay = root.querySelector('[data-act="play"]');
+    var COL = ['#c026d3', '#ea580c'], si = 0, runs = null, scn = null, t = 0, hold = 0, view = null, frame = 0, anim = null;
+    function reset() {
+      scn = USV_SCN[si];
+      runs = scn.cases.map(function (c) { return usvSimulate(scn, c.ic); });
+      t = 0; hold = 0; view = null;
+      var items = [{ color: '#2563eb', label: 'reference η<sub>d</sub>(t)' }];
+      scn.cases.forEach(function (c, k) { items.push({ color: COL[k], label: scn.cases.length > 1 ? c.label : 'vessel' }); });
+      legend(leg, items);
+      desc.innerHTML = scn.desc;
+    }
+    function build() {
+      rowS.innerHTML = '';
+      USV_SCN.forEach(function (s, j) {
+        var b = document.createElement('button'); b.innerHTML = s.label; if (j === si) b.className = 'on';
+        b.addEventListener('click', function () { si = j; build(); }); rowS.appendChild(b);
+      });
+      reset(); if (anim) anim.kick();
+    }
+    function idx() { return Math.min(runs[0].t.length - 1, Math.floor(t / 0.02)); }
+    function draw() {
+      var f = fitCanvas(cv), ctx = f.ctx, w = f.w, h = f.h, th = theme(), r0 = runs[0];
+      if (!view || view.w !== w || view.h !== h) {
+        var pts = r0.ref.slice(); runs.forEach(function (r) { pts = pts.concat(r.pos.slice(0, Math.round((scn.tf + 2) / 0.02))); });
+        view = fitView(pts, w, h, 30);
+      }
+      ctx.fillStyle = th.bg; ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = th.grid; ctx.lineWidth = 1;
+      for (var gx = 0; gx < w; gx += 40) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke(); }
+      for (var gy = 0; gy < h; gy += 40) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke(); }
+      var i = idx(), last = r0.t.length - 1;
+      // whole reference (faint) and the part already swept
+      ctx.setLineDash([5, 5]); ctx.strokeStyle = 'rgba(37,99,235,0.35)'; ctx.lineWidth = 1.5; polyline(ctx, view, r0.ref, last); ctx.setLineDash([]);
+      ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 2.5; polyline(ctx, view, r0.ref, i);
+      var conv = r0.t[i] >= scn.tf;
+      runs.forEach(function (r, k) {
+        ctx.strokeStyle = COL[k]; ctx.lineWidth = 2; polyline(ctx, view, r.pos, i);
+        var s0 = view.f(r.pos[0][0], r.pos[0][1]); ctx.fillStyle = COL[k]; ctx.fillRect(s0[0] - 4, s0[1] - 4, 8, 8);
+        var q = view.f(r.pos[i][0], r.pos[i][1]), q2 = view.f(r.pos[i][0] + Math.cos(r.pos[i][2]), r.pos[i][1] + Math.sin(r.pos[i][2]));
+        drawShip(ctx, q[0], q[1], Math.atan2(q2[1] - q[1], q2[0] - q[0]), 10, COL[k], th.halo);
+      });
+      var rq = view.f(r0.ref[i][0], r0.ref[i][1]);
+      ctx.beginPath(); ctx.arc(rq[0], rq[1], conv ? 5 : 7, 0, 7); ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = th.muted; ctx.font = '600 12px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('t = ' + fmt(r0.t[i], 1) + ' s' + (r0.t[i] > scn.tf + 3 ? '  (fast-forward)' : ''), 12, 10);
+      if (conv) {
+        ctx.textAlign = 'right'; ctx.fillStyle = '#16a34a'; ctx.font = '600 13px Inter, sans-serif';
+        ctx.fillText('on the reference from t = t_f = ' + scn.tf + ' s', w - 12, 10);
+      }
+    }
+    function charts() {
+      var r0 = runs[0], i = idx(), T = Math.min(r0.t[r0.t.length - 1], Math.max(2 * scn.tf, 20));
+      var e0 = 0; runs.forEach(function (r) { e0 = Math.max(e0, Math.hypot(r.err[0][0], r.err[0][1])); });
+      var sA = [], sB = [], pm = 0;
+      runs.forEach(function (r, k) {
+        var a = [], b = [];
+        for (var j = 0; j <= i && r.t[j] <= T; j += 2) { a.push([r.t[j], Math.hypot(r.err[j][0], r.err[j][1])]); b.push([r.t[j], r.err[j][2] / DEG]); pm = Math.max(pm, Math.abs(r.err[j][2] / DEG)); }
+        sA.push({ color: COL[k], pts: a }); sB.push({ color: COL[k], pts: b });
+      });
+      var pmax = 0; runs.forEach(function (r) { r.err.forEach(function (e, j) { if (r.t[j] <= T) pmax = Math.max(pmax, Math.abs(e[2] / DEG)); }); });
+      drawChart(cvA, 'position error ‖(x̃, ỹ)‖', 'm', T, 0, Math.ceil(e0 * 1.1), sA, Math.min(r0.t[i], T));
+      drawChart(cvB, 'heading error ψ̃', 'deg', T, -Math.ceil(pmax * 1.1), Math.ceil(pmax * 1.1), sB, Math.min(r0.t[i], T));
+      [cvA, cvB].forEach(function (c) {
+        var fc = fitCanvas(c), x = 38 + (fc.w - 46) * scn.tf / T, g = fc.ctx;
+        g.strokeStyle = 'rgba(22,163,74,0.7)'; g.setLineDash([5, 4]); g.beginPath(); g.moveTo(x, 18); g.lineTo(x, fc.h - 18); g.stroke(); g.setLineDash([]);
+        g.fillStyle = '#16a34a'; g.font = '10px Inter, sans-serif'; g.textAlign = 'left'; g.fillText('t_f = ' + scn.tf + ' s', x + 3, 26);
+      });
+      var html = '<div><span>time</span><b>' + fmt(r0.t[i], 1) + ' s</b></div><div><span>chosen t<sub>f</sub></span><b>' + scn.tf + ' s</b></div>';
+      runs.forEach(function (r, k) {
+        html += '<div><span>' + (runs.length > 1 ? 'case ' + (k + 1) + ' ' : '') + 'error ‖(x̃, ỹ)‖</span><b style="color:' + COL[k] + '">' +
+          (Math.hypot(r.err[i][0], r.err[i][1]) < 1e-3 ? '0.000' : fmt(Math.hypot(r.err[i][0], r.err[i][1]), 3)) + ' m</b></div>';
+      });
+      out.innerHTML = html;
+    }
+    anim = animator(root, function (dt) {
+      var tEnd = runs[0].t[runs[0].t.length - 1];
+      if (t >= tEnd) { hold += dt; if (hold > 2.5) { t = 0; hold = 0; } }
+      else t = Math.min(tEnd, t + dt * (t < scn.tf + 3 ? 1.5 : 12));
+      draw(); if (frame++ % 3 === 0) charts();
+    });
+    root.querySelector('[data-act="reset"]').addEventListener('click', function () { t = 0; hold = 0; anim.kick(); });
+    btnPlay.addEventListener('click', function () { anim.paused = !anim.paused; btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause'; anim.kick(); });
+    btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause';
+    build();
+  }
+
+/*
+ * Asymmetric barrier-Lyapunov backstepping (BLF) trajectory tracking of a
+ * Pelican quadrotor -- faithful port of the MATLAB code "Working codes/main.m"
+ * (+ initialization.m, desired_trajectory.m, quadrotordynamics.m,
+ * control_bounds.m) used for the JGCD paper "Three-dimensional Trajectory
+ * Tracking for Unmanned Aerial Vehicles Under Motion Constraints".
+ *
+ * Reproduced exactly as in the MATLAB code (including its quirks):
+ *  - outer loop step h = 1e-3 s, zero-order hold on the inputs; inside each
+ *    step the plant is integrated with MATLAB's ode45 algorithm (Dormand-Prince
+ *    5(4), RelTol 1e-3, AbsTol 1e-6, MaxStep = 0.1*h, MATLAB's initial-step
+ *    and step-adaptation rules);
+ *  - stabilising function alpha = r_dot - [q(kb^2-z1^2)+(1-q)(ka^2-z1^2)] k1 z1^3
+ *    with q taken from the sign of the PREVIOUS step's error, and r_dot,
+ *    alpha_dot obtained by backward finite differences;
+ *  - desired roll/pitch: phid = asin(ux sin psid - uy cos psid),
+ *    thetad = asin(ux cos psid + uy sin psid) / cos(phid);
+ *  - the x/y channels' lower-bound term uses (ka^2 - z1^3) (a typo in main.m,
+ *    kept on purpose);  ux, uy use the thrust BEFORE saturation;
+ *  - saturation |uT| <= 3*umax = 15 N, |u_phi|,|u_theta|,|u_psi| <= umax = 5 N m;
+ *  - rotor-speed term wr from inv(T)*[uT;M] (C_Q = 3.2320 as in the code), the
+ *    controller using the previous step's wr;
+ *  - translational drag K_x = K_y = K_z = 1 in plant and controller.
+ *
+ * ES5, no dependencies.  qblfSimulate(scn) returns a recording sampled every
+ * scn.rec seconds (default 0.02 s).
+ */
+
+var QBLF_SCN = [
+  {
+    id: 'orbital',
+    label: 'Orbital path',
+    desc: 'Orbit x_d = 1 + (1 - e^{-3t^3}) cos t, y_d = 2 + (1 - e^{-5t^3}) sin t, z_d = 0.1 + 0.1 sin t m from (1, 2, -0.01) m, psi(0) = 0.1 rad, with error bounds -2.2/+0.2 m (x), -2.3/+0.3 m (y), -0.4/+0.2 m (z), gains K = 100, M = 5, for 20 s.',
+    traj: 'orbital',
+    k1: [100, 100, 100, 100, 100, 100],
+    k2: [5, 5, 5, 5, 5, 5],
+    kb: [0.2, 0.3, 0.2, 0.23, 0.20, 0.2],   // upper bounds (error > 0)
+    ka: [2.2, 2.3, 0.4, 0.08, 0.11, 0.2],   // lower bounds (error < 0)
+    x0: [1, 2, -0.01, 0, 0, 0.1],
+    v0: [0, 0, 0, 0, 0, 0],
+    drag: [1, 1, 1],
+    umax: 5,
+    tend: 20, h: 1e-3, rec: 0.02,
+    dist: null
+  },
+  {
+    id: 'helix',
+    label: 'Helical path',
+    desc: 'Climbing helix x_d = 1 + (1 - e^{-3t^3}) cos t, y_d = 2 + (1 - e^{-5t^3}) sin t, z_d = 0.1 + t/50 m from (1, 2, -0.01) m, psi(0) = 0.1 rad, with error bounds -2.2/+0.2 m (x), -2.3/+0.3 m (y), -0.6/+0.2 m (z), gains K = 100, M = 5, for 20 s.',
+    traj: 'helix',
+    k1: [100, 100, 100, 100, 100, 100],
+    k2: [5, 5, 5, 5, 5, 5],
+    kb: [0.2, 0.3, 0.2, 0.23, 0.20, 0.2],
+    ka: [2.2, 2.3, 0.6, 0.08, 0.11, 0.2],
+    x0: [1, 2, -0.01, 0, 0, 0.1],
+    v0: [0, 0, 0, 0, 0, 0],
+    drag: [1, 1, 1],
+    umax: 5,
+    tend: 20, h: 1e-3, rec: 0.02,
+    dist: null
+  },
+  {
+    id: 'bow',
+    label: 'Bow-shaped path',
+    desc: 'Bow curve x_d = 1 + (1 - e^{-3t^3}) cos t, y_d = 2 + (1 - e^{-5t^3}) sin t cos t, z_d = 0.1 + 0.1 cos t m from (1, 2, -0.01) m, psi(0) = 0.1 rad, with error bounds -2.2/+0.2 m (x), -1.3/+0.3 m (y), -0.4/+0.2 m (z), -0.25/+0.20 rad (roll), gains K = 100, M = 5, for 20 s.',
+    traj: 'bow',
+    k1: [100, 100, 100, 100, 100, 100],
+    k2: [5, 5, 5, 5, 5, 5],
+    kb: [0.2, 0.3, 0.2, 0.20, 0.20, 0.2],
+    ka: [2.2, 1.3, 0.4, 0.25, 0.11, 0.2],
+    x0: [1, 2, -0.01, 0, 0, 0.1],
+    v0: [0, 0, 0, 0, 0, 0],
+    drag: [1, 1, 1],
+    umax: 5,
+    tend: 20, h: 1e-3, rec: 0.02,
+    dist: null
+  },
+  {
+    id: 'gust',
+    label: 'Orbital path + gust',
+    desc: 'Orbital path as above with a 2.5 N push along inertial x from t = 6 s to 6.5 s, using the gains of the stored comparison run (K = 5, M = 10/25/5 for x/y/z, 5 for attitude); the x error and pitch error stay inside -2.2/+0.2 m and -0.11/+0.20 rad, for 20 s.',
+    traj: 'orbital',
+    // values of Comparision_MAT_files/BLF_comp.mat (the run behind the paper's
+    // comparison figures); the paper text says K = 100, M = 5 and 1.358 N
+    k1: [5, 5, 5, 5, 5, 5],
+    k2: [10, 25, 5, 5, 5, 5],
+    kb: [0.2, 0.3, 0.2, 0.23, 0.20, 0.2],
+    ka: [2.2, 2.3, 0.4, 0.08, 0.11, 0.2],
+    x0: [1, 2, -0.01, 0, 0, 0.1],
+    v0: [0, 0, 0, 0, 0, 0],
+    drag: [1, 1, 1],
+    umax: 5,
+    tend: 20, h: 1e-3, rec: 0.02,
+    // acceleration added to x_ddot for t0 <= t <= t1 (2.5/m, m = 0.485)
+    dist: { t0: 6, t1: 6.5, a: [2.5 / 0.485, 0, 0] }
+  }
+];
+
+function qblfRef(traj, t) {
+  var e3 = 1 - Math.exp(-3 * t * t * t), e5 = 1 - Math.exp(-5 * t * t * t);
+  var c = Math.cos(t), s = Math.sin(t);
+  if (traj === 'helix') return [1 + e3 * c, 2 + e5 * s, 0.1 + t / 50];
+  if (traj === 'bow') return [1 + e3 * c, 2 + e5 * s * c, 0.1 + 0.1 * c];
+  return [1 + e3 * c, 2 + e5 * s, 0.1 + 0.1 * s];           // orbital
+}
+
+function qblfSimulate(scn) {
+  // ---- Pelican data (main.m / quadrotordynamics.m) ----
+  var g = 9.81, m = 0.485, Jxx = 3.4e-3, Jyy = 3.4e-3, Jzz = 4.7e-3, l = 0.35,
+      Jr = 3.4e-5, C_T = 2.9842e-5, C_Q = 3.2320;
+  var z1c = (Jyy - Jzz) / Jxx, z2c = Jr / Jxx, z3c = (Jzz - Jxx) / Jyy,
+      z4c = Jr / Jyy, z5c = (Jxx - Jyy) / Jzz,
+      c1 = 1 / Jxx, c2 = 1 / Jyy, c3 = 1 / Jzz;
+  var Kx = scn.drag ? scn.drag[0] : 0, Ky = scn.drag ? scn.drag[1] : 0, Kz = scn.drag ? scn.drag[2] : 0;
+  var k1 = scn.k1, k2 = scn.k2, ka = scn.ka, kb = scn.kb, umax = scn.umax;
+  var h = scn.h || 1e-3, tend = scn.tend || 20;
+  var N = Math.round(tend / h);                    // samples t = 0 : h : tend-h
+  var dist = scn.dist;
+  // scn.noTypo = true uses (ka^2 - z1^2) in the x/y channels too (only for
+  // reproducing older runs; main.m has the z1^3 typo)
+  var noTypo = !!scn.noTypo;
+
+  // inv(T) for the rotor-speed term
+  var T = [[C_T, C_T, C_T, C_T], [-C_T * l, 0, C_T * l, 0], [0, -C_T * l, 0, C_T * l], [C_Q, -C_Q, C_Q, -C_Q]];
+  var Ti = qblfInv4(T);
+  function rotorWr(u) {
+    var w = [0, 0, 0, 0];
+    for (var i = 0; i < 4; i++) {
+      w[i] = Math.sqrt(Math.abs(Ti[i][0] * u[0] + Ti[i][1] * u[1] + Ti[i][2] * u[2] + Ti[i][3] * u[3]));
+    }
+    return w[0] - w[1] + w[2] - w[3];
+  }
+
+  // ---- plant (quadrotordynamics.m); state [x xd y yd z zd phi phid th thd psi psid]
+  var uT = 0, uP = 0, uQ = 0, uR = 0, wrP = 0;
+  function f(t, X, out) {
+    var phi = X[6], th = X[8], psi = X[10];
+    var cph = Math.cos(phi), sph = Math.sin(phi), cth = Math.cos(th), sth = Math.sin(th),
+        cps = Math.cos(psi), sps = Math.sin(psi);
+    var dx = 0, dy = 0, dz = 0;
+    if (dist && (dist.strict ? (t > dist.t0 && t < dist.t1) : (t >= dist.t0 && t <= dist.t1))) { dx = dist.a[0]; dy = dist.a[1]; dz = dist.a[2]; }
+    var a = uT / m;
+    out[0] = X[1];
+    out[1] = a * (cph * sth * cps + sph * sps) - Kx * X[1] / m + dx;
+    out[2] = X[3];
+    out[3] = a * (cph * sth * sps - sph * cps) - Ky * X[3] / m + dy;
+    out[4] = X[5];
+    out[5] = a * (cph * cth) - g - Kz * X[5] / m + dz;
+    out[6] = X[7];
+    out[7] = z1c * X[9] * X[11] - z2c * wrP * X[9] + c1 * uP;
+    out[8] = X[9];
+    out[9] = z3c * X[7] * X[11] + z4c * wrP * X[7] + c2 * uQ;
+    out[10] = X[11];
+    out[11] = z5c * X[7] * X[9] + c3 * uR;
+  }
+
+  // ---- ode45 (MATLAB algorithm) over [t0, tf], returns y(tf) in y ----
+  var B = [
+    [1 / 5],
+    [3 / 40, 9 / 40],
+    [44 / 45, -56 / 15, 32 / 9],
+    [19372 / 6561, -25360 / 2187, 64448 / 6561, -212 / 729],
+    [9017 / 3168, -355 / 33, 46732 / 5247, 49 / 176, -5103 / 18656],
+    [35 / 384, 0, 500 / 1113, 125 / 192, -2187 / 6784, 11 / 84]
+  ];
+  var A = [1 / 5, 3 / 10, 4 / 5, 8 / 9, 1, 1];
+  var E = [71 / 57600, 0, -71 / 16695, 71 / 1920, -17253 / 339200, 22 / 525, -1 / 40];
+  var K = [], i, j;
+  for (i = 0; i < 7; i++) K.push(new Float64Array(12));
+  var ytmp = new Float64Array(12), ynew = new Float64Array(12);
+  var rtol = 1e-3, atol = 1e-6, thr = atol / rtol, pw = 1 / 5;
+  var stats = { steps: 0, fails: 0, fevals: 0 };
+  function eps(x) { x = Math.abs(x); if (x === 0) return 4.9e-324; var e = Math.floor(Math.log(x) / Math.LN2); if (Math.pow(2, e) > x) e--; if (Math.pow(2, e + 1) <= x) e++; return Math.pow(2, e - 52); }
+  function ode45(t0, tf, y) {
+    var span = tf - t0, hmax = 0.1 * span, t = t0;
+    f(t, y, K[0]); stats.fevals++;
+    var hmin = 16 * eps(t), absh = Math.min(hmax, span), rh = 0, v;
+    for (i = 0; i < 12; i++) { v = Math.abs(K[0][i]) / Math.max(Math.abs(y[i]), thr); if (v > rh) rh = v; }
+    rh = rh / (0.8 * Math.pow(rtol, pw));
+    if (absh * rh > 1) absh = 1 / rh;
+    absh = Math.max(absh, hmin);
+    var done = false;
+    while (!done) {
+      hmin = 16 * eps(t);
+      absh = Math.min(hmax, Math.max(hmin, absh));
+      var hh = absh;
+      if (1.1 * absh >= Math.abs(tf - t)) { hh = tf - t; absh = Math.abs(hh); done = true; }
+      var nofailed = true, err, tnew;
+      for (;;) {
+        for (var s = 0; s < 5; s++) {
+          var bs = B[s];
+          for (i = 0; i < 12; i++) {
+            var acc = 0;
+            for (j = 0; j <= s; j++) acc += bs[j] * K[j][i];
+            ytmp[i] = y[i] + hh * acc;
+          }
+          f(t + hh * A[s], ytmp, K[s + 1]); stats.fevals++;
+        }
+        tnew = t + hh;
+        if (done) tnew = tf;
+        hh = tnew - t;
+        var b6 = B[5];
+        for (i = 0; i < 12; i++) {
+          ynew[i] = y[i] + hh * (b6[0] * K[0][i] + b6[2] * K[2][i] + b6[3] * K[3][i] + b6[4] * K[4][i] + b6[5] * K[5][i]);
+        }
+        f(tnew, ynew, K[6]); stats.fevals++;
+        err = 0;
+        for (i = 0; i < 12; i++) {
+          var fe = 0;
+          for (j = 0; j < 7; j++) fe += K[j][i] * E[j];
+          v = Math.abs(fe) / Math.max(Math.max(Math.abs(y[i]), Math.abs(ynew[i])), thr);
+          if (v > err) err = v;
+        }
+        err = absh * err;
+        if (err > rtol) {
+          stats.fails++;
+          if (absh <= hmin) { done = true; break; }   // MATLAB would warn and stop
+          if (nofailed) { nofailed = false; absh = Math.max(hmin, absh * Math.max(0.1, 0.8 * Math.pow(rtol / err, pw))); }
+          else absh = Math.max(hmin, 0.5 * absh);
+          hh = absh; done = false;
+        } else break;
+      }
+      stats.steps++;
+      if (nofailed) { var tmp = 1.25 * Math.pow(err / rtol, pw); if (tmp > 0.2) absh = absh / tmp; else absh = 5 * absh; }
+      t = tnew;
+      for (i = 0; i < 12; i++) { y[i] = ynew[i]; K[0][i] = K[6][i]; }
+    }
+  }
+
+  // ---- reference r (positions precomputed on the grid; psid = 0) ----
+  // arrays indexed k = 0..N-1  (MATLAB kk = k+1)
+  var r = [], rp = [0, 0, 0, 0, 0, 0];
+  for (var k = 0; k < N; k++) {
+    var p = qblfRef(scn.traj, k * h);
+    r.push([p[0], p[1], p[2], 0, 0, 0]);
+  }
+  var x1 = scn.x0.slice(), x2 = scn.v0.slice();
+  var z1 = [], z2 = [], alpha = [0, 0, 0, 0, 0, 0], dalpha = [0, 0, 0, 0, 0, 0];
+  for (i = 0; i < 6; i++) { z1[i] = x1[i] - r[0][i]; z2[i] = x2[i] - alpha[i]; }
+  var wr = 0;
+  var lower = [], upper = [];
+  for (i = 0; i < 6; i++) { lower.push(-ka[i]); upper.push(kb[i]); }
+
+  var every = Math.max(1, Math.round((scn.rec || 0.02) / h));
+  var rec = {
+    scenario: scn.id, dt: every * h, h: h,
+    t: [], pos: [], ref: [], eul: [], eulRef: [], ePos: [], eOri: [],
+    lower: [], upper: [], uT: [], M: [],
+    boundsConst: { lower: lower, upper: upper },
+    complexAsin: 0, maxRatio: [0, 0, 0, 0, 0, 0]
+  };
+  var Y = new Float64Array(12), q = [0, 0, 0, 0, 0, 0];
+  // BLF term z1*[q/(kb^2-z1^2) + (1-q)/(ka^2-z1^2)]
+  function bar(i2) { return z1[i2] * (q[i2] / (kb[i2] * kb[i2] - z1[i2] * z1[i2]) + (1 - q[i2]) / (ka[i2] * ka[i2] - z1[i2] * z1[i2])); }
+  // same with main.m's x/y typo: (ka^2 - z1^3) in the lower-bound branch
+  function barTypo(i2) { return z1[i2] * (q[i2] / (kb[i2] * kb[i2] - z1[i2] * z1[i2]) + (1 - q[i2]) / (ka[i2] * ka[i2] - z1[i2] * z1[i2] * z1[i2])); }
+
+  for (k = 0; k < N - 1; k++) {                         // MATLAB: t1 = 0:h:tend-2h
+    var t1 = k * h;
+    // ---- q from current error sign ----
+    for (i = 0; i < 6; i++) q[i] = z1[i] > 0 ? 1 : 0;
+    var phi = x1[3], th = x1[4];
+    var thrust = (m / (Math.cos(phi) * Math.cos(th))) * (g + dalpha[2] + Kz * x2[2] / m - k2[2] * z2[2] - bar(2));
+    var ux = (m / thrust) * (dalpha[0] + Kx * x2[0] / m - k2[0] * z2[0] - (noTypo ? bar(0) : barTypo(0)));
+    var uy = (m / thrust) * (dalpha[1] + Ky * x2[1] / m - k2[1] * z2[1] - (noTypo ? bar(1) : barTypo(1)));
+    var psid = r[k][5];
+    var s4 = ux * Math.sin(psid) - uy * Math.cos(psid);
+    if (Math.abs(s4) > 1) rec.complexAsin++;
+    var phid = Math.asin(s4);
+    var s5 = ux * Math.cos(psid) + uy * Math.sin(psid);
+    if (Math.abs(s5) > 1) rec.complexAsin++;
+    var thetad = Math.asin(s5) / Math.cos(phid);
+    r[k + 1][3] = phid; r[k + 1][4] = thetad;
+
+    var fphi = z1c * x2[4] * x2[5] - z2c * wr * x2[4];
+    var fth = z3c * x2[3] * x2[5] + z4c * wr * x2[3];
+    var fpsi = z5c * x2[3] * x2[4];
+    var up = Jxx * (-fphi + dalpha[3] - k2[3] * z2[3] - bar(3));
+    var uq = Jyy * (-fth + dalpha[4] - k2[4] * z2[4] - bar(4));
+    var ur = Jzz * (-fpsi + dalpha[5] - k2[5] * z2[5] - bar(5));
+    // control_bounds.m
+    if (!(Math.abs(thrust) < 3 * umax)) thrust = 3 * umax * qblfSign(thrust);
+    if (!(Math.abs(up) < umax)) up = umax * qblfSign(up);
+    if (!(Math.abs(uq) < umax)) uq = umax * qblfSign(uq);
+    if (!(Math.abs(ur) < umax)) ur = umax * qblfSign(ur);
+    var u4 = [thrust, up, uq, ur];
+    wr = rotorWr(u4);                                   // used by controller next step
+
+    // ---- record (state at t1 and the input applied over [t1, t1+h]) ----
+    if (k % every === 0) qblfPush(rec, t1, x1, r[k], z1, lower, upper, u4);
+    for (i = 0; i < 6; i++) {
+      var rr = z1[i] > 0 ? z1[i] / kb[i] : -z1[i] / ka[i];
+      if (rr > rec.maxRatio[i]) rec.maxRatio[i] = rr;
+    }
+
+    // ---- integrate the plant over [t1, t1+h] ----
+    uT = thrust; uP = up; uQ = uq; uR = ur; wrP = wr;
+    Y[0] = x1[0]; Y[1] = x2[0]; Y[2] = x1[1]; Y[3] = x2[1]; Y[4] = x1[2]; Y[5] = x2[2];
+    Y[6] = x1[3]; Y[7] = x2[3]; Y[8] = x1[4]; Y[9] = x2[4]; Y[10] = x1[5]; Y[11] = x2[5];
+    ode45(t1, t1 + h, Y);
+    x1 = [Y[0], Y[2], Y[4], Y[6], Y[8], Y[10]];
+    x2 = [Y[1], Y[3], Y[5], Y[7], Y[9], Y[11]];
+
+    // ---- backstepping variables for the next step (q of this step) ----
+    for (i = 0; i < 6; i++) {
+      var zn = x1[i] - r[k + 1][i];
+      var rdot = (r[k + 1][i] - r[k][i]) / h;
+      var w = q[i] * (kb[i] * kb[i] - zn * zn) + (1 - q[i]) * (ka[i] * ka[i] - zn * zn);
+      var an = rdot - w * k1[i] * zn * zn * zn;
+      dalpha[i] = (an - alpha[i]) / h;
+      alpha[i] = an;
+      z1[i] = zn;
+      z2[i] = x2[i] - an;
+    }
+  }
+  // last sample (MATLAB leaves the inputs at index N equal to 0)
+  if ((N - 1) % every === 0) qblfPush(rec, (N - 1) * h, x1, r[N - 1], z1, lower, upper, [0, 0, 0, 0]);
+  rec.stats = stats;
+  rec.final = { x1: x1, x2: x2, z1: z1 };
+  return rec;
+}
+
+function qblfPush(rec, t, x1, rk, z1, lower, upper, u4) {
+  rec.t.push(t);
+  rec.pos.push([x1[0], x1[1], x1[2]]);
+  rec.ref.push([rk[0], rk[1], rk[2]]);
+  rec.eul.push([x1[3], x1[4], x1[5]]);
+  rec.eulRef.push([rk[3], rk[4], rk[5]]);
+  rec.ePos.push([z1[0], z1[1], z1[2]]);
+  rec.eOri.push([z1[3], z1[4], z1[5]]);
+  rec.lower.push(lower);
+  rec.upper.push(upper);
+  rec.uT.push(u4[0]);
+  rec.M.push([u4[1], u4[2], u4[3]]);
+}
+
+function qblfSign(a) { return a > 0 ? 1 : (a < 0 ? -1 : 0); }
+
+function qblfInv4(M) {
+  var n = 4, a = [], i, j, k;
+  for (i = 0; i < n; i++) { a.push(M[i].slice()); for (j = 0; j < n; j++) a[i].push(i === j ? 1 : 0); }
+  for (k = 0; k < n; k++) {
+    var p = k;
+    for (i = k + 1; i < n; i++) if (Math.abs(a[i][k]) > Math.abs(a[p][k])) p = i;
+    var tmp = a[k]; a[k] = a[p]; a[p] = tmp;
+    var d = a[k][k];
+    for (j = 0; j < 2 * n; j++) a[k][j] /= d;
+    for (i = 0; i < n; i++) if (i !== k) {
+      var fct = a[i][k];
+      for (j = 0; j < 2 * n; j++) a[i][j] -= fct * a[k][j];
+    }
+  }
+  var inv = [];
+  for (i = 0; i < n; i++) inv.push(a[i].slice(n));
+  return inv;
+}
+
+
+  /* ── BLF quadrotor animation (#tt-blf) ── */
+  var QBLF_DESC = {
+    orbital: 'Orbit x<sub>d</sub> = 1 + (1 − e<sup>−3t³</sup>) cos t, y<sub>d</sub> = 2 + (1 − e<sup>−5t³</sup>) sin t, z<sub>d</sub> = 0.1 + 0.1 sin t m, from (1, 2, −0.01) m with ψ(0) = 0.1 rad. Error bounds −2.2/+0.2 m (x), −2.3/+0.3 m (y), −0.4/+0.2 m (z); K = 100, M = 5.',
+    helix: 'Climbing helix with the same x<sub>d</sub>, y<sub>d</sub> and z<sub>d</sub> = 0.1 + t/50 m, from (1, 2, −0.01) m. Error bounds −2.2/+0.2 m (x), −2.3/+0.3 m (y), −0.6/+0.2 m (z); K = 100, M = 5.',
+    bow: 'Bow-shaped path y<sub>d</sub> = 2 + (1 − e<sup>−5t³</sup>) sin t cos t, z<sub>d</sub> = 0.1 + 0.1 cos t m, from (1, 2, −0.01) m. Error bounds −2.2/+0.2 m (x), −1.3/+0.3 m (y), −0.4/+0.2 m (z), −0.25/+0.20 rad (roll); K = 100, M = 5.',
+    gust: 'Orbital path with a 2.5 N push along x from t = 6 s to 6.5 s, with the gains of the comparison run (K = 5, M = 10/25/5 for x/y/z, 5 for attitude). The x and pitch errors are pushed toward their bounds but never cross them.'
+  };
+  function initBLF(root) {
+    var cv = root.querySelector('canvas.pf-main'), cvA = root.querySelector('canvas.pf-chart-r'), cvB = root.querySelector('canvas.pf-chart-xi');
+    var out = root.querySelector('.pf-readout'), leg = root.querySelector('.pf-legend'), rowS = root.querySelector('.tt-scn'), desc = root.querySelector('.tt-desc');
+    var btnPlay = root.querySelector('[data-act="play"]');
+    var si = 1, scn = null, res = null, t = 0, hold = 0, frame = 0, anim = null, view = null, full = null;
+    var CH = ['#dc2626', '#2563eb', '#16a34a'];
+    legend(leg, [{ color: '#2563eb', label: 'reference' }, { color: '#c026d3', label: 'quadrotor' },
+      { color: 'rgba(217,119,6,0.7)', label: 'safe box: error bounds around the reference' }]);
+    function reset() {
+      scn = QBLF_SCN[si]; res = qblfSimulate(scn); t = 0; hold = 0; view = null;
+      full = []; for (var k = 0; k <= 400; k++) full.push(qblfRef(scn.traj, k * scn.tend / 400));
+      desc.innerHTML = QBLF_DESC[scn.id] || scn.desc;
+    }
+    function build() {
+      rowS.innerHTML = '';
+      QBLF_SCN.forEach(function (s, j) {
+        var b = document.createElement('button'); b.textContent = s.label; if (j === si) b.className = 'on';
+        b.addEventListener('click', function () { si = j; build(); }); rowS.appendChild(b);
+      });
+      reset(); if (anim) anim.kick();
+    }
+    function idx() { return Math.min(res.t.length - 1, Math.floor(t / res.dt)); }
+    // orthographic view: azimuth -55 deg, elevation 28 deg, z exaggerated x2
+    var AZ = -55 * DEG, EL = 28 * DEG, ZS = 2;
+    function P3(p) {
+      var x = p[0], y = p[1], z = p[2] * ZS;
+      var u = x * Math.cos(AZ) + y * Math.sin(AZ), w = -x * Math.sin(AZ) + y * Math.cos(AZ);
+      return [u, z * Math.cos(EL) + w * Math.sin(EL)];
+    }
+    function draw() {
+      var f = fitCanvas(cv), ctx = f.ctx, w = f.w, h = f.h, th = theme();
+      if (!view || view.w !== w || view.h !== h) {
+        var pts = full.map(P3).concat(res.pos.map(P3));
+        var b0 = res.boundsConst; pts.push(P3([res.ref[0][0] + b0.upper[0], res.ref[0][1] + b0.upper[1], 0]), P3([res.ref[0][0] + b0.lower[0], res.ref[0][1] + b0.lower[1], 0]));
+        view = fitView(pts, w, h, 30);
+      }
+      function V(p) { var q = P3(p); return view.f(q[0], q[1]); }
+      ctx.fillStyle = th.bg; ctx.fillRect(0, 0, w, h);
+      var i = idx(), r = res.ref[i], lo = res.lower[i], up = res.upper[i];
+      // ground grid at z = 0
+      ctx.strokeStyle = th.grid; ctx.lineWidth = 1;
+      for (var gx = -2; gx <= 4; gx += 0.5) { var a1 = V([gx, -1, 0]), a2 = V([gx, 5, 0]); ctx.beginPath(); ctx.moveTo(a1[0], a1[1]); ctx.lineTo(a2[0], a2[1]); ctx.stroke(); }
+      for (var gy = -1; gy <= 5; gy += 0.5) { var b1 = V([-2, gy, 0]), b2 = V([4, gy, 0]); ctx.beginPath(); ctx.moveTo(b1[0], b1[1]); ctx.lineTo(b2[0], b2[1]); ctx.stroke(); }
+      // safe box around the current reference point
+      var X = [r[0] + lo[0], r[0] + up[0]], Y = [r[1] + lo[1], r[1] + up[1]], Z = [r[2] + lo[2], r[2] + up[2]];
+      var E = [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]], C = [];
+      for (var a = 0; a < 2; a++) for (var b = 0; b < 2; b++) for (var c = 0; c < 2; c++) C.push(V([X[a], Y[b], Z[c]]));
+      ctx.strokeStyle = 'rgba(217,119,6,0.55)'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 3]);
+      E.forEach(function (e) { ctx.beginPath(); ctx.moveTo(C[e[0]][0], C[e[0]][1]); ctx.lineTo(C[e[1]][0], C[e[1]][1]); ctx.stroke(); });
+      ctx.setLineDash([]);
+      // reference path (full, faint) and swept part
+      function line(pts, upto, col, wd, dash) {
+        ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.setLineDash(dash || []); ctx.beginPath();
+        for (var k = 0; k <= upto && k < pts.length; k++) { var q = V(pts[k]); if (k === 0) ctx.moveTo(q[0], q[1]); else ctx.lineTo(q[0], q[1]); }
+        ctx.stroke(); ctx.setLineDash([]);
+      }
+      line(full, full.length - 1, 'rgba(37,99,235,0.35)', 1.5, [5, 5]);
+      line(res.ref, i, '#2563eb', 2.2);
+      line(res.pos, i, '#c026d3', 2);
+      // shadow of the quad on the ground and its drop line
+      var p = res.pos[i], g0 = V([p[0], p[1], 0]), pp = V(p);
+      ctx.strokeStyle = th.grid; ctx.beginPath(); ctx.moveTo(g0[0], g0[1]); ctx.lineTo(pp[0], pp[1]); ctx.stroke();
+      // quadrotor: arms rotated by roll/pitch/yaw (small-angle body frame)
+      var e = res.eul[i], cph = Math.cos(e[0]), sph = Math.sin(e[0]), cth = Math.cos(e[1]), sth = Math.sin(e[1]), cps = Math.cos(e[2]), sps = Math.sin(e[2]);
+      var Rm = [[cth * cps, sph * sth * cps - cph * sps, cph * sth * cps + sph * sps], [cth * sps, sph * sth * sps + cph * cps, cph * sth * sps - sph * cps], [-sth, sph * cth, cph * cth]];
+      var L = 0.17;
+      [[L, 0, 0], [-L, 0, 0], [0, L, 0], [0, -L, 0]].forEach(function (arm, k) {
+        var bw = [Rm[0][0] * arm[0] + Rm[0][1] * arm[1], Rm[1][0] * arm[0] + Rm[1][1] * arm[1], (Rm[2][0] * arm[0] + Rm[2][1] * arm[1])];
+        var tip = V([p[0] + bw[0], p[1] + bw[1], p[2] + bw[2]]);
+        ctx.strokeStyle = th.text; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(pp[0], pp[1]); ctx.lineTo(tip[0], tip[1]); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(tip[0], tip[1], 7, 3, 0, 0, 7); ctx.fillStyle = k === 0 ? 'rgba(220,38,38,0.7)' : 'rgba(192,38,211,0.45)'; ctx.fill();
+      });
+      var rq = V(r); ctx.beginPath(); ctx.arc(rq[0], rq[1], 4, 0, 7); ctx.fillStyle = '#2563eb'; ctx.fill();
+      ctx.fillStyle = th.muted; ctx.font = '600 12px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('t = ' + fmt(res.t[i], 1) + ' s', 12, 10);
+      ctx.font = '11px Inter, sans-serif'; ctx.fillText('height exaggerated ×2', 12, h - 20);
+    }
+    function charts() {
+      var i = idx(), T = scn.tend;
+      function norm(e, k, j) { return e >= 0 ? e / res.upper[j][k] : -e / res.lower[j][k]; }
+      var sA = [0, 1, 2].map(function (k) { var pts = []; for (var j = 0; j <= i; j += 2) pts.push([res.t[j], norm(res.ePos[j][k], k, j)]); return { color: CH[k], pts: pts }; });
+      var sB = [0, 1, 2].map(function (k) { var pts = []; for (var j = 0; j <= i; j += 2) pts.push([res.t[j], norm(res.eOri[j][k], k + 3, j)]); return { color: CH[k], pts: pts }; });
+      drawChart(cvA, 'position error ÷ bound', '', T, -1.05, 1.05, sA, res.t[i]);
+      drawChart(cvB, 'attitude error ÷ bound', '', T, -1.05, 1.05, sB, res.t[i]);
+      [cvA, cvB].forEach(function (c) {
+        var fc = fitCanvas(c), g = fc.ctx, ph = fc.h - 36;
+        function Y(v) { return 18 + ph * (1 - (v + 1.05) / 2.1); }
+        g.strokeStyle = 'rgba(217,119,6,0.8)'; g.setLineDash([5, 4]); g.lineWidth = 1.2;
+        [1, -1].forEach(function (v) { g.beginPath(); g.moveTo(38, Y(v)); g.lineTo(fc.w - 8, Y(v)); g.stroke(); });
+        g.setLineDash([]); g.fillStyle = '#d97706'; g.font = '10px Inter, sans-serif'; g.textAlign = 'right';
+        g.fillText('upper bound', fc.w - 10, Y(1) - 3); g.fillText('lower bound', fc.w - 10, Y(-1) + 11);
+      });
+      var mx = 0; for (var j = 0; j <= i; j++) for (var k = 0; k < 6; k++) mx = Math.max(mx, Math.abs(norm(k < 3 ? res.ePos[j][k] : res.eOri[j][k - 3], k, j)));
+      var ep = res.ePos[i];
+      out.innerHTML =
+        '<div><span>position error</span><b>' + fmt(Math.hypot(ep[0], ep[1], ep[2]) * 100, 1) + ' cm</b></div>' +
+        '<div><span>closest approach to a bound</span><b style="color:' + (mx < 1 ? '#16a34a' : '#dc2626') + '">' + fmt(mx * 100, 0) + '% of the bound</b></div>' +
+        '<div><span>thrust</span><b>' + fmt(res.uT[i], 2) + ' N</b></div>' +
+        '<div><span>attitude (φ, θ)</span><b>' + fmt(res.eul[i][0] / DEG, 1) + '°, ' + fmt(res.eul[i][1] / DEG, 1) + '°</b></div>';
+    }
+    anim = animator(root, function (dt) {
+      var tEnd = res.t[res.t.length - 1];
+      if (t >= tEnd) { hold += dt; if (hold > 2.5) { t = 0; hold = 0; } } else t = Math.min(tEnd, t + dt);
+      draw(); if (frame++ % 3 === 0) charts();
+    });
+    root.querySelector('[data-act="reset"]').addEventListener('click', function () { t = 0; hold = 0; anim.kick(); });
+    btnPlay.addEventListener('click', function () { anim.paused = !anim.paused; btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause'; anim.kick(); });
+    btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause';
+    build();
+  }
+
+/* quad_ft.js -- faithful port of the MATLAB quadrotor finite-time SMC simulations
+ * behind S. Kumar & S.R. Kumar, "Robust Trajectory Tracking of an Uncertain Quadrotor
+ * with Almost Global Finite-time Convergence", Proc. IMechE Part G (2025).
+ *
+ * Source code ported (MATLAB, Quadrotor_finitetime_SAGE/Simulation/):
+ *   main_FT.m, main_autopilot.m, quadrotordynamics.m  (top level: helical / circular / lag runs)
+ *   Modified Reaching Law/main.m (M2), main_FT.m (M1), TASE_2023.m (C1), Lyapunov_based.m (C2),
+ *   Conventional_SMC.m (S1), quadrotordynamics.m (random disturbance), control_bounds.m
+ *
+ * Integration exactly as in MATLAB: a zero-order-hold control loop with step h, and on each
+ * interval [t, t+h] the dynamics are integrated by a line-for-line port of MATLAB's ode45
+ * (Dormand-Prince 5(4), RelTol 1e-3, AbsTol 1e-6, MaxStep = 0.1*h, MATLAB's initial-step and
+ * step-size rules).  Only Y(end,:) is used, as in the MATLAB scripts.
+ *
+ * Scenario fields: h, tend, traj, x0 = [x y z phi theta psi] (velocities zero),
+ *   model: 'v2022'   dynamics/controller pair that produced the stored 2022 results behind the paper's
+ *                    helical / circular / lag figures (identified to 1e-12 from the .mat files):
+ *                    phi/theta accelerations l*u/J with commands (J/l)*(...), and z acceleration
+ *                    (uT/m) cos(phi) cos(psi);
+ *          'current' the quadrotordynamics.m now on disk (u/J and (uT/m) cos(phi) cos(theta));
+ *   dist:  'none' | 'zsin' (d_z = 0.1 sin t) | 'sin' (0.1 sin t on all six channels, as the paper text says)
+ *          | 'statesin' (d_i = 0.1*state_i*sin t, the commented-out lines of quadrotordynamics.m)
+ *          | 'random' (Modified Reaching Law/quadrotordynamics.m: d_xyz ~ U[0, 0.1] m/s^2,
+ *            d_angles ~ U[-5, 5] deg/s^2, redrawn at every ode45 function call; seeded RNG here);
+ *   lag:   time constant of the first-order input lag (main_autopilot.m), 0 = none;
+ *   e0:    'actual' (e(1) = x0 - r(1)) or 'zero' (Modified Reaching Law scripts: initialization.m runs
+ *          before the initial condition is written, so e(1) = -r(1));
+ *   ctrl[name]: gains; an optional ctrl[name].h overrides the scenario step.
+ *
+ * Plain ES5, no dependencies.  Usage: var rec = qftSimulate(QFT_SCN[3], 'M2', { seed: 1, dtRec: 0.02 });
+ */
+
+/* ------------------------------------------------------------------ scenarios */
+var QFT_SCN = [
+  {
+    id: 'helical',
+    label: 'Helical path',
+    desc: 'Proposed controller M1 (constant reaching law, beta = 2, kappa = 10, p/q = 15/13) flies from rest at the origin ' +
+          '(psi(0) = 0.5 rad) onto the helix x_d = (1-e^{-2t^3})cos t, y_d = (1-e^{-3t^3})sin t, z_d = 2 + t/4 m for 20 s, ' +
+          'with thrust capped at 15 N, moments at 5 N m and a 0.1 sin t m/s^2 vertical disturbance.',
+    h: 0.01, tend: 20,
+    traj: { type: 'helical', ax: 2, ay: 3, z0: 2 },
+    x0: [0, 0, 0, 0, 0, 0.5],
+    model: 'v2022', dist: 'zsin', lag: 0, e0: 'actual',
+    controllers: ['M1'],
+    ctrl: { M1: { law: 'M1aes', beta: 2, k: 10, kpsi: 20, p: 15, q: 13 } }
+  },
+  {
+    id: 'circular',
+    label: 'Circular path',
+    desc: 'Proposed controller M1 (beta = 2, kappa = 10, p/q = 15/13) starts at (0.1, 0.1, 1) m with psi(0) = 0.3 rad and ' +
+          'converges onto the unit circle x_d = (1-e^{-2t^3})cos t, y_d = (1-e^{-3t^3})sin t at z_d = 2 m, ' +
+          'under a 0.1 sin t m/s^2 vertical disturbance, over 20 s.',
+    h: 0.01, tend: 20,
+    traj: { type: 'planar', ax: 2, ay: 3, z0: 2 },
+    x0: [0.1, 0.1, 1, 0, 0, 0.3],
+    model: 'v2022', dist: 'zsin', lag: 0, e0: 'actual',
+    controllers: ['M1'],
+    ctrl: { M1: { law: 'M1aes', beta: 2, k: 10, kpsi: 20, p: 15, q: 13 } }
+  },
+  {
+    id: 'lag',
+    label: 'Circular path with actuator lag',
+    desc: 'The circular case with every commanded input passed through a first-order lag 1/(0.1 s + 1) before it reaches ' +
+          'the vehicle (inputs start at zero), from (0.1, 0.1, 1) m with psi(0) = 0.3 rad, over 20 s.',
+    h: 0.01, tend: 20,
+    traj: { type: 'planar', ax: 2, ay: 3, z0: 2 },
+    x0: [0.1, 0.1, 1, 0, 0, 0.3],
+    model: 'v2022', dist: 'none', lag: 0.1, e0: 'actual',
+    controllers: ['M1'],
+    ctrl: { M1: { law: 'M1aes', beta: 2, k: 10, kpsi: 10, p: 15, q: 13 } }
+  },
+  {
+    id: 'orbital',
+    label: 'Orbital path: M2 vs M1',
+    desc: 'Modified reaching law M2 (beta = 2, kappa = 2, alpha0 = 0.5, N = 2, p/q = 15/13) against the constant-reaching-law M1 ' +
+          'and two existing finite-time controllers C1 and C2, tracking x_d = (1-e^{-3t^3})cos t, y_d = (1-e^{-5t^3})sin t, ' +
+          'z_d = 2 + sin t m from rest at the origin with psi(0) = 0.1 rad, under disturbances 0.1 (state) sin t, for 20 s.',
+    h: 0.01, tend: 20,
+    traj: { type: 'orbital', ax: 3, ay: 5, z0: 2 },
+    x0: [0, 0, 0, 0, 0, 0.1],
+    model: 'current', dist: 'statesin', lag: 0, e0: 'zero',
+    controllers: ['M2', 'M1'],
+    ctrl: {
+      /* h = 0.001 for M2 reproduces Table 2 (T_net 465.8158, P_rms 0.4470, Theta_rms 0.0124) and its figure curve */
+      M2: { law: 'M2', beta: 2, k: 2, p: 15, q: 13, alpha0: 0.5, N0: 2, P: 2, a1: 10, a2: 10, h: 0.001 },
+      /* main_FT.m on disk has k = 10, which diverges here; k = 2 ("identical gains") reproduces the figure curve */
+      M1: { law: 'M1', beta: 2, k: 2, p: 15, q: 13, a1: 10, a2: 10 },
+      C1: { law: 'C1', c1: 1, eta: 2, k: 0.5, a1: 5, a2: 10 },
+      C2: { law: 'C2', k1: 2.5, k2: 0.1 }
+    }
+  },
+  {
+    id: 'bow',
+    label: 'Bow-shaped path: M2 vs conventional SMC',
+    desc: 'Modified reaching law M2 (beta = 2, kappa = 2, alpha0 = 0.5, N = 2) against conventional linear-surface SMC S1 ' +
+          '(beta = 1, M = 2) on the bow x_d = 1 + (1-e^{-3t^3})cos t, y_d = 2 + (1-e^{-5t^3})sin t cos t, z_d = 0.5 + 0.5 cos t, ' +
+          'starting at (0.5, 1.5, 0) m with psi(0) = 0.5 rad, under random disturbances of up to 0.1 m/s^2 and 5 deg/s^2, for 10 s.',
+    h: 0.01, tend: 10,
+    traj: { type: 'bow' },
+    x0: [0.5, 1.5, 0, 0, 0, 0.5],
+    model: 'current', dist: 'random', lag: 0, e0: 'zero',
+    controllers: ['M2', 'S1'],
+    ctrl: {
+      M2: { law: 'M2', beta: 2, k: 2, p: 15, q: 13, alpha0: 0.5, N0: 2, P: 2, a1: 10, a2: 10 },
+      S1: { law: 'S1', beta: 1, k: 2, a1: 10, a2: 10 }
+    }
+  }
+];
+
+/* ------------------------------------------------------------------ model constants (as in the .m files) */
+var QFT_PAR = (function () {
+  var P = { g: 9.81, m: 0.485, Jxx: 3.4e-3, Jyy: 3.4e-3, Jzz: 4.7e-3, l: 0.35, Jr: 3.4e-5, d: 2.9842e-5, ar: 3.2320,
+            uTmax: 15, umax: 5 };
+  P.z1 = (P.Jyy - P.Jzz) / P.Jxx; P.z2 = P.Jr / P.Jxx; P.z3 = (P.Jzz - P.Jxx) / P.Jyy; P.z4 = P.Jr / P.Jyy;
+  P.z5 = (P.Jxx - P.Jyy) / P.Jzz;  /* = 0 (Jxx = Jyy); the dynamics file divides by Jxx, also 0 */
+  P.c1 = 1 / P.Jxx; P.c2 = 1 / P.Jyy; P.c3 = 1 / P.Jzz;
+  /* inv(T) for T = [d d d d; -d*l 0 d*l 0; 0 -d*l 0 d*l; ar -ar ar -ar] (Gauss-Jordan) */
+  var d = P.d, l = P.l, a = P.ar;
+  var M = [[d, d, d, d, 1, 0, 0, 0], [-d * l, 0, d * l, 0, 0, 1, 0, 0], [0, -d * l, 0, d * l, 0, 0, 1, 0], [a, -a, a, -a, 0, 0, 0, 1]];
+  var i, j, r, c;
+  for (c = 0; c < 4; c++) {
+    var piv = c, best = Math.abs(M[c][c]);
+    for (r = c + 1; r < 4; r++) if (Math.abs(M[r][c]) > best) { best = Math.abs(M[r][c]); piv = r; }
+    var tmp = M[c]; M[c] = M[piv]; M[piv] = tmp;
+    var dv = M[c][c];
+    for (j = 0; j < 8; j++) M[c][j] /= dv;
+    for (r = 0; r < 4; r++) if (r !== c) { var f = M[r][c]; for (j = 0; j < 8; j++) M[r][j] -= f * M[c][j]; }
+  }
+  P.Tinv = [];
+  for (i = 0; i < 4; i++) P.Tinv.push([M[i][4], M[i][5], M[i][6], M[i][7]]);
+  return P;
+})();
+
+/* relative rotor speed wr from the four inputs (W2 = inv(T)*u, W = sqrt|W2|) */
+function qftWr(uT, up, ut, us) {
+  var Ti = QFT_PAR.Tinv, w = [0, 0, 0, 0], i;
+  for (i = 0; i < 4; i++) w[i] = Math.sqrt(Math.abs(Ti[i][0] * uT + Ti[i][1] * up + Ti[i][2] * ut + Ti[i][3] * us));
+  return w[0] - w[1] + w[2] - w[3];
+}
+
+function qftImul(a, b) {
+  if (Math.imul) return Math.imul(a, b);
+  var ah = (a >>> 16) & 0xffff, al = a & 0xffff, bh = (b >>> 16) & 0xffff, bl = b & 0xffff;
+  return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
+}
+/* seeded uniform RNG (stands in for MATLAB rand; mulberry32) */
+function qftRng(seed) {
+  var s = (seed >>> 0) || 1;
+  return function () {
+    s = (s + 0x6D2B79F5) >>> 0;
+    var t = s;
+    t = qftImul(t ^ (t >>> 15), t | 1);
+    t ^= t + qftImul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* ------------------------------------------------------------------ dynamics (quadrotordynamics.m) */
+/* y = [x xd y yd z zd phi phid th thd psi psid]; u = [uT uphi utheta upsi, wr];
+ * md = { v2022: bool, zsin: bool, rng: function|null }
+ *   v2022 = the dynamics that produced the stored 2022 results / paper Figs (helical, circular, lag):
+ *           rolling/pitching accelerations l*u/J (not u/J) and z acceleration (uT/m) cos(phi) cos(psi);
+ *           identified from Helical_AES1.mat, circular_AES1.mat, autopilot.mat to ~1e-13 per step.
+ *   zsin  = d_z = 0.1 sin t (only the z channel), present in the stored helical and circular runs.
+ *   rng   = random disturbance of Modified Reaching Law/quadrotordynamics.m, redrawn at every call. */
+function qftRhs(t, y, u, md, out) {
+  var P = QFT_PAR, dx = 0, dy = 0, dz = 0, dph = 0, dth = 0, dps = 0, rng = md.rng;
+  if (md.zsin) dz = 0.1 * Math.sin(t);
+  if (md.sin) { var sn = 0.1 * Math.sin(t); dx = sn; dy = sn; dz = sn; dph = sn; dth = sn; dps = sn; }
+  if (md.statesin) {  /* commented-out alternative in quadrotordynamics.m: d_i = 0.1*state_i*sin(t) */
+    var s1 = 0.1 * Math.sin(t); dx = s1 * y[0]; dy = s1 * y[2]; dz = s1 * y[4]; dph = s1 * y[6]; dth = s1 * y[8]; dps = s1 * y[10];
+  }
+  if (rng) {
+    /* Dist_pos = 0 + (1-0).*rand(3,1); Dist_orien = deg2rad(-5 + 10.*rand(3,1)); d_pos = 0.1*Dist_pos */
+    dx = 0.1 * rng(); dy = 0.1 * rng(); dz = 0.1 * rng();
+    var k = Math.PI / 180;
+    dph = k * (-5 + 10 * rng()); dth = k * (-5 + 10 * rng()); dps = k * (-5 + 10 * rng());
+  }
+  var ph = y[6], th = y[8], ps = y[10], phd = y[7], thd = y[9], psd = y[11];
+  var cph = Math.cos(ph), sph = Math.sin(ph), cth = Math.cos(th), sth = Math.sin(th), cps = Math.cos(ps), sps = Math.sin(ps);
+  var a = u[0] / P.m, wr = u[4];
+  out[0] = y[1]; out[1] = a * (cph * sth * cps + sph * sps) + dx;
+  out[2] = y[3]; out[3] = a * (cph * sth * sps - sph * cps) + dy;
+  var arm = md.v2022 ? P.l : 1;
+  out[4] = y[5]; out[5] = a * (md.v2022 ? cph * cps : cph * cth) - P.g + dz;
+  out[6] = phd;  out[7] = P.z1 * thd * psd - P.z2 * wr * thd + arm * P.c1 * u[1] + dph;
+  out[8] = thd;  out[9] = P.z3 * phd * psd + P.z4 * wr * phd + arm * P.c2 * u[2] + dth;
+  out[10] = psd; out[11] = P.z5 * phd * thd + P.c3 * u[3] + dps;
+}
+
+/* ------------------------------------------------------------------ MATLAB ode45, one call over [t0, tf] */
+var QFT_DP = {
+  c: [0, 1 / 5, 3 / 10, 4 / 5, 8 / 9, 1, 1],
+  A: [[], [1 / 5], [3 / 40, 9 / 40], [44 / 45, -56 / 15, 32 / 9],
+      [19372 / 6561, -25360 / 2187, 64448 / 6561, -212 / 729],
+      [9017 / 3168, -355 / 33, 46732 / 5247, 49 / 176, -5103 / 18656],
+      [35 / 384, 0, 500 / 1113, 125 / 192, -2187 / 6784, 11 / 84]],
+  E: [71 / 57600, 0, -71 / 16695, 71 / 1920, -17253 / 339200, 22 / 525, -1 / 40]
+};
+function qftEps(x) { /* MATLAB eps(x) for doubles */
+  x = Math.abs(x); if (x < 2.2250738585072014e-308) return 4.9406564584124654e-324;
+  var e = Math.floor(Math.log(x) / Math.LN2); if (Math.pow(2, e) > x) e--; if (Math.pow(2, e + 1) <= x) e++;
+  return Math.pow(2, e - 52);
+}
+function qftOde45(u, md, t0, tf, y, st) {
+  var n = 12, rtol = 1e-3, atol = 1e-6, thr = atol / rtol, pow = 1 / 5;
+  var A = QFT_DP.A, Ec = QFT_DP.E, cc = QFT_DP.c;
+  var K = st.K, yt = st.yt, ynew = st.ynew, i, j, s;
+  var tspan = tf - t0, hmax = 0.1 * Math.abs(tspan), t = t0;
+  qftRhs(t, y, u, md, K[0]); st.nf++;
+  var hmin = 16 * qftEps(t);
+  var absh = Math.min(hmax, Math.abs(tspan));
+  var rh = 0;
+  for (i = 0; i < n; i++) rh = Math.max(rh, Math.abs(K[0][i]) / Math.max(Math.abs(y[i]), thr));
+  rh = rh / (0.8 * Math.pow(rtol, pow));
+  if (absh * rh > 1) absh = 1 / rh;
+  absh = Math.max(absh, hmin);
+  var done = false;
+  while (true) {
+    hmin = 16 * qftEps(t);
+    absh = Math.min(hmax, Math.max(hmin, absh));
+    var h = absh;
+    if (1.1 * absh >= Math.abs(tf - t)) { h = tf - t; absh = Math.abs(h); done = true; }
+    var nofailed = true, err, tnew;
+    while (true) {
+      for (s = 1; s < 6; s++) {
+        for (i = 0; i < n; i++) {
+          var acc = 0; for (j = 0; j < s; j++) acc += A[s][j] * K[j][i];
+          yt[i] = y[i] + h * acc;
+        }
+        qftRhs(t + QFT_DP.c[s] * h, yt, u, md, K[s]); st.nf++;
+      }
+      tnew = t + h; if (done) tnew = tf;
+      h = tnew - t;
+      for (i = 0; i < n; i++) {
+        var b = A[6]; ynew[i] = y[i] + h * (b[0] * K[0][i] + b[2] * K[2][i] + b[3] * K[3][i] + b[4] * K[4][i] + b[5] * K[5][i]);
+      }
+      qftRhs(tnew, ynew, u, md, K[6]); st.nf++;
+      err = 0;
+      for (i = 0; i < n; i++) {
+        var fe = 0; for (j = 0; j < 7; j++) fe += K[j][i] * Ec[j];
+        var sc = Math.max(Math.max(Math.abs(y[i]), Math.abs(ynew[i])), thr);
+        err = Math.max(err, Math.abs(fe / sc));
+      }
+      err = absh * err;
+      if (err > rtol) {
+        st.nrej++;
+        if (absh <= hmin) throw new Error('ode45: step size below hmin at t=' + t);
+        if (nofailed) { nofailed = false; absh = Math.max(hmin, absh * Math.max(0.1, 0.8 * Math.pow(rtol / err, pow))); }
+        else absh = Math.max(hmin, 0.5 * absh);
+        h = absh; done = false;
+      } else break;
+    }
+    st.nstep++;
+    if (done) break;
+    if (nofailed) { var temp = 1.25 * Math.pow(err / rtol, pow); if (temp > 0.2) absh = absh / temp; else absh = 5 * absh; }
+    t = tnew;
+    for (i = 0; i < n; i++) y[i] = ynew[i];
+    var tk = K[0]; K[0] = K[6]; K[6] = tk;   /* FSAL */
+  }
+  for (i = 0; i < n; i++) y[i] = ynew[i];
+}
+
+/* ------------------------------------------------------------------ reference trajectories */
+function qftRef(tr, t) {
+  var e = Math.exp, c = Math.cos(t), s = Math.sin(t), t3 = t * t * t;
+  if (tr.type === 'bow') return [1 + (1 - e(-3 * t3)) * c, 2 + (1 - e(-5 * t3)) * s * c, 0.5 + 0.5 * c];
+  var x = (1 - e(-tr.ax * t3)) * c, y = (1 - e(-tr.ay * t3)) * s;
+  if (tr.type === 'helical') return [x, y, tr.z0 + t / 4];
+  if (tr.type === 'orbital') return [x, y, tr.z0 + s];
+  return [x, y, tr.z0];  /* planar */
+}
+
+function qftSgn(v) { return v > 0 ? 1 : (v < 0 ? -1 : 0); }
+function qftFrac(v, a) { return Math.pow(Math.abs(v), a) * qftSgn(v); }  /* |v|^a sign(v) */
+function qftSat(v, lim) { return Math.abs(v) < lim ? v : lim * qftSgn(v); }
+function qftAsin(v, st) { if (v > 1 || v < -1) { st.asinClip++; v = v > 1 ? 1 : -1; } return Math.asin(v); }
+
+/* ------------------------------------------------------------------ main simulation */
+/* scn: an entry of QFT_SCN; controller: a key of scn.ctrl ('M1','M2','C1','C2','S1');
+ * opts: { seed (int, default 1), dtRec (s, default 0.02) } */
+function qftSimulate(scn, controller, opts) {
+  opts = opts || {};
+  var t0wall = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  var P = QFT_PAR, C = scn.ctrl[controller];
+  if (!C) throw new Error('unknown controller ' + controller + ' for scenario ' + scn.id);
+  var law = C.law, h = C.h || scn.h, N = Math.round(scn.tend / h);
+  var md = { v2022: scn.model === 'v2022', zsin: scn.dist === 'zsin', sin: scn.dist === 'sin', statesin: scn.dist === 'statesin',
+             rng: scn.dist === 'random' ? qftRng(opts.seed == null ? 1 : opts.seed) : null };
+  var stride = Math.max(1, Math.round((opts.dtRec || 0.02) / h));
+  var i, j, kk;
+
+  /* reference r (N x 6), its finite-difference derivatives, as in the scripts */
+  var R = new Float64Array(6 * N), Rd = new Float64Array(6 * N), Rdd = new Float64Array(6 * N);
+  for (kk = 0; kk < N; kk++) { var rr = qftRef(scn.traj, kk * h); R[6 * kk] = rr[0]; R[6 * kk + 1] = rr[1]; R[6 * kk + 2] = rr[2]; }
+
+  /* state */
+  var y = new Float64Array(12);
+  for (i = 0; i < 6; i++) y[2 * i] = scn.x0[i];
+  var E = new Float64Array(6), Ed = new Float64Array(6), S = new Float64Array(6), Ns = new Float64Array(6);
+  /* e(1,:): 'zero' => initialization.m ran before the IC was written (e = 0 - r), 'actual' => e = x0 - r */
+  for (i = 0; i < 6; i++) E[i] = (scn.e0 === 'zero' ? 0 : scn.x0[i]) - R[i];
+  var beta = C.beta, pq = C.p / C.q, qp = C.q / C.p;
+  if (law === 'M2') {
+    for (i = 0; i < 6; i++) {
+      S[i] = E[i] + (1 / beta) * qftFrac(Ed[i], pq);
+      /* main.m line: Ns(1,:)=alpha_0+(1-alpha_0).*exp(-N_0.*(abs(s)).^P.*sign(s))  (sign(s) only at k = 1) */
+      Ns[i] = C.alpha0 + (1 - C.alpha0) * Math.exp(-C.N0 * Math.pow(Math.abs(S[i]), C.P) * qftSgn(S[i]));
+    }
+  } else if (law === 'S1') {
+    for (i = 0; i < 6; i++) S[i] = Ed[i] + beta * E[i];
+  } /* M1, M1aes, C1: s = zeros; C2: no surface */
+
+  var st = { K: [], yt: new Float64Array(12), ynew: new Float64Array(12), nf: 0, nstep: 0, nrej: 0, asinClip: 0 };
+  for (i = 0; i < 7; i++) st.K.push(new Float64Array(12));
+  var uvec = [0, 0, 0, 0, 0], wr = 0, uPrev = [0, 0, 0, 0];
+
+  /* recording */
+  var nRec = Math.floor((N - 2) / stride) + 1;
+  function cols(m) { var a = []; for (var q = 0; q < m; q++) a.push(new Float64Array(nRec)); return a; }
+  var rec = {
+    scenario: scn.id, controller: controller, h: h, dt: stride * h, n: nRec,
+    t: new Float64Array(nRec), pos: cols(3), ref: cols(3), ang: cols(3), angRef: cols(3),
+    ePos: cols(3), eAng: cols(3), ePosNorm: new Float64Array(nRec), eAngNorm: new Float64Array(nRec),
+    S: law === 'C2' ? null : cols(6), u: cols(4), metrics: null
+  };
+  var ir = 0;
+  /* metrics, exactly as the scripts: rms over k = 1..N-1, trapz over t with u(N) = 0 */
+  var sumP2 = 0, sumO2 = 0, Q = [0, 0, 0, 0], uLast = [0, 0, 0, 0];
+
+  for (kk = 0; kk <= N - 2; kk++) {
+    var ph = y[6], th = y[8], ps = y[10], phd = y[7], thd = y[9], psd = y[11];
+    var r6 = R[6 * kk + 5];
+    var rdd = [Rdd[6 * kk], Rdd[6 * kk + 1], Rdd[6 * kk + 2], Rdd[6 * kk + 3], Rdd[6 * kk + 4], Rdd[6 * kk + 5]];
+    var pn = Math.sqrt(E[0] * E[0] + E[1] * E[1] + E[2] * E[2]), on = Math.sqrt(E[3] * E[3] + E[4] * E[4] + E[5] * E[5]);
+    sumP2 += pn * pn; sumO2 += on * on;
+
+    if (kk % stride === 0 && ir < nRec) {
+      rec.t[ir] = kk * h;
+      for (i = 0; i < 3; i++) {
+        rec.pos[i][ir] = y[2 * i]; rec.ref[i][ir] = R[6 * kk + i];
+        rec.ang[i][ir] = y[6 + 2 * i]; rec.angRef[i][ir] = R[6 * kk + 3 + i];
+        rec.ePos[i][ir] = E[i]; rec.eAng[i][ir] = E[3 + i];
+      }
+      rec.ePosNorm[ir] = pn; rec.eAngNorm[ir] = on;
+      if (rec.S) for (i = 0; i < 6; i++) rec.S[i][ir] = S[i];
+    }
+
+    var uT, ux, uy, up, ut, us, phdN, thdN, cc = Math.cos(ph) * Math.cos(th), sw, kn = [1, 1, 1, 1, 1, 1];
+    if (law === 'M2') for (i = 0; i < 6; i++) kn[i] = C.k / Ns[i];
+    else if (law === 'M1' || law === 'M1aes') for (i = 0; i < 6; i++) kn[i] = C.k;
+
+    if (law === 'M2' || law === 'M1') {
+      /* Modified Reaching Law/main.m (M2) and main_FT.m (M1): sign(e_dot), tanh(a*s) */
+      var ex = 2 - pq;
+      uT = P.m / cc * (rdd[2] + P.g - beta * qp * qftFrac(Ed[2], ex) - kn[2] * Math.tanh(C.a1 * S[2]));
+      ux = P.m / uT * (rdd[0] - beta * qp * qftFrac(Ed[0], ex) - kn[0] * Math.tanh(C.a1 * S[0]));
+      uy = P.m / uT * (rdd[1] - beta * qp * qftFrac(Ed[1], ex) - kn[1] * Math.tanh(C.a1 * S[1]));
+      phdN = qftAsin(ux * Math.sin(r6) - uy * Math.cos(r6), st);
+      thdN = qftAsin(ux * Math.cos(r6) + uy * Math.sin(r6), st) / Math.cos(phdN);   /* asin(..)/cos, as coded */
+      up = -P.Jxx * (P.z1 * thd * psd - P.z2 * wr * thd - rdd[3] + beta * qp * qftFrac(Ed[3], ex) + kn[3] * Math.tanh(C.a2 * S[3]));
+      ut = -P.Jyy * (P.z3 * phd * psd + P.z4 * wr * phd - rdd[4] + beta * qp * qftFrac(Ed[4], ex) + kn[4] * Math.tanh(C.a2 * S[4]));
+      us = -P.Jzz * (P.z5 * phd * thd - rdd[5] + beta * qp * qftFrac(Ed[5], ex) + kn[5] * Math.tanh(C.a2 * S[5]));
+    } else if (law === 'M1aes') {
+      /* top-level main_FT.m / main_autopilot.m: |e2|^(2-p/q)*tanh(e2), k*tanh(s), actual psi in phi_d/theta_d */
+      var ex2 = 2 - pq;
+      var tq = function (v) { return Math.pow(Math.abs(v), ex2) * Math.tanh(v); };
+      uT = P.m / cc * (rdd[2] + P.g - beta * qp * tq(Ed[2]) - C.k * Math.tanh(S[2]));
+      ux = P.m / uT * (rdd[0] - beta * qp * tq(Ed[0]) - C.k * Math.tanh(S[0]));
+      uy = P.m / uT * (rdd[1] - beta * qp * tq(Ed[1]) - C.k * Math.tanh(S[1]));
+      phdN = qftAsin(ux * Math.sin(ps) - uy * Math.cos(ps), st);
+      thdN = qftAsin((ux * Math.cos(ps) + uy * Math.sin(ps)) / Math.cos(phdN), st);
+      up = P.Jxx * (rdd[3] + (P.Jzz - P.Jyy) / P.Jxx * thd * psd + P.Jr / P.Jxx * wr * thd - beta * qp * tq(Ed[3]) - C.k * Math.tanh(S[3]));
+      ut = P.Jyy * (rdd[4] + (P.Jxx - P.Jzz) / P.Jyy * phd * psd - P.Jr / P.Jyy * wr * phd - beta * qp * tq(Ed[4]) - C.k * Math.tanh(S[4]));
+      us = P.Jzz * (rdd[5] + (P.Jyy - P.Jxx) / P.Jzz * phd * thd - beta * qp * tq(Ed[5]) - (C.kpsi || C.k) * Math.tanh(S[5]));
+      /* 2022 runs: rolling/pitching moments commanded as (J/l)*(...) to match the l*u/J dynamics */
+      if (md.v2022) { up = up / P.l; ut = ut / P.l; }
+    } else if (law === 'C1') {
+      /* TASE_2023.m: s = e_dot + c1 e; note +c1*e_dot in the position channels, c1(1) used for y, as coded */
+      uT = P.m / cc * (rdd[2] + P.g + C.c1 * Ed[2] - C.eta * Math.tanh(C.a1 * S[2]) - C.k * S[2]);
+      ux = P.m / uT * (rdd[0] + C.c1 * Ed[0] - C.eta * Math.tanh(C.a1 * S[0]) - C.k * S[0]);
+      uy = P.m / uT * (rdd[1] + C.c1 * Ed[1] - C.eta * Math.tanh(C.a1 * S[1]) - C.k * S[1]);
+      phdN = qftAsin(ux * Math.sin(r6) - uy * Math.cos(r6), st);
+      thdN = qftAsin((ux * Math.cos(r6) + uy * Math.sin(r6)) / Math.cos(phdN), st);
+      up = -P.Jxx * (P.z1 * thd * psd - P.z2 * wr * thd - rdd[3] + C.c1 * Ed[3] + C.eta * Math.tanh(C.a2 * S[3]) + C.k * S[3]);
+      ut = -P.Jyy * (P.z3 * phd * psd + P.z4 * wr * phd - rdd[4] + C.c1 * Ed[4] + C.eta * Math.tanh(C.a2 * S[4]) + C.k * S[4]);
+      us = -P.Jzz * (P.z5 * phd * thd - rdd[5] + C.c1 * Ed[5] + C.eta * Math.tanh(C.a2 * S[5]) + C.k * S[5]);
+    } else if (law === 'C2') {
+      /* Lyapunov_based.m: PD-like, actual psi in phi_d/theta_d */
+      var g1 = C.k1 * C.k1 - 1, g2 = C.k1 + C.k2;
+      uT = P.m / cc * (rdd[2] + P.g - g1 * E[2] - g2 * Ed[2]);
+      ux = P.m / uT * (rdd[0] - g1 * E[0] - g2 * Ed[0]);
+      uy = P.m / uT * (rdd[1] - g1 * E[1] - g2 * Ed[1]);
+      phdN = qftAsin(ux * Math.sin(ps) - uy * Math.cos(ps), st);
+      thdN = qftAsin((ux * Math.cos(ps) + uy * Math.sin(ps)) / Math.cos(phdN), st);
+      up = -P.Jxx * (P.z1 * thd * psd - P.z2 * wr * thd - rdd[3] + g1 * E[3] + g2 * Ed[3]);
+      ut = -P.Jyy * (P.z3 * phd * psd + P.z4 * wr * phd - rdd[4] + g1 * E[4] + g2 * Ed[4]);
+      us = -P.Jzz * (P.z5 * phd * thd - rdd[5] + g1 * E[5] + g2 * Ed[5]);
+    } else if (law === 'S1') {
+      /* Conventional_SMC.m: s = e_dot + beta e */
+      uT = P.m / cc * (rdd[2] + P.g - beta * Ed[2] - C.k * Math.tanh(C.a1 * S[2]));
+      ux = P.m / uT * (rdd[0] - beta * Ed[0] - C.k * Math.tanh(C.a1 * S[0]));
+      uy = P.m / uT * (rdd[1] - beta * Ed[1] - C.k * Math.tanh(C.a1 * S[1]));
+      phdN = qftAsin(ux * Math.sin(r6) - uy * Math.cos(r6), st);
+      thdN = qftAsin((ux * Math.cos(r6) + uy * Math.sin(r6)) / Math.cos(phdN), st);
+      up = -P.Jxx * (P.z1 * thd * psd - P.z2 * wr * thd - rdd[3] + beta * Ed[3] + C.k * Math.tanh(C.a2 * S[3]));
+      ut = -P.Jyy * (P.z3 * phd * psd + P.z4 * wr * phd - rdd[4] + beta * Ed[4] + C.k * Math.tanh(C.a2 * S[4]));
+      us = -P.Jzz * (P.z5 * phd * thd - rdd[5] + beta * Ed[5] + C.k * Math.tanh(C.a2 * S[5]));
+    } else throw new Error('unknown law ' + law);
+    R[6 * (kk + 1) + 3] = phdN; R[6 * (kk + 1) + 4] = thdN;
+
+    /* control_bounds.m */
+    uT = qftSat(uT, P.uTmax); up = qftSat(up, P.umax); ut = qftSat(ut, P.umax); us = qftSat(us, P.umax);
+    /* main_autopilot.m: first-order lag, explicit Euler, inputs zero at k = 1 */
+    if (scn.lag > 0) {
+      if (kk > 0) {
+        uT = uPrev[0] + (uT - uPrev[0]) / scn.lag * h; up = uPrev[1] + (up - uPrev[1]) / scn.lag * h;
+        ut = uPrev[2] + (ut - uPrev[2]) / scn.lag * h; us = uPrev[3] + (us - uPrev[3]) / scn.lag * h;
+      } else { uT = 0; up = 0; ut = 0; us = 0; }
+      uPrev[0] = uT; uPrev[1] = up; uPrev[2] = ut; uPrev[3] = us;
+    }
+    wr = qftWr(uT, up, ut, us);
+    uvec[0] = uT; uvec[1] = up; uvec[2] = ut; uvec[3] = us; uvec[4] = wr;
+
+    if (kk % stride === 0 && ir < nRec) {
+      rec.u[0][ir] = uT; rec.u[1][ir] = up; rec.u[2][ir] = ut; rec.u[3][ir] = us; ir++;
+    }
+    /* trapz(t, u.^2) */
+    if (kk > 0) for (i = 0; i < 4; i++) Q[i] += 0.5 * h * (uLast[i] * uLast[i] + uvec[i] * uvec[i]);
+    for (i = 0; i < 4; i++) uLast[i] = uvec[i];
+
+    /* ode45 over [t1, t1+h] */
+    qftOde45(uvec, md, kk * h, kk * h + h, y, st);
+
+    /* states update, finite-difference reference derivatives, errors, surfaces */
+    var k1 = kk + 1;
+    for (i = 0; i < 6; i++) {
+      Rd[6 * k1 + i] = (R[6 * k1 + i] - R[6 * kk + i]) / h;
+      Rdd[6 * k1 + i] = (Rd[6 * k1 + i] - Rd[6 * kk + i]) / h;
+      E[i] = y[2 * i] - R[6 * k1 + i];
+      Ed[i] = y[2 * i + 1] - Rd[6 * k1 + i];
+    }
+    if (law === 'M2' || law === 'M1' || law === 'M1aes') {
+      for (i = 0; i < 6; i++) S[i] = E[i] + (1 / beta) * qftFrac(Ed[i], pq);
+      if (law === 'M2') for (i = 0; i < 6; i++) Ns[i] = C.alpha0 + (1 - C.alpha0) * Math.exp(-C.N0 * Math.pow(Math.abs(S[i]), C.P));
+    } else if (law === 'C1') { for (i = 0; i < 6; i++) S[i] = Ed[i] + C.c1 * E[i]; }
+    else if (law === 'S1') { for (i = 0; i < 6; i++) S[i] = Ed[i] + beta * E[i]; }
+  }
+  /* last trapz interval to u(N) = 0 */
+  for (i = 0; i < 4; i++) Q[i] += 0.5 * h * (uLast[i] * uLast[i]);
+  var t1wall = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  rec.metrics = {
+    Tnet: Q[0], Mnet: Math.sqrt(Q[1] * Q[1] + Q[2] * Q[2] + Q[3] * Q[3]),
+    Prms: Math.sqrt(sumP2 / (N - 1)), Orms: Math.sqrt(sumO2 / (N - 1)),
+    final: { pos: [y[0], y[2], y[4]], ang: [y[6], y[8], y[10]] },
+    rhsEvals: st.nf, odeSteps: st.nstep, odeRejected: st.nrej, asinClipped: st.asinClip,
+    runtimeMs: t1wall - t0wall
+  };
+  return rec;
+}
+
+
+  /* ── Finite-time quadrotor animation (#tt-ft) ── */
+  var QFT_NAME = { M1: 'proposed, constant reaching law (M1)', M2: 'proposed, modified exponential reaching law (M2)',
+    C1: 'existing finite-time controller C1', C2: 'existing finite-time controller C2', S1: 'conventional SMC' };
+  var QFT_COL = { M2: '#c026d3', M1: '#16a34a', C1: '#ea580c', C2: '#64748b', S1: '#ea580c' };
+  var QFT_DESC = {
+    helical: 'Controller M1 (β = 2, κ = 10, p/q = 15/13) takes off from rest at the origin with ψ(0) = 0.5 rad onto the helix x<sub>d</sub> = (1 − e<sup>−2t³</sup>) cos t, y<sub>d</sub> = (1 − e<sup>−3t³</sup>) sin t, z<sub>d</sub> = 2 + t/4 m, with a 0.1 sin t m/s² vertical disturbance.',
+    circular: 'Controller M1 starts at (0.1, 0.1, 1) m with ψ(0) = 0.3 rad and converges onto the unit circle at z<sub>d</sub> = 2 m, under a 0.1 sin t m/s² vertical disturbance.',
+    lag: 'The circular case with every command passed through a first-order lag 1/(0.1s + 1) before it reaches the vehicle.',
+    orbital: 'The two reaching laws: modified exponential law M2 (κ = 2, α<sub>0</sub> = 0.5, 𝒩 = 2) against the constant reaching law M1, on x<sub>d</sub> = (1 − e<sup>−3t³</sup>) cos t, y<sub>d</sub> = (1 − e<sup>−5t³</sup>) sin t, z<sub>d</sub> = 2 + sin t m from rest at the origin, with state-dependent disturbances.',
+    bow: 'M2 against conventional linear-surface SMC on the bow path x<sub>d</sub> = 1 + (1 − e<sup>−3t³</sup>) cos t, y<sub>d</sub> = 2 + (1 − e<sup>−5t³</sup>) sin t cos t, z<sub>d</sub> = 0.5 + 0.5 cos t, from (0.5, 1.5, 0) m with random disturbances.'
+  };
+  function initFT(root) {
+    var cv = root.querySelector('canvas.pf-main'), cvA = root.querySelector('canvas.pf-chart-r'), cvB = root.querySelector('canvas.pf-chart-xi');
+    var out = root.querySelector('.pf-readout'), leg = root.querySelector('.pf-legend'), rowS = root.querySelector('.tt-scn'), desc = root.querySelector('.tt-desc');
+    var btnPlay = root.querySelector('[data-act="play"]');
+    var si = 3, scn = null, runs = null, t = 0, hold = 0, frame = 0, anim = null, view = null, full = null;
+    var AZ = -55 * DEG, EL = 25 * DEG;
+    function P3(p) { var u = p[0] * Math.cos(AZ) + p[1] * Math.sin(AZ), w = -p[0] * Math.sin(AZ) + p[1] * Math.cos(AZ); return [u, p[2] * Math.cos(EL) + w * Math.sin(EL)]; }
+    function at(r, key, i) { return [r[key][0][i], r[key][1][i], r[key][2][i]]; }
+    function reset() {
+      scn = QFT_SCN[si];
+      runs = scn.controllers.map(function (c) { return { c: c, r: qftSimulate(scn, c) }; });
+      t = 0; hold = 0; view = null;
+      full = []; for (var k = 0; k <= 400; k++) full.push(qftRef(scn.traj, k * scn.tend / 400));
+      var items = [{ color: '#2563eb', label: 'reference' }];
+      runs.forEach(function (x) { items.push({ color: QFT_COL[x.c], label: QFT_NAME[x.c] }); });
+      legend(leg, items);
+      desc.innerHTML = QFT_DESC[scn.id] || scn.desc;
+    }
+    function build() {
+      rowS.innerHTML = '';
+      QFT_SCN.forEach(function (s, j) {
+        var b = document.createElement('button'); b.textContent = s.label.replace(/:.*$/, ''); if (j === si) b.className = 'on';
+        b.addEventListener('click', function () { si = j; build(); }); rowS.appendChild(b);
+      });
+      reset(); if (anim) anim.kick();
+    }
+    function idx() { return Math.min(runs[0].r.n - 1, Math.floor(t / runs[0].r.dt)); }
+    function draw() {
+      var f = fitCanvas(cv), ctx = f.ctx, w = f.w, h = f.h, th = theme(), i = idx();
+      if (!view || view.w !== w || view.h !== h) {
+        var pts = full.map(P3); runs.forEach(function (x) { for (var j = 0; j < x.r.n; j += 5) pts.push(P3(at(x.r, 'pos', j))); });
+        view = fitView(pts, w, h, 30);
+      }
+      function V(p) { var q = P3(p); return view.f(q[0], q[1]); }
+      ctx.fillStyle = th.bg; ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = th.grid; ctx.lineWidth = 1;
+      for (var g = -2; g <= 4; g += 0.5) {
+        var a1 = V([g, -2, 0]), a2 = V([g, 4, 0]), b1 = V([-2, g, 0]), b2 = V([4, g, 0]);
+        ctx.beginPath(); ctx.moveTo(a1[0], a1[1]); ctx.lineTo(a2[0], a2[1]); ctx.moveTo(b1[0], b1[1]); ctx.lineTo(b2[0], b2[1]); ctx.stroke();
+      }
+      function line(get, n, col, wd, dash) {
+        ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.setLineDash(dash || []); ctx.beginPath();
+        for (var k = 0; k <= n; k++) { var q = V(get(k)); if (k === 0) ctx.moveTo(q[0], q[1]); else ctx.lineTo(q[0], q[1]); }
+        ctx.stroke(); ctx.setLineDash([]);
+      }
+      line(function (k) { return full[k]; }, full.length - 1, 'rgba(37,99,235,0.35)', 1.5, [5, 5]);
+      line(function (k) { return at(runs[0].r, 'ref', k); }, i, '#2563eb', 2.2);
+      runs.slice().reverse().forEach(function (x) {
+        line(function (k) { return at(x.r, 'pos', k); }, i, QFT_COL[x.c], x.c === 'M2' || runs.length === 1 ? 2.2 : 1.6);
+        var p = at(x.r, 'pos', i), pp = V(p), a = at(x.r, 'ang', i);
+        var cph = Math.cos(a[0]), sph = Math.sin(a[0]), cth = Math.cos(a[1]), sth = Math.sin(a[1]), cps = Math.cos(a[2]), sps = Math.sin(a[2]);
+        var Rm = [[cth * cps, sph * sth * cps - cph * sps], [cth * sps, sph * sth * sps + cph * cps], [-sth, sph * cth]];
+        [[0.17, 0], [-0.17, 0], [0, 0.17], [0, -0.17]].forEach(function (arm, k) {
+          var tip = V([p[0] + Rm[0][0] * arm[0] + Rm[0][1] * arm[1], p[1] + Rm[1][0] * arm[0] + Rm[1][1] * arm[1], p[2] + Rm[2][0] * arm[0] + Rm[2][1] * arm[1]]);
+          ctx.strokeStyle = QFT_COL[x.c]; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(pp[0], pp[1]); ctx.lineTo(tip[0], tip[1]); ctx.stroke();
+          ctx.beginPath(); ctx.ellipse(tip[0], tip[1], 6, 2.5, 0, 0, 7); ctx.fillStyle = k === 0 ? 'rgba(220,38,38,0.75)' : th.muted; ctx.fill();
+        });
+      });
+      var rq = V(at(runs[0].r, 'ref', i)); ctx.beginPath(); ctx.arc(rq[0], rq[1], 4, 0, 7); ctx.fillStyle = '#2563eb'; ctx.fill();
+      ctx.fillStyle = th.muted; ctx.font = '600 12px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('t = ' + fmt(runs[0].r.t[i], 1) + ' s', 12, 10);
+    }
+    function charts() {
+      var i = idx(), T = scn.tend, pm = 0, am = 0;
+      var sA = runs.map(function (x) { var p = []; for (var j = 0; j <= i; j += 2) { p.push([x.r.t[j], x.r.ePosNorm[j]]); } return { color: QFT_COL[x.c], pts: p }; });
+      var sB = runs.map(function (x) { var p = []; for (var j = 0; j <= i; j += 2) { p.push([x.r.t[j], x.r.eAngNorm[j] / DEG]); } return { color: QFT_COL[x.c], pts: p }; });
+      runs.forEach(function (x) { for (var j = 0; j < x.r.n; j++) { pm = Math.max(pm, x.r.ePosNorm[j]); am = Math.max(am, x.r.eAngNorm[j] / DEG); } });
+      drawChart(cvA, 'position error ‖e‖', 'm', T, 0, Math.ceil(pm * 10) / 10, sA, runs[0].r.t[i]);
+      drawChart(cvB, 'attitude error ‖e‖', 'deg', T, 0, Math.ceil(am), sB, runs[0].r.t[i]);
+      var html = '<div><span>time</span><b>' + fmt(runs[0].r.t[i], 1) + ' s</b></div>';
+      runs.forEach(function (x) {
+        html += '<div><span>' + x.c + ' position error now / RMS</span><b style="color:' + QFT_COL[x.c] + '">' + fmt(x.r.ePosNorm[i] * 100, 1) + ' cm / ' + fmt(x.r.metrics.Prms, 3) + ' m</b></div>';
+      });
+      out.innerHTML = html;
+    }
+    anim = animator(root, function (dt) {
+      var tEnd = runs[0].r.t[runs[0].r.n - 1];
+      if (t >= tEnd) { hold += dt; if (hold > 2.5) { t = 0; hold = 0; } } else t = Math.min(tEnd, t + dt);
+      draw(); if (frame++ % 3 === 0) charts();
+    });
+    root.querySelector('[data-act="reset"]').addEventListener('click', function () { t = 0; hold = 0; anim.kick(); });
+    btnPlay.addEventListener('click', function () { anim.paused = !anim.paused; btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause'; anim.kick(); });
+    btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause';
+    build();
+  }
+
   function init() {
     var a = document.getElementById('pf-sim2d'); if (a) initSim2D(a);
     var b = document.getElementById('pf-sim3d'); if (b) initSim3D(b);
@@ -1569,6 +2793,9 @@
     var e = document.getElementById('pe-sim'); if (e) initPE(e);
     var m = document.getElementById('pe-multi'); if (m) initPEMulti(m);
     var tr = document.getElementById('pe-tri'); if (tr) initTri(tr);
+    var us = document.getElementById('tt-usv'); if (us) initUSV(us);
+    var bl = document.getElementById('tt-blf'); if (bl) initBLF(bl);
+    var ftq = document.getElementById('tt-ft'); if (ftq) initFT(ftq);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

@@ -370,13 +370,33 @@ MathJax.Hub.Config({
   <p class="pf-note">Both laws simulated in your browser at \(v=10\) m/s, from the four starting points used in the nested-saturation papers. Nested saturation: \(k_1=k_2=1\), \(M_2'=10\) m/s\(^2\), \(M_1=M_2/2.1\). Terminal sliding mode: \(p/q=15/13\), with \(\beta=2,\ \eta=20\) (line, sinusoid) and \(\beta=5,\ \eta=50\) (circle) as in the 2023 simulation code, and \(|a_m|\le 50\) m/s\(^2\). The shaded band marks \(\pm10\) m/s\(^2\): the nested-saturation command never leaves it. The sliding-mode law converges faster, but at the price of commands that spike well past the band during the reaching phase. The red segments show the cross-track error \(d\) to the closest point.</p>
 </div>
 <h2>Terminal Sliding Mode Guidance</h2>
+<a id="smc"></a>
+<h3>Robust Path-following Guidance for an Unmanned Vehicle</h3>
+<p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/6.2023-1055" target=&ldquo;blank&rdquo;>AIAA GNC Conference</a>, National Harbor, MD, USA, 2023.</p>
+<p>The curvature term is lumped into a bounded disturbance, \(\ddot d = a_m\cos(\psi-\psi_d) + \Delta\), so the law needs no curvature information. A nonsingular terminal sliding surface and the guidance command</p>
+<p style="text-align:center">
+\[ \mathcal S_d = d + \frac{1}{\beta}\,\dot d^{\,p/q}, \qquad a_m = \frac{-1}{\cos(\psi-\psi_d)}\left[\beta\frac{p}{q}\,\dot d^{\,2-p/q} + \eta\,\mathrm{sign}(\mathcal S_d)\right], \qquad 1&lt;\frac{p}{q}&lt;2,\ \ \eta&gt;\Delta_{\max}, \]
+</p><p>bring the UAV onto the surface in finite time and then drive \(d\) to zero in finite time. Once the UAV is on the sliding surface, \(d\) reaches zero within \(\frac{p}{\beta(p-q)}\,|d(t_0)|^{(p-q)/p}\) seconds. Because the law treats curvature only as a disturbance, the same design follows any smooth path. The paper shows finite-time convergence from arbitrary initial conditions on straight lines and circles. It also shows robustness to an external disturbance (\(0.1\sin t\)) and to a first-order autopilot lag \(1/(0.1s+1)\).</p>
+<div class="figure-grid cols-3">
+  <figure class="figure-card">
+    <img src="images/research/pf/smc_lag_line.png" alt="Straight-line following with and without autopilot lag" loading="lazy">
+    <figcaption>Straight line, with and without autopilot lag.</figcaption>
+  </figure>
+  <figure class="figure-card">
+    <img src="images/research/pf/smc_lag_circle.png" alt="Circular path following with and without autopilot lag" loading="lazy">
+    <figcaption>Circular orbit, with and without autopilot lag.</figcaption>
+  </figure>
+  <div class="video-card" style="margin:0">
+    <video controls preload="metadata" muted playsinline>
+      <source src="videos/path-following/smc_stline_all.mp4" type="video/mp4">
+    </video>
+    <p class="video-card-caption">Simulation video: straight line from four initial conditions.</p>
+  </div>
+</div>
 <a id="sgc"></a>
 <h3>Separate Guidance and Control Design for Autonomous Path-following</h3>
 <p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.1016/j.ifacol.2023.03.036" target=&ldquo;blank&rdquo;>IFAC-PapersOnLine</a>, Vol. 55, No. 22, 2022, pp. 212&ndash;217.</p>
-<p>The curvature term is lumped into a bounded disturbance, \(\ddot d = a_m\cos(\psi-\psi_d) + \Delta\), so the law needs no curvature information. A nonsingular terminal sliding surface and the guidance command</p>
-<p style="text-align:center">
-\[ \mathcal S_d = d + \frac{1}{\beta}\,\dot d^{\,p/q}, \qquad a_m^c = \frac{-1}{\cos(\psi-\psi_d)}\left[\beta\frac{p}{q}\,\dot d^{\,2-p/q} + \eta\,\mathrm{sign}(\mathcal S_d)\right], \qquad 1&lt;\frac{p}{q}&lt;2,\ \ \eta&gt;\Delta_{\max}, \]
-</p><p>bring the UAV onto the surface in finite time and then drive \(d\) to zero in finite time. The paper keeps guidance and control separate. An inner loop, also a finite-time sliding-mode design, makes the airframe's achieved acceleration track \(a_m^c\) through a second-order autopilot (\(\omega_n=30\) rad/s, \(\xi=0.5\)).</p>
+<p>This paper pairs the terminal sliding mode guidance law with a separate control loop. The guidance loop produces a commanded lateral acceleration \(a_m^c\) from the sliding surface \(\mathcal S_d\) above. A real airframe does not deliver \(a_m^c\) instantly, so an inner loop takes over. That loop is also a finite-time sliding-mode design, and it drives the acceleration error \(\varrho = a_m - a_m^c\) to zero through a second-order autopilot (\(\omega_n=30\) rad/s, \(\xi=0.5\)). Each loop converges in finite time, and the inner loop is designed to be faster, so the UAV follows the path with the dynamics of the real actuator included.</p>
 <figure class="paper-figure wide">
   <img src="images/research/pf/sgc_block.png" alt="Two-loop guidance and autopilot block diagram" loading="lazy">
   <figcaption>Two-loop structure: the guidance loop commands \(a_m^c\), and the inner loop makes the airframe deliver it.</figcaption>
@@ -395,26 +415,6 @@ MathJax.Hub.Config({
       <source src="videos/path-following/sgc_circle_all.mp4" type="video/mp4">
     </video>
     <p class="video-card-caption">Simulation video: circular orbit.</p>
-  </div>
-</div>
-<a id="smc"></a>
-<h3>Robust Path-following Guidance for an Unmanned Vehicle</h3>
-<p>Saurabh Kumar, Shashi Ranjan Kumar, and Abhinav Sinha, <a href="https://doi.org/10.2514/6.2023-1055" target=&ldquo;blank&rdquo;>AIAA GNC Conference</a>, National Harbor, MD, USA, 2023.</p>
-<p>This work develops the terminal sliding mode guidance law as a stand-alone design. It covers finite-time convergence from arbitrary initial conditions on straight lines and circles, and robustness to an external disturbance (\(0.1\sin t\)) and to a first-order autopilot lag \(1/(0.1s+1)\). Once the UAV is on the sliding surface, \(d\) reaches zero within \(\frac{p}{\beta(p-q)}\,|d(t_0)|^{(p-q)/p}\) seconds. Because the law treats curvature only as a disturbance, the same design follows any smooth path.</p>
-<div class="figure-grid cols-3">
-  <figure class="figure-card">
-    <img src="images/research/pf/smc_lag_line.png" alt="Straight-line following with and without autopilot lag" loading="lazy">
-    <figcaption>Straight line, with and without autopilot lag.</figcaption>
-  </figure>
-  <figure class="figure-card">
-    <img src="images/research/pf/smc_lag_circle.png" alt="Circular path following with and without autopilot lag" loading="lazy">
-    <figcaption>Circular orbit, with and without autopilot lag.</figcaption>
-  </figure>
-  <div class="video-card" style="margin:0">
-    <video controls preload="metadata" muted playsinline>
-      <source src="videos/path-following/smc_stline_all.mp4" type="video/mp4">
-    </video>
-    <p class="video-card-caption">Simulation video: straight line from four initial conditions.</p>
   </div>
 </div>
 <h2>Bounded Lateral Acceleration via Nested Saturation</h2>
@@ -552,7 +552,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated November 25<sup>th</sup> 2026  12:28PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated November 25<sup>th</sup> 2026  12:31PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

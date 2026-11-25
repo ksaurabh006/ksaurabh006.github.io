@@ -85,34 +85,25 @@ MathJax.Hub.Config({
 
 <div class="pf-sim" id="pe-sim">
   <div class="pf-sim-head">
-    <div class="pf-sim-title">Try it: the defender protects the evader
-      <small>The paper's guidance laws, simulated live. Click the canvas to start the defender somewhere else.</small></div>
+    <div class="pf-sim-title">Try it: the paper's simulation scenarios
+      <small>Each button replays one case from Section V of the paper, with its initial conditions and gains.</small></div>
     <div class="pf-controls">
-      <button data-mode="ilc" class="on">Information-level</button>
-      <button data-mode="mlc">Maneuver-level</button>
+      <button data-mode="mlc" class="on">Maneuver-level</button>
+      <button data-mode="ilc">Information-level</button>
     </div>
   </div>
   <div class="pf-sim-head" style="margin-top:-0.3rem">
+    <div class="pf-controls"><span class="pf-ctl-label">scenario</span><span class="pf-controls pe-scn"></span></div>
+  </div>
+  <div class="pf-sim-head" style="margin-top:-0.3rem">
     <div class="pf-controls">
-      <span class="pf-ctl-label">\(\chi^\star\)</span>
-      <button data-chi="150">150°</button>
-      <button data-chi="180" class="on">180°</button>
-      <button data-chi="200">200°</button>
-      <span class="sep"></span>
-      <span class="pf-ctl-label">delay \(\tau\)</span>
-      <button data-tau="0" class="on">0</button>
-      <button data-tau="0.6">0.6 s</button>
-      <button data-tau="1">1 s</button>
-      <span class="sep"></span>
-      <span class="pf-ctl-label">pursuer</span>
-      <button data-plaw="png" class="on">PN</button>
-      <button data-plaw="ppg">pure pursuit</button>
-      <button data-plaw="dpg">deviated pursuit</button>
+      <span class="pf-ctl-label">case</span><span class="pf-controls pe-case"></span>
       <span class="sep"></span>
       <button data-act="reset">Restart</button>
       <button data-act="play">❚❚ Pause</button>
     </div>
   </div>
+  <p class="pf-note pe-desc" style="margin:0 0 0.5rem"></p>
   <canvas class="pf-main" aria-label="Animated three-body engagement between a pursuer, an evader and a defender"></canvas>
   <div class="pf-legend"></div>
   <div class="pf-below">
@@ -120,7 +111,7 @@ MathJax.Hub.Config({
     <canvas class="pf-chart-xi"></canvas>
     <div class="pf-readout"></div>
   </div>
-  <p class="pf-note">Simulated in your browser with the laws and parameters of the paper: \(v_P=v_D=200\) m/s, \(v_E=100\) m/s, acceleration limits 20 g (P, D) and 10 g (E). Pursuer at 5 km and defender 500 m from the evader. Information-level: \(t_2=4\) s, \(t_1=5\) s, \(t^\star=9\) s. Maneuver-level: \(t_1=3\) s, \(t^\star=6\) s. The dashed circle has EP as its diameter. It turns green while the defender is inside it, i.e. while \(\chi\in[90^\circ,270^\circ]\). The delay \(\tau\) applies to the evader command received by the defender (information-level only).</p>
+  <p class="pf-note">Simulated in your browser with the laws and parameters of the paper: \(v_P=v_D=200\) m/s, \(v_E=100\) m/s, acceleration limits 20 g (P, D) and 10 g (E) unless stated. Maneuver-level: \(t_1=3\) s, \(t^\star=6\) s, \(k_1=6\), \(k_2=3\), \(\mathcal{K}=5\). Information-level: \(t_2=4\) s, \(t_1=5\) s, \(t^\star=9\) s, \(k_1=k_2=k_3=3\), \(\mathcal{K}=\mathcal{K}_1=1\). The dashed circle has EP as its diameter. It turns green while the defender is inside it, i.e. while \(\chi\in[90^\circ,270^\circ]\).</p>
 </div>
 <h2>How the Work Developed</h2>
 <div class="pf-timeline">
@@ -318,7 +309,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated November 25<sup>th</sup> 2026  12:53PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated November 25<sup>th</sup> 2026  02:34PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

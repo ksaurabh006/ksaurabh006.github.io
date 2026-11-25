@@ -918,27 +918,73 @@
     ctx.globalAlpha = 1;
   }
 
-  // One engagement. opt: {mode, chi (deg), tau (s), plaw, D0: [x, y] or null}
-  function peSimulate(opt) {
-    var ilc = opt.mode === 'ilc', d = DEG, H = 0.002, REC = 0.02, every = Math.round(REC / H), TMAX = 30;
-    var G = ilc ? { k1: 3, k2: 3, t1: 5, ts: 9, K: 1, marg: 0.1, N: 3, lED: 45, gD: 0 }
-                : { k1: 6, k2: 3, t1: 3, ts: 6, K: 5, marg: 0.2, N: 5, lED: -45, gD: 30 };
-    var xE = 0, yE = 0, gE = 45 * d;
-    var xD = opt.D0 ? opt.D0[0] : 500 * Math.cos(G.lED * d), yD = opt.D0 ? opt.D0[1] : 500 * Math.sin(G.lED * d), gD = G.gD * d;
-    var xP = 5000, yP = 0, gP = 180 * d;
-    var chis = opt.chi * d, S0 = null, he0 = null, amEh = [], nDel = Math.round(opt.tau / H);
+  // The paper's simulation scenarios (Section V), with the initial conditions and gains of the
+  // corresponding MATLAB scripts. Each scenario lists the cases plotted together in one figure.
+  var PE_BASE = {
+    mlc: { rEP: 5000, lEP: 0, rED: 500, lED: -45, gE: 45, gD: 30, gP: 180, vE: 100, chi: 180, plaw: 'png', N: 5, tg: 10,
+           aP: 20, aD: 20, aE: 10, k1: 6, k2: 3, t1: 3, ts: 6, K: 5, marg: 0.2 },
+    ilc: { rEP: 5000, lEP: 0, rED: 500, lED: 45, gE: 45, gD: 0, gP: 180, vE: 100, chi: 180, plaw: 'png', N: 3, tg: 10,
+           aP: 20, aD: 20, aE: 10, k1: 3, k2: 3, t1: 5, ts: 9, K: 1, marg: 0.1, t2: 4, k3: 3, K1: 1, tau: 0 }
+  };
+  var PE_SCN = {
+    mlc: [
+      { label: 'Different χ*', fig: 'MLC_diff_chi',
+        desc: 'Pursuer at 5000 m (LOS 0°), defender at 500 m (LOS −45°); headings γ<sub>E</sub> = 45°, γ<sub>D</sub> = 30°, γ<sub>P</sub> = 180°, so χ(0) = 229°. The pursuer uses PN with 𝒩 = 5.',
+        cases: [{ label: 'χ* = 150°', chi: 150 }, { label: 'χ* = 180°', chi: 180 }, { label: 'χ* = 200°', chi: 200 }], on: 1 },
+      { label: 'Pursuer guidance', base: { tg: 20 },
+        desc: 'Same geometry with χ* = 180°. PNG with 𝒩 = 5, pure pursuit a<sub>P</sub> = v<sub>P</sub>λ̇<sub>EP</sub> − 0.5(γ<sub>P</sub> − λ<sub>EP</sub>), deviated pursuit with δ = 60°.',
+        cases: [{ label: 'PNG', plaw: 'png' }, { label: 'PPG', plaw: 'ppg' }, { label: 'DPG', plaw: 'dpg' }] },
+      { label: 'Stationary evader: defender position', base: { tg: 20, vE: 0, lEP: 2 },
+        desc: 'The evader does not move. Pursuer at 5000 m (LOS 2°); the defender starts at three positions and aims for χ* = 180°.',
+        cases: [{ label: '400 m, −45°', rED: 400, lED: -45 }, { label: '1500 m, −10°', rED: 1500, lED: -10 }, { label: '2000 m, 10°', rED: 2000, lED: 10 }] },
+      { label: 'Stationary evader: pursuer position', base: { tg: 20, vE: 0, rED: 400, lED: -45 },
+        desc: 'The evader does not move. Defender at 400 m (LOS −45°); the pursuer starts 5000 m away at three LOS angles. χ* = 180°.',
+        cases: [{ label: 'LOS −5°', lEP: -5 }, { label: 'LOS 0°', lEP: 0 }, { label: 'LOS 2°', lEP: 2 }], on: 2 },
+      { label: 'Reduced acceleration', base: { tg: 20, rED: 400, aP: 8, aD: 8, aE: 4 },
+        desc: 'Limits cut to 8 g for the pursuer and defender and 4 g for the evader. Defender at 400 m, otherwise as for χ* = 180°.',
+        cases: [{ label: '8 g / 8 g / 4 g' }] }
+    ],
+    ilc: [
+      { label: 'Different χ*',
+        desc: 'Evader at the origin heading 45°. Defender at 500 m (LOS 45°) heading 0°; pursuer at 5000 m heading 180°, using PN with 𝒩 = 3. The evader becomes bait at t<sub>2</sub> = 4 s.',
+        cases: [{ label: 'χ* = 150°', chi: 150 }, { label: 'χ* = 180°', chi: 180 }, { label: 'χ* = 200°', chi: 200 }], on: 1 },
+      { label: 'Bait time t<sub>2</sub>',
+        desc: 'Same geometry with χ* = 180°. The evader nulls its LOS rate to the pursuer at t<sub>2</sub> = 4, 6 or 8 s.',
+        cases: [{ label: 't₂ = 4 s', t2: 4 }, { label: 't₂ = 6 s', t2: 6 }, { label: 't₂ = 8 s', t2: 8 }] },
+      { label: 'Pursuer guidance',
+        desc: 'Same geometry with χ* = 180°. PNG with 𝒩 = 3; biased PNG a<sub>P</sub> = −𝒩ṙ<sub>EP</sub>λ̇<sub>EP</sub> + 1.5a<sub>E</sub>, where the pursuer knows the evader’s maneuver; pure pursuit.',
+        cases: [{ label: 'PNG', plaw: 'png' }, { label: 'BPNG', plaw: 'bpng' }, { label: 'PPG', plaw: 'ppg' }] },
+      { label: 'Communication delay',
+        desc: 'Same geometry with χ* = 180°. The defender receives the evader’s command a<sub>E</sub>(t − τ).',
+        cases: [{ label: 'τ = 0', tau: 0 }, { label: 'τ = 0.3 s', tau: 0.3 }, { label: 'τ = 0.6 s', tau: 0.6 }, { label: 'τ = 1 s', tau: 1 }] }
+    ]
+  };
+  function peOptions(mode, si, ci) {
+    var s = PE_SCN[mode][si], o = { mode: mode }, src = [PE_BASE[mode], s.base || {}, s.cases[ci]];
+    src.forEach(function (x) { for (var k in x) if (k !== 'label') o[k] = x[k]; });
+    return o;
+  }
+
+  // One engagement of the paper, for the options built by peOptions.
+  function peSimulate(o) {
+    var ilc = o.mode === 'ilc', d = DEG, H = 0.002, REC = 0.02, every = Math.round(REC / H), TMAX = 30;
+    var VP = PE_V.P, VD = PE_V.D, VE = o.vE, g = 9.8;
+    var xE = 0, yE = 0, gE = o.gE * d;
+    var xD = o.rED * Math.cos(o.lED * d), yD = o.rED * Math.sin(o.lED * d), gD = o.gD * d;
+    var xP = o.rEP * Math.cos(o.lEP * d), yP = o.rEP * Math.sin(o.lEP * d), gP = o.gP * d;
+    var chis = o.chi * d, S0 = null, he0 = null, amEh = [], nDel = Math.round((o.tau || 0) / H);
     var rec = { E: [], P: [], D: [], gE: [], gP: [], gD: [], chi: [], rdp: [], rep: [], t: [] };
     var out = { rec: rec, end: 'timeout', tEnd: TMAX };
     for (var k = 0; ; k++) {
       var t = k * H;
       var RDP = Math.hypot(xP - xD, yP - yD), RED = Math.hypot(xD - xE, yD - yE), REP = Math.hypot(xP - xE, yP - yE);
       var lDP = Math.atan2(yP - yD, xP - xD), lED = Math.atan2(yD - yE, xD - xE), lEP = Math.atan2(yP - yE, xP - xE);
-      var RDPd = PE_V.P * Math.cos(gP - lDP) - PE_V.D * Math.cos(gD - lDP);
-      var REPd = PE_V.P * Math.cos(gP - lEP) - PE_V.E * Math.cos(gE - lEP);
-      var REDd = PE_V.D * Math.cos(gD - lED) - PE_V.E * Math.cos(gE - lED);
-      var lDPd = (PE_V.P * Math.sin(gP - lDP) - PE_V.D * Math.sin(gD - lDP)) / RDP;
-      var lEPd = (PE_V.P * Math.sin(gP - lEP) - PE_V.E * Math.sin(gE - lEP)) / REP;
-      var lEDd = (PE_V.D * Math.sin(gD - lED) - PE_V.E * Math.sin(gE - lED)) / RED;
+      var RDPd = VP * Math.cos(gP - lDP) - VD * Math.cos(gD - lDP);
+      var REPd = VP * Math.cos(gP - lEP) - VE * Math.cos(gE - lEP);
+      var REDd = VD * Math.cos(gD - lED) - VE * Math.cos(gE - lED);
+      var lDPd = (VP * Math.sin(gP - lDP) - VD * Math.sin(gD - lDP)) / RDP;
+      var lEPd = (VP * Math.sin(gP - lEP) - VE * Math.sin(gE - lEP)) / REP;
+      var lEDd = (VD * Math.sin(gD - lED) - VE * Math.sin(gE - lED)) / RED;
       var chi = ((Math.PI + lDP - lED) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
       if (k % every === 0) {
         rec.E.push([xE, yE]); rec.P.push([xP, yP]); rec.D.push([xD, yD]);
@@ -948,41 +994,42 @@
       if (RDP <= 2) { out.end = 'intercept'; out.tEnd = t; break; }
       if (REP <= 2) { out.end = 'evader hit'; out.tEnd = t; break; }
       if (t >= TMAX) break;
-      var beta = chi - chis, bd = lDPd - lEDd, gdot, S, tl = G.ts - t;
-      if (tl > G.marg) { gdot = -G.k1 / tl * bd - G.k1 * beta / (tl * tl); S = bd + G.k1 / tl * beta; }
-      else { gdot = -G.k1 / G.marg * bd - G.k1 * beta / (G.marg * G.marg); S = bd + G.k1 / G.marg * beta; }
+      var beta = chi - chis, bd = lDPd - lEDd, gdot, S, tl = o.ts - t;
+      if (tl > o.marg) { gdot = -o.k1 / tl * bd - o.k1 * beta / (tl * tl); S = bd + o.k1 / tl * beta; }
+      else { gdot = -o.k1 / o.marg * bd - o.k1 * beta / (o.marg * o.marg); S = bd + o.k1 / o.marg * beta; }
       if (S0 === null) S0 = -S;
       var ht = 0, hd = 0;
-      if (t < G.t1) { ht = S0 / Math.pow(G.t1, G.k2) * Math.pow(G.t1 - t, G.k2); hd = -S0 / Math.pow(G.t1, G.k2) * G.k2 * Math.pow(G.t1 - t, G.k2 - 1); }
+      if (t < o.t1) { ht = S0 / Math.pow(o.t1, o.k2) * Math.pow(o.t1 - t, o.k2); hd = -S0 / Math.pow(o.t1, o.k2) * o.k2 * Math.pow(o.t1 - t, o.k2 - 1); }
       var Si = S + ht;
       var a1 = Math.cos(gE - lED) / RED, a2 = Math.cos(gD - lDP) / RDP + Math.cos(gD - lED) / RED;
       var amD, amE;
       if (ilc) {
-        // Theorem 3: evader nulls its LOS rate to the pursuer at t2 (decoy)
+        // Theorem 3: the evader nulls its LOS rate to the pursuer at t2 and becomes bait
         if (he0 === null) he0 = -lEPd;
-        var hE = 0, hEd = 0;
-        if (t < 4) { hE = he0 / 64 * Math.pow(4 - t, 3); hEd = -he0 / 64 * 3 * Math.pow(4 - t, 2); }
-        amE = REP / Math.cos(gE - lEP) * (-2 * REPd * lEPd / REP + hEd + Math.tanh(10 * (lEPd + hE)));
-        amE = clamp(amE, -98, 98);
+        var hE = 0, hEd = 0, t2 = o.t2, p3 = Math.pow(t2, o.k3);
+        if (t < t2) { hE = he0 / p3 * Math.pow(t2 - t, o.k3); hEd = -he0 / p3 * o.k3 * Math.pow(t2 - t, o.k3 - 1); }
+        amE = REP / Math.cos(gE - lEP) * (-2 * REPd * lEPd / REP + hEd + o.K1 * Math.tanh(o.tg * (lEPd + hE)));
         amEh.push(amE);
         var amEd = amEh.length > nDel ? amEh[amEh.length - 1 - nDel] : 0;   // defender receives a_E(t − τ)
-        // Theorem 4: defender law using the evader's (delayed) command
-        amD = (-2 * RDPd * lDPd / RDP + 2 * REDd * lEDd / RED + a1 * amEd - gdot + hd + G.K * Math.tanh(10 * Si)) / a2;
+        // Theorem 4: defender law built on the evader's (delayed) command
+        amD = (-2 * RDPd * lDPd / RDP + 2 * REDd * lEDd / RED + a1 * amEd - gdot + hd + o.K * Math.tanh(o.tg * Si)) / a2;
       } else {
-        // Theorems 1–2: net cooperative control U, split by weighted minimum-norm allocation
-        var U = 2 * RDPd * lDPd / RDP - 2 * REDd * lEDd / RED + gdot - hd - G.K * Math.tanh(10 * Si);
-        amD = -U * a2 / (a2 * a2 + a1 * a1); amE = clamp(U * a1 / (a2 * a2 + a1 * a1), -98, 98);
+        // Theorems 1–2: net cooperative control U, split by minimum-norm allocation (all of it to D if E is stationary)
+        var U = 2 * RDPd * lDPd / RDP - 2 * REDd * lEDd / RED + gdot - hd - o.K * Math.tanh(o.tg * Si);
+        if (VE === 0) { amD = -U / a2; amE = 0; }
+        else { amD = -U * a2 / (a2 * a2 + a1 * a1); amE = U * a1 / (a2 * a2 + a1 * a1); }
       }
       var amP;
-      if (opt.plaw === 'ppg') amP = PE_V.P * lEPd - 0.5 * (gP - lEP);
-      else if (opt.plaw === 'dpg') amP = PE_V.P * lEPd - (gP - lEP - Math.PI / 3);
-      else amP = -G.N * REPd * lEPd;
-      amD = clamp(amD, -196, 196); amP = clamp(amP, -196, 196);
-      xD += PE_V.D * Math.cos(gD) * H; yD += PE_V.D * Math.sin(gD) * H; gD += amD / PE_V.D * H;
-      xP += PE_V.P * Math.cos(gP) * H; yP += PE_V.P * Math.sin(gP) * H; gP += amP / PE_V.P * H;
-      xE += PE_V.E * Math.cos(gE) * H; yE += PE_V.E * Math.sin(gE) * H; gE += amE / PE_V.E * H;
+      if (o.plaw === 'ppg') amP = VP * lEPd - (ilc ? 0.1 : 0.5) * (gP - lEP);
+      else if (o.plaw === 'dpg') amP = VP * lEPd - (gP - lEP - Math.PI / 3);
+      else if (o.plaw === 'bpng') amP = -o.N * REPd * lEPd + 1.5 * amE;
+      else amP = -o.N * REPd * lEPd;
+      amD = clamp(amD, -o.aD * g, o.aD * g); amP = clamp(amP, -o.aP * g, o.aP * g); amE = clamp(amE, -o.aE * g, o.aE * g);
+      xD += VD * Math.cos(gD) * H; yD += VD * Math.sin(gD) * H; gD += amD / VD * H;
+      xP += VP * Math.cos(gP) * H; yP += VP * Math.sin(gP) * H; gP += amP / VP * H;
+      if (VE > 0) { xE += VE * Math.cos(gE) * H; yE += VE * Math.sin(gE) * H; gE += amE / VE * H; }
     }
-    out.G = G;
+    out.G = o;
     return out;
   }
 
@@ -1007,14 +1054,26 @@
     var out = root.querySelector('.pf-readout');
     var leg = root.querySelector('.pf-legend');
     var btnPlay = root.querySelector('[data-act="play"]');
-    var opt = { mode: 'ilc', chi: 180, tau: 0, plaw: 'png', D0: null };
+    var rowS = root.querySelector('.pe-scn'), rowC = root.querySelector('.pe-case'), desc = root.querySelector('.pe-desc');
+    var mode = 'mlc', si = 0, ci = PE_SCN.mlc[0].on || 0;
     var res, t = 0, hold = 0, view = null;
     legend(leg, [{ color: CE, label: 'evader E' }, { color: CP, label: 'pursuer P' }, { color: CD, label: 'defender D' },
       { color: 'rgba(22,163,74,0.45)', label: 'circle on EP (D inside ⇒ χ ∈ [90°, 270°])' }]);
 
-    function reset() {
-      res = peSimulate(opt); t = 0; hold = 0; view = null;
-      root.querySelectorAll('[data-tau]').forEach(function (b) { b.disabled = opt.mode !== 'ilc'; });
+    function reset() { res = peSimulate(peOptions(mode, si, ci)); t = 0; hold = 0; view = null; }
+    function buttons(row, items, cur, pick) {
+      row.innerHTML = '';
+      items.forEach(function (it, j) {
+        var b = document.createElement('button'); b.innerHTML = it.label; if (j === cur) b.className = 'on';
+        b.addEventListener('click', function () { pick(j); }); row.appendChild(b);
+      });
+    }
+    function build() {
+      var list = PE_SCN[mode], sc = list[si];
+      buttons(rowS, list, si, function (j) { si = j; ci = list[j].on || 0; build(); });
+      buttons(rowC, sc.cases, ci, function (j) { ci = j; build(); });
+      desc.innerHTML = sc.desc;
+      reset(); if (anim) anim.kick();
     }
     function idx() { return Math.min(res.rec.t.length - 1, Math.floor(t / 0.02)); }
 
@@ -1065,7 +1124,6 @@
       ctx.fillStyle = CE; ctx.fillText('E', E[0] + 10, E[1] + 8);
       if (!done) { ctx.fillStyle = CP; ctx.fillText('P', P[0] + 10, P[1] + 8); ctx.fillStyle = CD; ctx.fillText('D', D[0] + 10, D[1] + 8); }
       ctx.fillStyle = th.muted; ctx.fillText('t = ' + fmt(r.t[i], 1) + ' s', 12, 10);
-      ctx.font = '11px Inter, sans-serif'; ctx.fillText('click to move the defender’s starting point', 12, h - 20);
       if (done) {
         ctx.font = '600 13px Inter, sans-serif'; ctx.fillStyle = CD; ctx.textAlign = 'right';
         ctx.fillText('Pursuer intercepted at t = ' + fmt(res.tEnd, 2) + ' s', w - 12, 10);
@@ -1077,11 +1135,11 @@
     function charts() {
       var r = res.rec, i = idx(), T = Math.ceil(r.t[r.t.length - 1] / 5) * 5 || 5;
       var pc = []; for (var j = 0; j <= i; j += 2) pc.push([r.t[j], r.chi[j]]);
-      drawChart(cvC, 'angle χ (target χ* = ' + opt.chi + '°)', 'deg', T, 0, 360, [{ color: CD, pts: pc }], r.t[i]);
+      drawChart(cvC, 'angle χ (target χ* = ' + res.G.chi + '°)', 'deg', T, 0, 360, [{ color: CD, pts: pc }], r.t[i]);
       var fc = fitCanvas(cvC), c = fc.ctx, ph = fc.h - 36;
       function Y(v) { return 18 + ph * (1 - v / 360); }
       c.fillStyle = 'rgba(22,163,74,0.10)'; c.fillRect(38, Y(270), fc.w - 46, Y(90) - Y(270));
-      c.strokeStyle = CD; c.setLineDash([5, 4]); c.beginPath(); c.moveTo(38, Y(opt.chi)); c.lineTo(fc.w - 8, Y(opt.chi)); c.stroke(); c.setLineDash([]);
+      c.strokeStyle = CD; c.setLineDash([5, 4]); c.beginPath(); c.moveTo(38, Y(res.G.chi)); c.lineTo(fc.w - 8, Y(res.G.chi)); c.stroke(); c.setLineDash([]);
       var tsx = 38 + (fc.w - 46) * res.G.ts / T;
       c.strokeStyle = 'rgba(100,116,139,0.6)'; c.beginPath(); c.moveTo(tsx, 18); c.lineTo(tsx, 18 + ph); c.stroke();
       c.fillStyle = theme().muted; c.font = '10px Inter, sans-serif'; c.textAlign = 'left'; c.fillText('t* = ' + res.G.ts + ' s', tsx + 3, 22);
@@ -1102,26 +1160,16 @@
       if (t >= tEnd) { hold += dt; if (hold > 2.5) { t = 0; hold = 0; } } else t = Math.min(tEnd, t + dt);
       draw(); if (frame++ % 3 === 0) charts();
     });
-    function group(attr, key, parse) {
-      root.querySelectorAll('[' + attr + ']').forEach(function (b) {
-        b.addEventListener('click', function () {
-          root.querySelectorAll('[' + attr + ']').forEach(function (x) { x.classList.remove('on'); });
-          b.classList.add('on'); opt[key] = parse(b.getAttribute(attr));
-          if (key === 'mode') opt.D0 = null;
-          reset(); anim.kick();
-        });
+    root.querySelectorAll('[data-mode]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        root.querySelectorAll('[data-mode]').forEach(function (x) { x.classList.remove('on'); });
+        b.classList.add('on'); mode = b.getAttribute('data-mode'); si = 0; ci = PE_SCN[mode][0].on || 0; build();
       });
-    }
-    group('data-mode', 'mode', String); group('data-chi', 'chi', Number); group('data-tau', 'tau', Number); group('data-plaw', 'plaw', String);
-    cv.addEventListener('click', function (e) {
-      if (!view) return;
-      var rc = cv.getBoundingClientRect(), p = view.inv(e.clientX - rc.left, e.clientY - rc.top);
-      opt.D0 = p; reset(); anim.kick();
     });
-    root.querySelector('[data-act="reset"]').addEventListener('click', function () { opt.D0 = null; reset(); anim.kick(); });
+    root.querySelector('[data-act="reset"]').addEventListener('click', function () { reset(); anim.kick(); });
     btnPlay.addEventListener('click', function () { anim.paused = !anim.paused; btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause'; anim.kick(); });
     btnPlay.textContent = anim.paused ? '▶ Play' : '❚❚ Pause';
-    reset();
+    build();
   }
 
   /* ── one-to-one assignment: Hungarian, greedy, auction (as in the paper's code) ── */

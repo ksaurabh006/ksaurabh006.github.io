@@ -34,13 +34,6 @@ MathJax.Hub.Config({
 });
 </script>
 <!-- End MathJax -->
-<!-- Vanta.js animated globe background (hero section) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"
-  integrity="sha512-334uBDwY0iZ2TklV1OtDtBW9vp7jjP7SWRzT7Ehu1fdtPIjTpCwTSFb8HI/YBau9L1/kRBEOALrS229Kry4yFQ=="
-  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.globe.min.js"
-  integrity="sha512-cfeQlKIIaFDUyrmXLF3uv1DSprgNRSSptQF6lyPPmsnXhR2M8qtQ4B6pMQJE3BePiGHRefNCVO4u5/FUSzMkbQ=="
-  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
 <div id="main-container">
@@ -132,7 +125,7 @@ MathJax.Hub.Config({
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
   </div>
   <div>
-    <p>Saurabh Kumar is a Postdoctoral Fellow in the Department of Aerospace Engineering at the Indian Institute of Technology Bombay, where he also completed his Ph.D. in 2025. His research develops mathematically rigorous, real-time-implementable guidance and control strategies for autonomous vehicles &mdash; spanning path following, trajectory tracking, interceptor guidance, cooperative pursuit-evasion, safety-critical control, and cooperative aerial manipulation &mdash; with an emphasis on provable convergence and safety guarantees.</p>
+    <p>Saurabh Kumar is a Postdoctoral Fellow in the Department of Aerospace Engineering at the Indian Institute of Technology Bombay, where he also completed his Ph.D. in 2025. His research develops mathematically rigorous, real-time-implementable guidance and control strategies for autonomous vehicles, with an emphasis on provable convergence and safety guarantees. His work covers path following, trajectory tracking, interceptor guidance, cooperative pursuit-evasion, safety-critical control, and cooperative aerial manipulation.</p>
     <p>He holds a B.Tech. in Electrical Engineering from NIT Patna (2019) and an M.Tech. in Control Systems Engineering from NIT Kurukshetra (2021). His doctoral work was recognized with the <strong>Naik and Rastogi Award for Excellence in Ph.D. Research (2024&ndash;26)</strong>.</p>
   </div>
 </div>
@@ -204,6 +197,35 @@ MathJax.Hub.Config({
     <p class="news-text">Successfully defended my Ph.D. at IIT Bombay. 🎓</p>
   </div>
 </div>
+<!-- Vanta.js animated globe background (hero section) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"
+  integrity="sha512-334uBDwY0iZ2TklV1OtDtBW9vp7jjP7SWRzT7Ehu1fdtPIjTpCwTSFb8HI/YBau9L1/kRBEOALrS229Kry4yFQ=="
+  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.globe.min.js"
+  integrity="sha512-cfeQlKIIaFDUyrmXLF3uv1DSprgNRSSptQF6lyPPmsnXhR2M8qtQ4B6pMQJE3BePiGHRefNCVO4u5/FUSzMkbQ=="
+  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+// Animated globe behind the hero, colored to match the site's navy/blue
+// palette (see :root in main.css). The hero stays dark navy in both site
+// themes, so it looks the same with either theme. The hero gradient remains
+// as a fallback if the CDN scripts fail to load.
+if (window.VANTA && document.getElementById("vanta-bg")) {
+    VANTA.GLOBE({
+        el: "#vanta-bg",
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: 200.00,
+        minWidth: 200.00,
+        scale: 1.00,
+        scaleMobile: 1.00,
+        color: 0x3b82f6,           /* --accent2: globe wireframe / dots */
+        color2: 0x2563eb,          /* --accent: secondary dot color */
+        backgroundColor: 0x0a1628, /* --navy: matches hero gradient start */
+        size: 1.10
+    });
+}
+</script>
 </div> <!-- <div id="layout-content"> -->
 <div id="footer-container">
 <div id="footer">
@@ -239,7 +261,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated September 14<sup>th</sup> 2026  07:13PM (Time Zone: UTC), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated November 25<sup>th</sup> 2026  05:24PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->
@@ -261,27 +283,6 @@ function closeNav() {
         document.getElementById("layout-content-container").style.position = "static";
         document.getElementById("layout-content-container").style.marginLeft = "0px";
     }
-}
-
-// Vanta.js animated globe background for the hero section, colored to
-// match the site's navy/blue palette (see :root in main.css). The hero
-// banner stays dark navy in both light and dark site themes, so this
-// looks consistent regardless of the theme toggle.
-if (window.VANTA && document.getElementById("vanta-bg")) {
-    VANTA.GLOBE({
-        el: "#vanta-bg",
-        mouseControls: true,
-        touchControls: true,
-        gyroControls: false,
-        minHeight: 200.00,
-        minWidth: 200.00,
-        scale: 1.00,
-        scaleMobile: 1.00,
-        color: 0x3b82f6,        /* --accent2: globe wireframe / dots */
-        color2: 0x2563eb,       /* --accent: secondary dot color */
-        backgroundColor: 0x0a1628, /* --navy: matches hero gradient start */
-        size: 1.10
-    });
 }
 </script>
 </body>

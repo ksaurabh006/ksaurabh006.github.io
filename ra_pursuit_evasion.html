@@ -76,17 +76,17 @@ MathJax.Hub.Config({
 <div class="ra-back"><a href="research.html">&larr; All Research Areas</a></div>
 <h2>Overview</h2>
 <p>Pursuit-evasion problems involve one or more pursuers trying to capture one or more evaders, each acting in its own interest. My research develops <b>cooperative nonlinear guidance</b> for the three-body version of this problem, often called <i>active aircraft defence</i>. A pursuer \(P\) chases an evader \(E\), and the evader is protected by a defender \(D\) that must intercept the pursuer first. The evader and the defender form a team. They do not know the pursuer's guidance law, and the defender has no speed advantage: \(v_P = v_D &gt; v_E\).</p>
-<p>Classical line-of-sight guidance puts the defender exactly on the line from the evader to the pursuer. That is a demanding geometric target, and many nonlinear alternatives need an estimate of time-to-go, which is noisy in practice. My approach asks for a much weaker geometric condition, reaches it at a time the designer chooses, and needs neither time-to-go nor any knowledge of how the pursuer steers.</p>
+<p>Classical line-of-sight guidance puts the defender exactly on the line from the evader to the pursuer. That is a demanding geometric target, and many nonlinear alternatives need an estimate of time-to-go, which is noisy in practice. My approach requires a weaker geometric condition, reaches it at a time the designer chooses, and needs neither time-to-go nor any knowledge of how the pursuer steers.</p>
 <div class="pf-steps">
-  <div class="pf-step"><h4>A wide target, not a collision line</h4><p>Let \(\chi\) be the angle at the defender between its lines of sight to the evader and to the pursuer. If \(\chi\in[\pi/2,\,3\pi/2]\), the defender lies inside the circle whose diameter is EP, so EP is the longest side of the triangle and the defender reaches the pursuer first.</p></div>
-  <div class="pf-step"><h4>Reach it at a chosen time</h4><p>A dual-layer sliding manifold drives \(\beta=\chi-\chi^\star\) to zero <em>exactly</em> at a user-set time \(t^\star\), from any initial geometry and with no reaching phase. \(\chi^\star\) can be anywhere in the admissible interval.</p></div>
+  <div class="pf-step"><h4>A relaxed geometric condition</h4><p>Let \(\chi\) be the angle at the defender between its lines of sight to the evader and to the pursuer. If \(\chi\in[\pi/2,\,3\pi/2]\), the defender lies inside the circle whose diameter is EP, so EP is the longest side of the triangle and the defender reaches the pursuer first.</p></div>
+  <div class="pf-step"><h4>Reach it at a chosen time</h4><p>A dual-layer sliding manifold drives \(\beta=\chi-\chi^\star\) to zero <em>exactly</em> at a user-set time \(t^\star\), from any initial geometry and with no reaching phase. \(\chi^\star\) may be chosen anywhere in the admissible interval.</p></div>
   <div class="pf-step"><h4>Cooperate at two levels</h4><p>The evader and defender either co-design their maneuvers (maneuver-level), or the evader flies on its own and shares only its command (information-level). The second form tolerates communication delay.</p></div>
 </div>
 
 <div class="pf-sim" id="pe-sim">
   <div class="pf-sim-head">
     <div class="pf-sim-title">Try it: the paper's simulation scenarios
-      <small>Each button replays one case from Section V of the paper, with its initial conditions and gains.</small></div>
+      <small>Cases from Section V of the paper, with their initial conditions and gains.</small></div>
     <div class="pf-controls">
       <button data-mode="mlc" class="on">Maneuver-level</button>
       <button data-mode="ilc">Information-level</button>
@@ -111,7 +111,7 @@ MathJax.Hub.Config({
     <canvas class="pf-chart-xi"></canvas>
     <div class="pf-readout"></div>
   </div>
-  <p class="pf-note">Simulated in your browser with the laws and parameters of the paper: \(v_P=v_D=200\) m/s, \(v_E=100\) m/s, acceleration limits 20 g (P, D) and 10 g (E) unless stated. Maneuver-level: \(t_1=3\) s, \(t^\star=6\) s, \(k_1=6\), \(k_2=3\), \(\mathcal{K}=5\). Information-level: \(t_2=4\) s, \(t_1=5\) s, \(t^\star=9\) s, \(k_1=k_2=k_3=3\), \(\mathcal{K}=\mathcal{K}_1=1\). The dashed circle has EP as its diameter. It turns green while the defender is inside it, i.e. while \(\chi\in[90^\circ,270^\circ]\). In every case of the paper the defender's closing speed on the pursuer stays positive (at least 229 m/s) and \(\chi\) stays inside the circle, so Proposition 1 guarantees the interception shown.</p>
+  <p class="pf-note">The simulations use the guidance laws and parameters of the paper: \(v_P=v_D=200\) m/s, \(v_E=100\) m/s, acceleration limits 20 g (P, D) and 10 g (E) unless stated. Maneuver-level: \(t_1=3\) s, \(t^\star=6\) s, \(k_1=6\), \(k_2=3\), \(\mathcal{K}=5\). Information-level: \(t_2=4\) s, \(t_1=5\) s, \(t^\star=9\) s, \(k_1=k_2=k_3=3\), \(\mathcal{K}=\mathcal{K}_1=1\). The dashed circle has EP as its diameter. It turns green while the defender is inside it, i.e. while \(\chi\in[90^\circ,270^\circ]\). In every case of the paper the defender's closing speed on the pursuer stays positive (at least 229 m/s) and the defender stays inside the circle (\(\chi\in[90^\circ,270^\circ]\)), so Proposition 1 guarantees the interception shown.</p>
 </div>
 <h2>How the Work Developed</h2>
 <div class="pf-timeline">
@@ -120,9 +120,9 @@ MathJax.Hub.Config({
   <div class="pf-tl-item"><a href="https://doi.org/10.2514/6.2025-2233"><div class="pf-tl-year">2025 &middot; AIAA GNC</div><div class="pf-tl-name">Enclosing moving targets</div><div class="pf-tl-what">Geometric guidance</div></a></div>
   <div class="pf-tl-item key"><a href="#jais"><div class="pf-tl-year">2026 &middot; JAIS</div><div class="pf-tl-name">Delay-robust information structures</div><div class="pf-tl-what">Prescribed-time geometric guidance, maneuver- and information-level cooperation, many-on-many</div></a></div>
 </div>
-<h2>Key Contributions</h2>
+<h2>Main Contributions</h2>
 <ul>
-<li><p>A <b>relaxed geometric capture condition</b>: the defender only needs \(\chi\in[\pi/2,3\pi/2]\), not exact collinearity with the evader and the pursuer.</p>
+<li><p>A <b>relaxed geometric capture condition</b>: \(\chi\in[\pi/2,3\pi/2]\) suffices, and exact collinearity of the defender with the evader and the pursuer is not required.</p>
 </li>
 <li><p><b>Prescribed-time</b> convergence of \(\chi\) to any chosen \(\chi^\star\) at a user-set time, independent of the initial geometry, with no time-to-go estimate.</p>
 </li>
@@ -212,7 +212,7 @@ MathJax.Hub.Config({
 </p><p>The only thing shared with the defender is the scalar command \(a_E\), which the defender folds into its own law:</p>
 <p style="text-align:center">
 \[ a_D = \left[-\frac{2\dot r_{DP}\dot\lambda_{DP}}{r_{DP}} + \frac{2\dot r_{ED}\dot\lambda_{ED}}{r_{ED}} + \frac{\cos\delta_{ED}}{r_{ED}}a_E - \dot g + \dot h + \mathcal K\,\mathrm{sign}(\bar{\mathcal S})\right]\frac{r_{ED}\,r_{DP}}{r_{DP}\cos\delta_{DE} + r_{ED}\cos\delta_{DP}}. \]
-</p><p>The guarantee does not require the pursuer to take the bait.</p>
+</p><p>Note that the guarantee holds whether or not the pursuer responds to the decoy.</p>
 <div class="figure-grid">
   <figure class="figure-card">
     <img src="images/research/pe/ilc_diff_chi_trajectory.png" alt="Trajectories for different chi star with information-level cooperation" loading="lazy">
@@ -227,7 +227,7 @@ MathJax.Hub.Config({
 <p>In practice the defender receives the evader's command late, as \(a_E(t-\tau)\). Using a Lyapunov&ndash;Krasovskii functional, the paper shows that the sliding dynamics remain input-to-state stable. The manifold converges to a small set whose size grows with \(\tau\), provided</p>
 <p style="text-align:center">
 \[ \mathcal K &gt; \sup_t\left(\frac{a_P^{\max}}{r_{DP}} + \frac{\tau\,\dot a_E^{\max}}{r_{ED}}\right) + \eta, \qquad \eta&gt;0. \]
-</p><p>If the evader's command is constant, the delay causes no mismatch at all. In simulation the defender intercepts the pursuer for delays of up to 1 s.</p>
+</p><p>If the evader's command is constant, the delay causes no mismatch. In simulation the defender intercepts the pursuer for delays of up to 1 s.</p>
 <div class="figure-grid cols-3">
   <figure class="figure-card">
     <img src="images/research/pe/ilc_delay_trajectory.png" alt="Interception under communication delay" loading="lazy">
@@ -235,7 +235,7 @@ MathJax.Hub.Config({
   </figure>
   <figure class="figure-card">
     <img src="images/research/pe/defender_capture_initial_range_map.png" alt="Monte Carlo initial ranges, all captured" loading="lazy">
-    <figcaption>Monte Carlo: 1000 random initial ranges and angles, defender wins all 1000.</figcaption>
+    <figcaption>Monte Carlo: 1000 random initial ranges and angles, with interception in all 1000.</figcaption>
   </figure>
   <figure class="figure-card">
     <img src="images/research/pe/defender_final_rep_survival_proof.png" alt="Final evader-pursuer range in Monte Carlo runs" loading="lazy">
@@ -246,7 +246,7 @@ MathJax.Hub.Config({
 <p>The same guidance scales to \(M\) defenders protecting one evader from \(M\) pursuers. Each defender is paired with one pursuer at \(t=0\) by minimizing the total initial separation</p>
 <p style="text-align:center">
 \[ J(\sigma) = \sum_{i=1}^{M} \big\|\mathbf r_{P_{\sigma(i)}}(0) - \mathbf r_{D_i}(0)\big\|, \]
-</p><p>and then runs the information-level law against its pursuer. The paper solves the assignment with the Hungarian algorithm (optimal), a greedy nearest-pair rule, and an auction algorithm, and all pursuers are intercepted with each of them. The guidance needs only a one-to-one pairing, not a particular assignment method.</p>
+</p><p>and then runs the information-level law against its pursuer. The paper solves the assignment with the Hungarian algorithm (optimal), a greedy nearest-pair rule, and an auction algorithm, and all pursuers are intercepted with each of them. Therefore, the guidance requires only a one-to-one pairing and is independent of the assignment method.</p>
 <div class="pf-sim" id="pe-multi">
   <div class="pf-sim-head">
     <div class="pf-sim-title">Try it: 20 defenders against 20 pursuers
@@ -334,7 +334,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated November 25<sup>th</sup> 2026  05:05PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated November 25<sup>th</sup> 2026  05:24PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

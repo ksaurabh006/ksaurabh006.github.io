@@ -939,13 +939,13 @@
         desc: 'Same geometry with χ* = 180°. PNG with 𝒩 = 5, pure pursuit a<sub>P</sub> = v<sub>P</sub>λ̇<sub>EP</sub> − 0.5(γ<sub>P</sub> − λ<sub>EP</sub>), deviated pursuit with δ = 60°.',
         cases: [{ label: 'PNG', plaw: 'png' }, { label: 'PPG', plaw: 'ppg' }, { label: 'DPG', plaw: 'dpg' }] },
       { label: 'Stationary evader: defender position', base: { tg: 20, vE: 0, lEP: 2 },
-        desc: 'The evader does not move. Pursuer at 5000 m (LOS 2°); the defender starts at three positions and aims for χ* = 180°.',
+        desc: 'The evader is stationary. Pursuer at 5000 m (LOS 2°); the defender starts from three positions with χ* = 180°.',
         cases: [{ label: '400 m, −45°', rED: 400, lED: -45 }, { label: '1500 m, −10°', rED: 1500, lED: -10 }, { label: '2000 m, 10°', rED: 2000, lED: 10 }] },
       { label: 'Stationary evader: pursuer position', base: { tg: 20, vE: 0, rED: 400, lED: -45 },
-        desc: 'The evader does not move. Defender at 400 m (LOS −45°); the pursuer starts 5000 m away at three LOS angles. χ* = 180°.',
+        desc: 'The evader is stationary. Defender at 400 m (LOS −45°); the pursuer starts 5000 m away at three LOS angles. χ* = 180°.',
         cases: [{ label: 'LOS −5°', lEP: -5 }, { label: 'LOS 0°', lEP: 0 }, { label: 'LOS 2°', lEP: 2 }], on: 2 },
       { label: 'Reduced acceleration', base: { tg: 20, rED: 400, aP: 8, aD: 8, aE: 4 },
-        desc: 'Limits cut to 8 g for the pursuer and defender and 4 g for the evader. Defender at 400 m, otherwise as for χ* = 180°.',
+        desc: 'Acceleration limits of 8 g for the pursuer and defender and 4 g for the evader. Defender at 400 m; otherwise as for χ* = 180°.',
         cases: [{ label: '8 g / 8 g / 4 g' }] }
     ],
     ilc: [
@@ -1584,10 +1584,10 @@
   };
   var USV_SCN = [
     { label: 'Known disturbance bound', ref: 'ellipse', obs: false, tf: 10, T: 150,
-      desc: 'Reference x<sub>d</sub> = 4 sin 0.02t, y<sub>d</sub> = 2.5(1 − cos 0.02t), ψ<sub>d</sub> = 0.02t. The vessel starts at (2, −3) m with ψ = π/6 and is at rest. t<sub>f</sub> = 10 s, t<sub>1</sub> = 5 s, with a time-varying disturbance whose bound is known.',
+      desc: 'Reference x<sub>d</sub> = 4 sin 0.02t, y<sub>d</sub> = 2.5(1 − cos 0.02t), ψ<sub>d</sub> = 0.02t. The vessel starts at rest at (2, −3) m with ψ = π/6. t<sub>f</sub> = 10 s, t<sub>1</sub> = 5 s, with a time-varying disturbance whose bound is known.',
       cases: [{ label: 'start (2, −3), ψ = 30°', ic: [2, -3, Math.PI / 6] }] },
     { label: 'Disturbance observer', ref: 'ellipse', obs: true, tf: 10, T: 150,
-      desc: 'Same reference and start, but the disturbance bound is unknown: a disturbance observer estimates it, and the model has a 10% error in its Coriolis and damping terms. t<sub>f</sub> = 10 s.',
+      desc: 'Same reference and initial condition. The disturbance bound is unknown and a disturbance observer estimates it; the model also has a 10% error in its Coriolis and damping terms. t<sub>f</sub> = 10 s.',
       cases: [{ label: 'start (2, −3), ψ = 30°', ic: [2, -3, Math.PI / 6] }] },
     { label: 'Infinity-shaped reference', ref: 'infinity', obs: true, tf: 6, T: 70,
       desc: 'Reference x<sub>d</sub> = 2 cos 0.1t, y<sub>d</sub> = sin 0.2t, ψ<sub>d</sub> = 0.02t, with rapidly changing curvature. Two starting points, both at rest with ψ = π/3; t<sub>f</sub> = 6 s.',
@@ -2121,7 +2121,7 @@ function qblfInv4(M) {
     orbital: 'Orbit x<sub>d</sub> = 1 + (1 − e<sup>−3t³</sup>) cos t, y<sub>d</sub> = 2 + (1 − e<sup>−5t³</sup>) sin t, z<sub>d</sub> = 0.1 + 0.1 sin t m, from (1, 2, −0.01) m with ψ(0) = 0.1 rad. Error bounds −2.2/+0.2 m (x), −2.3/+0.3 m (y), −0.4/+0.2 m (z); K = 100, M = 5.',
     helix: 'Climbing helix with the same x<sub>d</sub>, y<sub>d</sub> and z<sub>d</sub> = 0.1 + t/50 m, from (1, 2, −0.01) m. Error bounds −2.2/+0.2 m (x), −2.3/+0.3 m (y), −0.6/+0.2 m (z); K = 100, M = 5.',
     bow: 'Bow-shaped path y<sub>d</sub> = 2 + (1 − e<sup>−5t³</sup>) sin t cos t, z<sub>d</sub> = 0.1 + 0.1 cos t m, from (1, 2, −0.01) m. Error bounds −2.2/+0.2 m (x), −1.3/+0.3 m (y), −0.4/+0.2 m (z), −0.25/+0.20 rad (roll); K = 100, M = 5.',
-    gust: 'Orbital path with a 2.5 N push along x from t = 6 s to 6.5 s, with the gains of the comparison run (K = 5, M = 10/25/5 for x/y/z, 5 for attitude). The x and pitch errors are pushed toward their bounds but never cross them.'
+    gust: 'Orbital path with a 2.5 N push along x from t = 6 s to 6.5 s, with the gains of the comparison run (K = 5, M = 10/25/5 for x/y/z, 5 for attitude). The x and pitch errors approach their bounds and remain inside them.'
   };
   function initBLF(root) {
     var cv = root.querySelector('canvas.pf-main'), cvA = root.querySelector('canvas.pf-chart-r'), cvB = root.querySelector('canvas.pf-chart-xi');
@@ -2706,7 +2706,7 @@ function qftSimulate(scn, controller, opts) {
     helical: 'Controller M1 (β = 2, κ = 10, p/q = 15/13) takes off from rest at the origin with ψ(0) = 0.5 rad onto the helix x<sub>d</sub> = (1 − e<sup>−2t³</sup>) cos t, y<sub>d</sub> = (1 − e<sup>−3t³</sup>) sin t, z<sub>d</sub> = 2 + t/4 m, with a 0.1 sin t m/s² vertical disturbance.',
     circular: 'Controller M1 starts at (0.1, 0.1, 1) m with ψ(0) = 0.3 rad and converges onto the unit circle at z<sub>d</sub> = 2 m, under a 0.1 sin t m/s² vertical disturbance.',
     lag: 'The circular case with every command passed through a first-order lag 1/(0.1s + 1) before it reaches the vehicle.',
-    orbital: 'The two reaching laws: modified exponential law M2 (κ = 2, α<sub>0</sub> = 0.5, 𝒩 = 2) against the constant reaching law M1, on x<sub>d</sub> = (1 − e<sup>−3t³</sup>) cos t, y<sub>d</sub> = (1 − e<sup>−5t³</sup>) sin t, z<sub>d</sub> = 2 + sin t m from rest at the origin, with state-dependent disturbances.',
+    orbital: 'Modified exponential reaching law M2 (κ = 2, α<sub>0</sub> = 0.5, 𝒩 = 2) compared with the constant reaching law M1 on x<sub>d</sub> = (1 − e<sup>−3t³</sup>) cos t, y<sub>d</sub> = (1 − e<sup>−5t³</sup>) sin t, z<sub>d</sub> = 2 + sin t m from rest at the origin, with state-dependent disturbances.',
     bow: 'M2 against conventional linear-surface SMC on the bow path x<sub>d</sub> = 1 + (1 − e<sup>−3t³</sup>) cos t, y<sub>d</sub> = 2 + (1 − e<sup>−5t³</sup>) sin t cos t, z<sub>d</sub> = 0.5 + 0.5 cos t, from (0.5, 1.5, 0) m with random disturbances.'
   };
   function initFT(root) {

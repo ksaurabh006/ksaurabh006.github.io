@@ -709,9 +709,10 @@
     var leg = root.querySelector('.pf-legend');
     var btnPlay = root.querySelector('[data-act="play"]');
     var V = 10, H = 0.002, AMAX = 10, REC = 0.02;
+    var CC = ['#16a34a', '#2563eb', '#c026d3', '#0891b2'];
 
     var PATHS = {
-      line: { T: 22, starts: [[20, 10, 45], [10, 30, 80], [15, -15, 135], [0, 40, 60]],
+      line: { T: 14, starts: [[20, 10, 45], [10, 30, 80], [15, -15, 135], [0, 40, 60]],
         geo: function (x, y) {
           var pd = Math.PI / 4, d = -x * Math.sin(pd) + y * Math.cos(pd);
           return { d: d, psid: pd, foot: [x + d * Math.sin(pd), y - d * Math.cos(pd)], rate: function () { return 0; } };
@@ -746,11 +747,13 @@
     }
     // Nested saturation (Kathiriya, Kumar & Kumar, ASCC 2026 / AST 2026), k1 = k2 = 1, M2' = 10, M1 = M2/2.1.
     function amNS(g, psi, rate) {
+      // at |ψ−ψd| = 90° the ratio u/cos stays finite (M2 ∝ |cos|), so only guard against an exact zero
       var k1 = 1, k2 = 1, z = psi - g.psid, cz = Math.cos(z), d1 = g.d, d2 = V * Math.sin(z);
+      if (Math.abs(cz) < 1e-9) cz = cz < 0 ? -1e-9 : 1e-9;
       var h1 = k1 * k2 * d1 + k2 * d2, h2 = k1 * d2;
       var M2 = Math.abs((AMAX - V * Math.abs(rate)) * cz), M1 = M2 / 2.1;
       var u = -sat(h2 + sat(h1, M1), M2);
-      return Math.abs(cz) < 1e-6 ? V * rate : (u + V * rate * cz) / cz;
+      return (u + V * rate * cz) / cz;
     }
 
     function simulate() {
@@ -777,7 +780,7 @@
       runs = simulate(); t = 0; hold = 0; view = null;
       pathPts = PATHS[key].sample();
       legend(leg, [{ color: AMBER, label: 'closest point' }, { color: '#dc2626', label: 'cross-track error d' }].concat(
-        runs.map(function (_, k) { return { color: COLORS[k], label: 'Case ' + (k + 1) }; })));
+        runs.map(function (_, k) { return { color: CC[k], label: 'Case ' + (k + 1) }; })));
     }
 
     function computeView(w, h) {
@@ -804,10 +807,10 @@
       ctx.stroke(); ctx.setLineDash([]); ctx.restore();
       var i = idx();
       runs.forEach(function (r, k) {
-        ctx.strokeStyle = COLORS[k]; ctx.lineWidth = 2.2; ctx.beginPath();
+        ctx.strokeStyle = CC[k]; ctx.lineWidth = 2.2; ctx.beginPath();
         for (var j = 0; j <= i; j++) { var q = view.f(r.xy[j][0], r.xy[j][1]); if (j === 0) ctx.moveTo(q[0], q[1]); else ctx.lineTo(q[0], q[1]); }
         ctx.stroke();
-        var s0 = view.f(r.xy[0][0], r.xy[0][1]); ctx.fillStyle = COLORS[k]; ctx.fillRect(s0[0] - 4, s0[1] - 4, 8, 8);
+        var s0 = view.f(r.xy[0][0], r.xy[0][1]); ctx.fillStyle = CC[k]; ctx.fillRect(s0[0] - 4, s0[1] - 4, 8, 8);
       });
       runs.forEach(function (r, k) {
         var P = view.f(r.xy[i][0], r.xy[i][1]), F = view.f(r.foot[i][0], r.foot[i][1]);
@@ -816,7 +819,7 @@
           ctx.fillStyle = AMBER; ctx.beginPath(); ctx.arc(F[0], F[1], 4, 0, 7); ctx.fill();
         }
         var H2 = view.f(r.xy[i][0] + Math.cos(r.psi[i]), r.xy[i][1] + Math.sin(r.psi[i]));
-        drawPlane(ctx, P[0], P[1], Math.atan2(H2[1] - P[1], H2[0] - P[0]), 10, COLORS[k], th.halo);
+        drawPlane(ctx, P[0], P[1], Math.atan2(H2[1] - P[1], H2[0] - P[0]), 10, CC[k], th.halo);
       });
       ctx.fillStyle = th.muted; ctx.font = '600 12px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
       ctx.fillText('t = ' + fmt(i * REC, 1) + ' s', 12, 10);
@@ -825,7 +828,7 @@
     function charts() {
       var T = PATHS[key].T, i = idx(), th = theme();
       var series = runs.map(function (r, k) {
-        var pts = []; for (var j = 0; j <= i; j += 3) pts.push([j * REC, r.am[j]]); return { color: COLORS[k], pts: pts };
+        var pts = []; for (var j = 0; j <= i; j += 3) pts.push([j * REC, r.am[j]]); return { color: CC[k], pts: pts };
       });
       drawChart(cvA, 'lateral acceleration a_m (band: ±10)', 'm/s²', T, -30, 30, series, i * REC);
       var fa = fitCanvas(cvA), ca = fa.ctx, ph = fa.h - 18 - 18;
@@ -850,10 +853,10 @@
       c2.textAlign = 'left'; c2.textBaseline = 'top'; c2.fillStyle = th.text; c2.font = '600 11px Inter, sans-serif';
       c2.fillText('phase plane: ḋ (m/s) vs d', Lp, 3);
       runs.forEach(function (r, k) {
-        c2.strokeStyle = COLORS[k]; c2.lineWidth = 1.6; c2.beginPath();
+        c2.strokeStyle = CC[k]; c2.lineWidth = 1.6; c2.beginPath();
         for (var j = 0; j <= i; j += 2) { var X = X2(r.d[j]), Yv = Y2(r.dd[j]); if (j === 0) c2.moveTo(X, Yv); else c2.lineTo(X, Yv); }
         c2.stroke();
-        c2.fillStyle = COLORS[k]; c2.beginPath(); c2.arc(X2(r.d[i]), Y2(r.dd[i]), 3, 0, 7); c2.fill();
+        c2.fillStyle = CC[k]; c2.beginPath(); c2.arc(X2(r.d[i]), Y2(r.dd[i]), 3, 0, 7); c2.fill();
       });
 
       var peak = 0, dmax = 0;

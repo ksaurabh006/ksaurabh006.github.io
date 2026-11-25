@@ -105,3 +105,32 @@
   .pf-below { grid-template-columns: 1fr; }
   .pf-below .pf-readout { grid-template-columns: 1fr 1fr; }
 }
+
+/* two-approach overview cards and section banners */
+.pf-approaches { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin: 0.8rem 0 1.4rem 0; }
+.pf-approach {
+  display: block; text-decoration: none; color: inherit;
+  border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.1rem;
+  background: linear-gradient(160deg, rgba(37,99,235,0.07), transparent 65%);
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.pf-approach:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(15,23,42,0.08); }
+.pf-approach + .pf-approach { background: linear-gradient(160deg, rgba(217,119,6,0.08), transparent 65%); }
+.pf-approach-tag { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.pf-approach + .pf-approach .pf-approach-tag { color: #d97706; }
+.pf-approach h4 { margin: 0.2rem 0 0.4rem 0; font-size: 1.02rem; color: var(--heading-color); }
+.pf-approach p { margin: 0; font-size: 0.85rem; line-height: 1.55; color: var(--text); }
+.pf-banner {
+  margin: 2.6rem 0 1.1rem 0; padding: 0.9rem 1.2rem; border-radius: var(--radius-lg);
+  background: linear-gradient(100deg, #0a1628, #1e3a8a); color: #fff;
+  font-family: var(--font-serif); font-size: 1.45rem; font-weight: 600;
+}
+.pf-banner span {
+  display: block; font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: #93c5fd; margin-bottom: 0.15rem;
+}
+#approach-ct + .pf-banner { background: linear-gradient(100deg, #0a1628, #92400e); }
+#approach-ct + .pf-banner span { color: #fcd34d; }
+[data-theme="dark"] .pf-banner { background: linear-gradient(100deg, #13233f, #1e3a8a); }
+[data-theme="dark"] #approach-ct + .pf-banner { background: linear-gradient(100deg, #13233f, #78350f); }
+@media (max-width: 700px) { .pf-approaches { grid-template-columns: 1fr; } }

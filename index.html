@@ -7,12 +7,13 @@
 <link rel="icon" href="./images/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 <!-- Prevent dark-mode flash: apply saved theme before first paint -->
 <script>
 (function(){try{var t=localStorage.getItem('sk-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
 </script>
 <link rel="stylesheet" href="main.css" type="text/css" />
+<link rel="stylesheet" href="academic.css" type="text/css" />
 <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
 <!--- <title></title> --->
 <title>Saurabh Kumar  IIT Bombay</title>
@@ -69,7 +70,6 @@ MathJax.Hub.Config({
 <div id="layout-content-container">
 <div id="layout-content">
 <div class="hero-section">
-  <div id="vanta-bg"></div>
   <div class="hero-inner">
     <div class="hero-left">
       <div class="hero-badge">Postdoctoral Fellow &middot; IIT Bombay</div>
@@ -197,35 +197,6 @@ MathJax.Hub.Config({
     <p class="news-text">Successfully defended my Ph.D. at IIT Bombay. 🎓</p>
   </div>
 </div>
-<!-- Vanta.js animated globe background (hero section) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"
-  integrity="sha512-334uBDwY0iZ2TklV1OtDtBW9vp7jjP7SWRzT7Ehu1fdtPIjTpCwTSFb8HI/YBau9L1/kRBEOALrS229Kry4yFQ=="
-  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.globe.min.js"
-  integrity="sha512-cfeQlKIIaFDUyrmXLF3uv1DSprgNRSSptQF6lyPPmsnXhR2M8qtQ4B6pMQJE3BePiGHRefNCVO4u5/FUSzMkbQ=="
-  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script>
-// Animated globe behind the hero, colored to match the site's navy/blue
-// palette (see :root in main.css). The hero stays dark navy in both site
-// themes, so it looks the same with either theme. The hero gradient remains
-// as a fallback if the CDN scripts fail to load.
-if (window.VANTA && document.getElementById("vanta-bg")) {
-    VANTA.GLOBE({
-        el: "#vanta-bg",
-        mouseControls: true,
-        touchControls: true,
-        gyroControls: false,
-        minHeight: 200.00,
-        minWidth: 200.00,
-        scale: 1.00,
-        scaleMobile: 1.00,
-        color: 0x3b82f6,           /* --accent2: globe wireframe / dots */
-        color2: 0x2563eb,          /* --accent: secondary dot color */
-        backgroundColor: 0x0a1628, /* --navy: matches hero gradient start */
-        size: 1.10
-    });
-}
-</script>
 </div> <!-- <div id="layout-content"> -->
 <div id="footer-container">
 <div id="footer">
@@ -261,7 +232,7 @@ if (window.VANTA && document.getElementById("vanta-bg")) {
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated November 25<sup>th</sup> 2026  05:26PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated November 27<sup>th</sup> 2026  05:03PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

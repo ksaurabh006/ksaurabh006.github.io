@@ -34,13 +34,13 @@
   function theme() {
     var d = isDark();
     return {
-      bg: d ? '#0f1b30' : '#ffffff',
+      bg: d ? '#12161c' : '#ffffff',
       grid: d ? 'rgba(148,163,184,0.10)' : 'rgba(15,23,42,0.06)',
       axis: d ? 'rgba(148,163,184,0.35)' : 'rgba(15,23,42,0.25)',
       text: d ? '#cbd5e1' : '#1e293b',
       muted: d ? '#94a3b8' : '#64748b',
       path: d ? 'rgba(226,232,240,0.55)' : 'rgba(10,22,40,0.45)',
-      halo: d ? 'rgba(15,27,48,0.85)' : 'rgba(255,255,255,0.85)'
+      halo: d ? 'rgba(18,22,28,0.85)' : 'rgba(255,255,255,0.85)'
     };
   }
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;

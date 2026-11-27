@@ -1,0 +1,255 @@
+/* ============================================================
+   Formal academic theme, loaded after main.css.
+   Serif text, one deep-navy accent, thin rules in place of shadows,
+   square corners and no decorative motion. Remove the <link> to this
+   file in mysite.conf to return to the previous look.
+   ============================================================ */
+
+:root {
+  --navy:          #14263d;
+  --navy2:         #1f3a5f;
+  --accent:        #1f3a5f;
+  --accent2:       #2c5282;
+  --light:         #ffffff;
+  --muted:         #5a6472;
+  --border:        #d9dde3;
+  --white:         #ffffff;
+  --text:          #222831;
+  --text-light:    #8a929d;
+  --heading-color: #14263d;
+  --font-serif:    'Source Serif 4', 'Source Serif Pro', Georgia, 'Times New Roman', serif;
+  --font-sans:     'Source Sans 3', 'Source Sans Pro', 'Segoe UI', Helvetica, Arial, sans-serif;
+  --radius:        3px;
+  --radius-sm:     2px;
+  --radius-lg:     4px;
+}
+
+[data-theme="dark"] {
+  --navy:          #e6e9ee;
+  --navy2:         #f2f4f7;
+  --accent:        #9fb9d9;
+  --accent2:       #b9cde6;
+  --light:         #12161c;
+  --muted:         #9aa3ae;
+  --border:        #2a313b;
+  --white:         #171c23;
+  --text:          #d5dae0;
+  --text-light:    #6b7480;
+  --heading-color: #f2f4f7;
+}
+
+/* ── Type ── */
+body {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  line-height: 1.65;
+  background: var(--white);
+  color: var(--text);
+}
+p, li, dd { line-height: 1.7; }
+
+h1, h2, h3, h4, #layout-content h1, #layout-content h2, #layout-content h3, #layout-content h4 {
+  font-family: var(--font-serif);
+  color: var(--heading-color);
+  letter-spacing: 0;
+}
+h1, div#toptitle h1, #layout-content div#toptitle h1 { font-size: 2.05rem; font-weight: 600; }
+h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  color: var(--heading-color);
+}
+h3 { font-size: 1.08rem; font-weight: 600; color: var(--heading-color); }
+h4 { font-weight: 600; }
+strong, b { color: inherit; font-weight: 600; }
+div#toptitle { border-bottom: 1px solid var(--border); }
+div#toptitle::before { display: none; }
+
+/* UI text stays sans-serif: header, menu, buttons, labels, captions, simulations */
+div#header, div#layout-menu, .menu-item, .menu-category,
+button, .btn-primary, .btn-outline, figcaption, .figure-grid-note,
+.pf-sim, .pf-controls, .pf-readout, .pf-note, .pf-legend, .pf-step h4, .pf-tl-item,
+.pub-filter-bar, .pub-filter-btn, .proj-stat, .proj-tag, .poc-meta, .edu-chip, .hero-social-link,
+.video-card-caption, div#footer {
+  font-family: var(--font-sans);
+}
+
+/* ── Links ── */
+a, a > tt { color: var(--accent); }
+a:hover, a:hover > tt { color: var(--accent2); text-decoration: underline; text-underline-offset: 2px; }
+[data-theme="dark"] a { color: var(--accent); }
+[data-theme="dark"] a:hover { color: var(--accent2); }
+
+/* ── Header: white bar with a rule ── */
+div#header {
+  background: var(--white);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  border-bottom: 1px solid var(--border);
+}
+div#header-text-container, div#header-text-container a { color: var(--heading-color); font-family: var(--font-serif); font-weight: 600; }
+div#header-text-container a:hover { color: var(--accent); text-decoration: none; }
+div#header-icon-container { border: 1px solid var(--border); }
+#theme-toggle { border: 1px solid var(--border); border-radius: var(--radius); color: var(--muted); }
+#theme-toggle:hover { background: transparent; border-color: var(--accent); color: var(--accent); }
+.openbtn, .openbtn:hover { color: var(--heading-color) !important; background: none !important; }
+
+/* ── Menu ── */
+div.menu-category { color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 600; letter-spacing: 1px; }
+div.menu-item a { color: var(--text); border-left-width: 3px; }
+div.menu-item a:hover,
+#layout-menu a.current, #layout-menu a.current:link, #layout-menu a.current:visited {
+  background: transparent;
+  color: var(--accent);
+  border-left-color: var(--accent);
+}
+[data-theme="dark"] div#layout-menu { background: var(--white); border-right-color: var(--border); }
+[data-theme="dark"] div#layout-menu a { color: var(--text); }
+[data-theme="dark"] div#layout-menu a.current { color: var(--accent); }
+
+/* ── Page background in dark mode ── */
+[data-theme="dark"] body, [data-theme="dark"] div#main-container,
+[data-theme="dark"] div#layout-content, [data-theme="dark"] div#layout-content-container { background: var(--white); }
+[data-theme="dark"] div#footer { background: var(--white); border-top-color: var(--border); }
+
+/* ── Flat surfaces: thin borders, square corners, no lift on hover ── */
+.res-card, a.res-card, .course-card, .mentor-card, .project-card, .poc-card, .about-block, .news-entry,
+.edu-body, .figure-card, .video-card, .resource-card, .pf-sim, .pf-step, .proj-stats, .projects-intro,
+.pub-page-lists ol li, .team-card {
+  box-shadow: none !important;
+  border-radius: var(--radius) !important;
+  transform: none !important;
+}
+.res-card:hover, a.res-card:hover, .course-card:hover, .mentor-card:hover, .project-card:hover, .poc-card:hover,
+.news-entry:hover, .figure-card:hover, .video-card:hover, .resource-card:hover {
+  box-shadow: none !important;
+  transform: none !important;
+  border-color: var(--accent) !important;
+}
+[data-theme="dark"] .res-card, [data-theme="dark"] .course-card, [data-theme="dark"] .mentor-card,
+[data-theme="dark"] .project-card, [data-theme="dark"] .edu-body, [data-theme="dark"] .about-block,
+[data-theme="dark"] .news-entry, [data-theme="dark"] .figure-card {
+  background: var(--white);
+  border-color: var(--border);
+}
+
+/* Decorative icon tiles become plain, muted glyphs */
+.about-block-icon, .res-card-icon {
+  background: transparent !important;
+  color: var(--muted) !important;
+  border: 1px solid var(--border);
+  border-radius: var(--radius) !important;
+}
+
+/* ── No decorative motion ── */
+.sk-fade, .sk-fade.sk-visible { opacity: 1 !important; transform: none !important; transition: none !important; }
+.hero-inner { animation: none !important; }
+
+/* ── Home-page header block ── */
+.hero-section {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  margin: -2.5rem -2.5rem 2rem -2.5rem;
+  padding: 2.75rem 2.5rem 2.25rem 2.5rem;
+}
+#vanta-bg { display: none; }
+.hero-inner { gap: 2.5rem; }
+.hero-badge {
+  color: var(--muted);
+  border-bottom: none;
+  padding: 0;
+  margin-bottom: 0.6rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.hero-name { color: var(--heading-color); font-family: var(--font-serif); font-size: 2.5rem; }
+.hero-dept, .hero-dept a { color: var(--accent); font-weight: 400; font-size: 1.08rem; }
+.hero-dept a:hover { color: var(--accent2); }
+/* research interests as one line separated by middle dots */
+.hero-tags { gap: 0; margin-bottom: 1.25rem; }
+.hero-tag {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  color: var(--text);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1rem;
+}
+.hero-tag + .hero-tag::before { content: "\00b7"; font-style: normal; color: var(--muted); margin: 0 0.55rem; }
+.btn-primary, .btn-outline {
+  border-radius: var(--radius);
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 0.5rem 1.15rem;
+}
+.btn-primary { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+.btn-primary:hover { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+.btn-outline, [data-theme="dark"] .btn-outline { border: 1px solid var(--border); color: var(--accent); background: transparent; }
+.btn-outline:hover, [data-theme="dark"] .btn-outline:hover { border-color: var(--accent); background: transparent; color: var(--accent); }
+[data-theme="dark"] .btn-primary { color: #12161c; }
+.hero-social-row { border-top: 1px solid var(--border); padding-top: 1.1rem; }
+.hero-social-link { color: var(--accent); font-weight: 600; }
+.hero-social-link:hover { color: var(--accent2); text-decoration: underline; }
+.hero-social-icon-github { filter: none; }
+[data-theme="dark"] .hero-social-icon-github { filter: invert(1); }
+.hero-avatar {
+  width: 220px;
+  height: 260px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  outline: none;
+  box-shadow: none;
+  background: var(--white);
+}
+.hero-avatar img { border-radius: var(--radius); position: relative; z-index: 1; }
+.hero-avatar-fallback { color: var(--border); z-index: 0; }
+[data-theme="dark"] .hero-badge { color: var(--muted); }
+
+/* ── Tags and chips elsewhere: plain outlined labels ── */
+.proj-tag, .edu-chip, .thesis-label, .team-label, .pub-filter-btn {
+  border-radius: var(--radius) !important;
+  box-shadow: none !important;
+}
+.pub-filter-btn.active { background: var(--accent) !important; border-color: var(--accent) !important; }
+.news-date-badge, .course-code, .cite-btn, .proj-stats-bar, .proj-coming-soon, .poc-icon, .res-icon, .cv-embed,
+.pf-controls button, .pf-controls a, #layout-content a[class=""] {
+  border-radius: var(--radius) !important;
+}
+.res-icon, .poc-icon, .proj-cs-icon {
+  background: transparent !important;
+  color: var(--muted) !important;
+  border: 1px solid var(--border);
+}
+.edu-dot { box-shadow: none !important; }
+.ra-back a { border-radius: var(--radius) !important; }
+
+/* Simulation-page blocks (pf_anim.css loads after this file, hence the body prefix) */
+body .pf-approach, body .pf-approach + .pf-approach { background: var(--white); border-radius: var(--radius); }
+body .pf-approach:hover { transform: none; box-shadow: none; }
+body .pf-approach + .pf-approach .pf-approach-tag { color: var(--accent); }
+body .pf-approach-tag { font-family: var(--font-sans); }
+body .pf-step, body .pf-tl-item, body .pf-tl-item a, body .pf-sim { border-radius: var(--radius); box-shadow: none; }
+body .pf-tl-item:hover, body .pf-tl-item a:hover { transform: none; box-shadow: none; }
+/* Part banners ("Approach 1 / 2") become a ruled serif heading */
+body .pf-banner, body #approach-ct + .pf-banner,
+[data-theme="dark"] body .pf-banner, [data-theme="dark"] body #approach-ct + .pf-banner {
+  background: none;
+  color: var(--heading-color);
+  border-top: 2px solid var(--accent);
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  font-family: var(--font-serif);
+  padding-left: 0;
+  padding-right: 0;
+}
+body .pf-banner span, body #approach-ct + .pf-banner span { color: var(--muted); font-family: var(--font-sans); }
+.pf-controls button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+[data-theme="dark"] .pf-controls button.on { color: #12161c; }
+[data-theme="dark"] body .pf-sim { background: var(--white); border-color: var(--border); }
+#layout-content-container { animation: none !important; }

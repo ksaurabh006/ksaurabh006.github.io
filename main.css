@@ -2296,6 +2296,9 @@ a { transition: color 0.15s ease; }
 }
 .figure-card img {
   width: 100%;
+  aspect-ratio: 4 / 3;     /* same frame for every plot in a grid; contain keeps the whole figure */
+  object-fit: contain;
+  background: #fff;
   display: block;
   border-radius: var(--radius-sm);
 }

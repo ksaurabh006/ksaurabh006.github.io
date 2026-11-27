@@ -373,3 +373,33 @@ div#layout-menu .menu-item a.current { border-left-color: var(--gold); }
 }
 /* Dark mode: research interests stay plain italic text (main.css gives them pills) */
 [data-theme="dark"] .hero-tags .hero-tag { background: none; border: none; color: var(--text); }
+
+/* ============================================================
+   Text contrast: every text colour meets WCAG AA (4.5:1) against
+   its background in both themes. Gold stays as the accent for rules
+   and markers; text in gold uses a deeper shade.
+   ============================================================ */
+:root              { --gold-text: #86661f; }
+[data-theme="dark"] { --gold-text: #d1b06b; }
+.hero-badge, [data-theme="dark"] .hero-badge,
+body .pf-approach-tag, body .pf-approach + .pf-approach .pf-approach-tag,
+body .pf-banner span, body #approach-ct + .pf-banner span { color: var(--gold-text); }
+
+/* Secondary text (dates, periods, details) uses --muted, not the paler --text-light */
+.mentor-period, .course-sem, .edu-detail, .edu-detail em,
+[data-theme="dark"] .mentor-period, [data-theme="dark"] .course-sem,
+[data-theme="dark"] .edu-detail, [data-theme="dark"] .edu-detail em { color: var(--muted); }
+
+/* Footer on navy */
+.footer-copy, [data-theme="dark"] .footer-copy { color: rgba(255, 255, 255, 0.72); }
+
+/* Menu section headings in dark mode */
+[data-theme="dark"] div#layout-menu .menu-category { color: var(--muted); }
+
+/* Teaching intro panel: was pale blue in dark mode with light text on it */
+[data-theme="dark"] .teaching-intro { background: var(--tint); }
+
+/* Filter and demo buttons in dark mode: the accent is light, so selected text is dark */
+[data-theme="dark"] .pub-filter-btn { color: var(--text) !important; }
+[data-theme="dark"] .pub-filter-btn.active,
+[data-theme="dark"] .demo-btn.selected { color: #12161c !important; }

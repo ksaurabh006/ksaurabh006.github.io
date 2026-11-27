@@ -197,6 +197,29 @@ MathJax.Hub.Config({
     <p class="news-text">Successfully defended my Ph.D. at IIT Bombay. 🎓</p>
   </div>
 </div>
+<script>
+// Research interests: drop the separator dot on any tag that starts a new line.
+(function () {
+  var row = document.querySelector('.hero-tags');
+  if (!row) return;
+  function mark() {
+    var tags = row.querySelectorAll('.hero-tag'), tops = [], i;
+    for (i = 0; i < tags.length; i++) tags[i].classList.remove('line-start', 'line-start-keep');
+    for (i = 0; i < tags.length; i++) tops.push(tags[i].offsetTop);
+    for (i = 1; i < tags.length; i++) if (tops[i] > tops[i - 1] + 2) tags[i].classList.add('line-start');
+    // If dropping the dot lets a tag move back up a line, keep the dot's space but hide it,
+    // so the tag stays at the start of the next line.
+    for (i = 1; i < tags.length; i++)
+      if (tags[i].classList.contains('line-start') && tags[i].offsetTop <= tags[i - 1].offsetTop + 2) {
+        tags[i].classList.remove('line-start');
+        tags[i].classList.add('line-start-keep');
+      }
+  }
+  mark();
+  window.addEventListener('resize', mark);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(mark);
+})();
+</script>
 </div> <!-- <div id="layout-content"> -->
 <div id="footer-container">
 <div id="footer">
@@ -232,7 +255,7 @@ MathJax.Hub.Config({
   </div>
   <div class="footer-copy">&copy; 2026 Saurabh Kumar. All rights reserved.</div>
 </div>
-Page generated November 27<sup>th</sup> 2026  05:03PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
+Page generated November 27<sup>th</sup> 2026  05:13PM (Time Zone: India Standard Time), by <a href="https://github.com/wsshin/jemdoc_mathjax">jemdoc+MathJax</a>.
 </div> <!-- <div id="footer-text"> -->
 </div> <!-- <div id="footer"> -->
 </div> <!-- <div id="footer-container"> -->

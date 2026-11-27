@@ -331,3 +331,6 @@ div#layout-menu .menu-item a.current { border-left-color: var(--gold); }
 }
 .ra-back a:hover { background: var(--accent) !important; color: #fff !important; text-decoration: none; }
 [data-theme="dark"] .ra-back a:hover { color: #12161c !important; }
+.hero-tag { white-space: nowrap; }
+.hero-tag.line-start::before { content: none; }
+.hero-tag.line-start-keep::before { visibility: hidden; }

@@ -253,3 +253,81 @@ body .pf-banner span, body #approach-ct + .pf-banner span { color: var(--muted);
 [data-theme="dark"] .pf-controls button.on { color: #12161c; }
 [data-theme="dark"] body .pf-sim { background: var(--white); border-color: var(--border); }
 #layout-content-container { animation: none !important; }
+
+/* ============================================================
+   Palette: deep navy (primary), muted gold (highlight), and a pale
+   blue-grey tint for content panels. Plots and simulations stay white.
+   ============================================================ */
+:root {
+  --gold:    #a5802f;
+  --tint:    #f4f6f9;
+  --tag-bg:  #e7edf5;
+  --tag-fg:  #1f3a5f;
+}
+[data-theme="dark"] {
+  --gold:    #d1b06b;
+  --tint:    #1c222b;
+  --tag-bg:  #233042;
+  --tag-fg:  #c6d6ea;
+}
+
+/* Header: navy strip on top, gold kicker on the home page */
+div#header { border-top: 3px solid var(--accent); }
+[data-theme="dark"] div#header { border-top-color: #2c4f7c; }
+.hero-badge, [data-theme="dark"] .hero-badge { color: var(--gold); }
+
+/* Section headings: grey rule with a short gold segment */
+#layout-content h2 { position: relative; }
+#layout-content h2::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 3rem;
+  height: 2px;
+  background: var(--gold);
+}
+div#toptitle { border-bottom: 2px solid var(--accent); }
+
+/* Content panels on a pale tint so they separate from the page */
+.res-card, a.res-card, .about-block, .news-entry, .edu-body, .poc-card, .course-card, .mentor-card,
+.resource-card, .proj-stats-bar, .projects-intro, .team-card,
+body .pf-step, body .pf-approach, body .pf-approach + .pf-approach, body .pf-tl-item a {
+  background: var(--tint) !important;
+}
+[data-theme="dark"] .res-card, [data-theme="dark"] .about-block, [data-theme="dark"] .news-entry,
+[data-theme="dark"] .edu-body, [data-theme="dark"] .course-card, [data-theme="dark"] .mentor-card {
+  background: var(--tint) !important;
+}
+.about-block-icon, .res-card-icon, .res-icon, .poc-icon, .proj-cs-icon {
+  background: var(--white) !important;
+  color: var(--accent) !important;
+}
+
+/* Key milestones in the "How the Work Developed" timelines */
+body .pf-tl-item.key a { border-top: 2px solid var(--gold); }
+body .pf-tl-item.key::before { background: var(--gold); }
+
+/* Tags, chips and date badges: navy tint, no bright blue */
+.proj-tag, .edu-chip, .course-code, .news-date-badge,
+[data-theme="dark"] .proj-tag, [data-theme="dark"] .edu-chip, [data-theme="dark"] .news-date-badge {
+  background: var(--tag-bg) !important;
+  color: var(--tag-fg) !important;
+  border-color: transparent !important;
+}
+.thesis-label, .team-label { background: var(--tag-bg) !important; color: var(--tag-fg) !important; }
+
+/* Approach labels and part banners pick up the gold highlight */
+body .pf-approach-tag, body .pf-approach + .pf-approach .pf-approach-tag,
+body .pf-banner span, body #approach-ct + .pf-banner span { color: var(--gold); }
+
+/* Menu: gold marker on the current page */
+#layout-menu a.current, #layout-menu a.current:link, #layout-menu a.current:visited,
+div#layout-menu .menu-item a.current { border-left-color: var(--gold); }
+.ra-back a, [data-theme="dark"] .ra-back a {
+  background: var(--tag-bg) !important;
+  color: var(--tag-fg) !important;
+  border-color: transparent !important;
+}
+.ra-back a:hover { background: var(--accent) !important; color: #fff !important; text-decoration: none; }
+[data-theme="dark"] .ra-back a:hover { color: #12161c !important; }

@@ -403,3 +403,41 @@ body .pf-banner span, body #approach-ct + .pf-banner span { color: var(--gold-te
 [data-theme="dark"] .pub-filter-btn { color: var(--text) !important; }
 [data-theme="dark"] .pub-filter-btn.active,
 [data-theme="dark"] .demo-btn.selected { color: #12161c !important; }
+
+/* ============================================================
+   Palette (2026-11-28): near-black text with one blue accent.
+   Gold is retired; the gold variables now take the blue accent.
+   ============================================================ */
+:root {
+  --navy:          #111827;
+  --navy2:         #1f2937;
+  --accent:        #1d4ed8;
+  --accent2:       #1e40af;
+  --muted:         #4b5563;
+  --text:          #1f2937;
+  --text-light:    #6b7280;
+  --heading-color: #111827;
+  --gold:          #1d4ed8;
+  --gold-text:     #1d4ed8;
+  --tint:          #f6f7f9;
+  --tag-bg:        #eef3ff;
+  --tag-fg:        #1e40af;
+}
+[data-theme="dark"] {
+  --navy:          #f3f4f6;
+  --navy2:         #f9fafb;
+  --accent:        #7aa7ff;
+  --accent2:       #a3c2ff;
+  --muted:         #a1a9b4;
+  --text:          #e5e7eb;
+  --text-light:    #8b939e;
+  --heading-color: #f9fafb;
+  --gold:          #7aa7ff;
+  --gold-text:     #7aa7ff;
+  --tint:          #1b2029;
+  --tag-bg:        #1e2a44;
+  --tag-fg:        #c7d7fe;
+}
+[data-theme="dark"] div#header { border-top-color: var(--accent); }
+[data-theme="dark"] .cite-panel pre { background: transparent; }
+[data-theme="dark"] .cite-copy-btn  { color: #12161c; }

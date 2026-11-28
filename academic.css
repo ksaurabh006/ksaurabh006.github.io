@@ -441,3 +441,13 @@ body .pf-banner span, body #approach-ct + .pf-banner span { color: var(--gold-te
 [data-theme="dark"] div#header { border-top-color: var(--accent); }
 [data-theme="dark"] .cite-panel pre { background: transparent; }
 [data-theme="dark"] .cite-copy-btn  { color: #12161c; }
+
+/* All text black in the light theme (2026-11-28) */
+:root {
+  --navy:          #000000;
+  --navy2:         #000000;
+  --muted:         #000000;
+  --text:          #000000;
+  --text-light:    #000000;
+  --heading-color: #000000;
+}
